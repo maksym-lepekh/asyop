@@ -15,12 +15,58 @@
 #define CATCH_CONFIG_MAIN
 #include <catch2/catch.hpp>
 
+#include <asio.hpp>
+
 #include <asy/op.hpp>
+#include <asy/event_loop_asio.hpp>
 #include <optional>
+#include <thread>
+#include <chrono>
+#include <iostream>
+
+using namespace std::literals;
 
 TEST_CASE( "Try unit tests", "[stub]" )
 {
     auto opt = std::optional<int>{};
 
     REQUIRE(!(bool)opt);
+}
+
+TEST_CASE("Event loop", "[asio]")
+{
+    auto io = asio::io_service{};
+    auto timer = asio::steady_timer{io, 2s};
+
+    asy::this_thread::set_event_loop(io);
+
+    asy::op<int>([&timer](auto ctx){
+        std::cout << "op...\n";
+
+        timer.async_wait([ctx](auto& ec) {
+            ctx->async_return(42);
+        });
+    });
+
+    io.run();
+}
+
+TEST_CASE("Event loop 2", "[asio]")
+{
+    auto io = asio::io_service{};
+    auto timer = asio::steady_timer{io, 2s};
+
+    asy::this_thread::set_event_loop(io);
+
+    asy::op<int>([&timer](auto ctx){
+        std::cout << "op...\n";
+
+        timer.async_wait([ctx](auto& ec) {
+            ctx->async_return(42);
+        });
+    }).then([](auto& val){
+        std::cout << "returned " << val << "\n";
+    });
+
+    io.run();
 }

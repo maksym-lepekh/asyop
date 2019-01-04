@@ -15,17 +15,26 @@ set(CMAKE_CXX_EXTENSIONS OFF)
 
 # dependencies
 add_subdirectory(libs/Catch2)
+find_package(ASIO REQUIRED)
 
 # main library
-add_library(asyop INTERFACE)
-target_include_directories(asyop INTERFACE include)
+add_library(asyop SHARED src/asy.cpp)
+target_include_directories(asyop PUBLIC include)
+
+add_library(asyop-asio SHARED src_asio/event_loop.cpp)
+target_include_directories(asyop-asio PUBLIC include_asio)
+target_link_libraries(asyop-asio PUBLIC asyop ASIO::ASIO)
+
+
 add_library(asyop::asyop ALIAS asyop)
+add_library(asyop::asio ALIAS asyop-asio)
+
 
 # standalone
 if (NOT_SUBDIR)
     # tests
     add_executable(tests tests/main.cpp)
-    target_link_libraries(tests PRIVATE Catch2::Catch2 asyop)
+    target_link_libraries(tests PRIVATE Catch2::Catch2 asyop-asio)
 
     # test driver
     enable_testing()
