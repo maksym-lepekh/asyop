@@ -16,57 +16,63 @@
 #include <functional>
 #include <tuple>
 #include <variant>
+#include <type_traits>
 #include <system_error>
 
-#include <iostream>
 
+namespace asy::detail
+{
+    struct void_t{};
+    struct done_t{};
+
+    template <typename T>
+    struct type_traits
+    {
+        using success = T;
+        using success_cb = std::function<void(T&&)>;
+        template <typename F> using cb_result = std::invoke_result_t<F, T&&>;
+        template <typename F> using std_fun_t = std::function<cb_result<F>(T&&)>;
+    };
+
+    template <>
+    struct type_traits<void>
+    {
+        using success = void_t;
+        using success_cb = std::function<void()>;
+        template <typename F> using cb_result = std::invoke_result_t<F>;
+        template <typename F> using std_fun_t = std::function<cb_result<F>()>;
+    };
+
+    using posted_fn = std::function<void()>;
+    extern thread_local std::function<void(posted_fn)> post_impl;
+}
 
 namespace asy
 {
-    namespace detail
-    {
-        using posted_fn = std::function<void()>;
-        extern thread_local std::function<void(posted_fn)> post_impl;
-    }
-
-    class basic_context
-    {
-    protected:
-        struct done_tag {};
-
-        template <typename F, typename... Arg>
-        void post(F& f, Arg&... arg)
-        {
-            if (f)
-            {
-                detail::post_impl([handler = std::move(f), params = std::make_tuple(std::move(arg)...)]() mutable {
-                    std::apply(handler, params);
-                });
-            }
-        }
-    };
-
-
-    template <typename T>
-    class context: public basic_context
+    template <typename Val, typename Err>
+    class context
     {
     public:
-        using success_t = T;
-        using failure_t = std::error_code;
+        using success_t = typename detail::type_traits<Val>::success;
+        using failure_t = Err;
+        using success_cb_t = typename detail::type_traits<Val>::success_cb;
+        using failure_cb_t = std::function<void(Err&&)>;
+        using cb_pair_t = std::tuple<success_cb_t, failure_cb_t>;
 
-        using success_cb_t = std::function<void(success_t&)>;
-        using failure_cb_t = std::function<void(failure_t&)>;
-
-        void async_return(success_t&& val)
+        void async_return(success_t&& val = {})
         {
-            if (std::get_if<done_tag>(&m_pending))
+            if (std::get_if<detail::done_t>(&m_pending))
             {
                 return;
             }
             else if (auto cbs = std::get_if<cb_pair_t>(&m_pending))
             {
-                post(std::get<success_cb_t>(*cbs), val);
-                m_pending = done_tag{};
+                if constexpr (std::is_void_v<Val>)
+                    post(std::get<success_cb_t>(*cbs));
+                else
+                    post(std::get<success_cb_t>(*cbs), val);
+
+                m_pending = detail::done_t{};
             }
             else
             {
@@ -76,14 +82,14 @@ namespace asy
 
         void async_return(failure_t&& val)
         {
-            if (std::get_if<done_tag>(&m_pending))
+            if (std::get_if<detail::done_t>(&m_pending))
             {
                 return;
             }
             else if (auto cbs = std::get_if<cb_pair_t>(&m_pending))
             {
                 post(std::get<failure_cb_t>(*cbs), val);
-                m_pending = done_tag{};
+                m_pending = detail::done_t{};
             }
             else
             {
@@ -93,7 +99,7 @@ namespace asy
 
         void cancel()
         {
-            if (std::get_if<done_tag>(&m_pending))
+            if (std::get_if<detail::done_t>(&m_pending))
             {
                 return;
             }
@@ -102,7 +108,7 @@ namespace asy
             if (auto cbs = std::get_if<cb_pair_t>(&m_pending))
             {
                 post(std::get<failure_cb_t>(*cbs), val);
-                m_pending = done_tag{};
+                m_pending = detail::done_t{};
             }
             else
             {
@@ -110,21 +116,24 @@ namespace asy
             }
         }
 
-        void then(success_cb_t success_cb, failure_cb_t failure_cb = {})
+        void set_continuation(success_cb_t success_cb, failure_cb_t failure_cb = {})
         {
-            if (std::get_if<done_tag>(&m_pending))
+            if (std::get_if<detail::done_t>(&m_pending))
             {
                 return;
             }
             else if (auto s_val = std::get_if<success_t>(&m_pending))
             {
-                post(success_cb, *s_val);
-                m_pending = done_tag{};
+                if constexpr (std::is_void_v<Val>)
+                    post(success_cb);
+                else
+                    post(success_cb, *s_val);
+                m_pending = detail::done_t{};
             }
             else if (auto f_val = std::get_if<failure_t>(&m_pending))
             {
                 post(failure_cb, *f_val);
-                m_pending = done_tag{};
+                m_pending = detail::done_t{};
             }
             else
             {
@@ -132,108 +141,29 @@ namespace asy
             }
         }
 
-        ~context()
-        {
-            std::cout << "context dtor, state: " << m_pending.index() << "\n";
-        }
-
     private:
-        using cb_pair_t = std::tuple<success_cb_t, failure_cb_t>;
-        std::variant<std::monostate, cb_pair_t, success_t, failure_t, done_tag> m_pending;
-    };
-
-    template <>
-    class context<void>: public basic_context
-    {
-    public:
-        struct success_t{};
-        using failure_t = std::error_code;
-
-        using success_cb_t = std::function<void()>;
-        using failure_cb_t = std::function<void(failure_t&)>;
-
-        void async_return()
+        template <typename F, typename Arg>
+        void post(F&& f, Arg&& arg)
         {
-            if (std::get_if<done_tag>(&m_pending))
+            if (f)
             {
-                return;
-            }
-            else if (auto cbs = std::get_if<cb_pair_t>(&m_pending))
-            {
-                post(std::get<success_cb_t>(*cbs));
-                m_pending = done_tag{};
-            }
-            else
-            {
-                m_pending = success_t{};
+                detail::post_impl([handler = std::move(f), param = std::move(arg)]() mutable {
+                    handler(std::move(param));
+                });
             }
         }
 
-        void async_return(failure_t&& val)
+        template <typename F>
+        void post(F&& f)
         {
-            if (std::get_if<done_tag>(&m_pending))
+            if (f)
             {
-                return;
-            }
-            else if (auto cbs = std::get_if<cb_pair_t>(&m_pending))
-            {
-                post(std::get<failure_cb_t>(*cbs), val);
-                m_pending = done_tag{};
-            }
-            else
-            {
-                m_pending = val;
+                detail::post_impl([handler = std::move(f)]() {
+                    handler();
+                });
             }
         }
 
-        void cancel()
-        {
-            if (std::get_if<done_tag>(&m_pending))
-            {
-                return;
-            }
-
-            auto val = std::make_error_code(std::errc::operation_canceled);
-            if (auto cbs = std::get_if<cb_pair_t>(&m_pending))
-            {
-                post(std::get<failure_cb_t>(*cbs), val);
-                m_pending = done_tag{};
-            }
-            else
-            {
-                m_pending = val;
-            }
-        }
-
-        void then(success_cb_t success_cb, failure_cb_t failure_cb = {})
-        {
-            if (std::get_if<done_tag>(&m_pending))
-            {
-                return;
-            }
-            else if (std::get_if<success_t>(&m_pending))
-            {
-                post(success_cb);
-                m_pending = done_tag{};
-            }
-            else if (auto f_val = std::get_if<failure_t>(&m_pending))
-            {
-                post(failure_cb, *f_val);
-                m_pending = done_tag{};
-            }
-            else
-            {
-                m_pending = cb_pair_t{std::move(success_cb), std::move(failure_cb)};
-            }
-        }
-
-        ~context()
-        {
-            std::cout << "context dtor, state: " << m_pending.index() << "\n";
-        }
-
-    private:
-        using cb_pair_t = std::tuple<success_cb_t, failure_cb_t>;
-        std::variant<std::monostate, cb_pair_t, success_t, failure_t, done_tag> m_pending;
+        std::variant<std::monostate, cb_pair_t, success_t, failure_t, detail::done_t> m_pending;
     };
 }

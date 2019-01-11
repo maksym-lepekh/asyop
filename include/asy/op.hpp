@@ -25,13 +25,14 @@ namespace asy
     class op_handle
     {
     public:
-        using ctx_t = context<T>;
+        using failure_type = std::error_code;
+
+        using ctx_t = context<T, failure_type>;
         using ctx_arg_t = std::shared_ptr<ctx_t>;
         using fn_t = std::function<void(ctx_arg_t)>;
-        using success_type = T;
-        using failure_type = std::error_code;
-        using success_cb_t = std::function<void(success_type&)>;
-        using failure_cb_t = std::function<void(failure_type&)>;
+
+        using success_cb_t = typename ctx_t::success_cb_t;
+        using failure_cb_t = typename ctx_t::failure_cb_t;
 
         explicit op_handle(fn_t exec)
         {
@@ -44,23 +45,108 @@ namespace asy
             m_ctx->cancel();
         }
 
-        void then(success_cb_t s, failure_cb_t f = {})
+        template <typename SuccCb>
+        auto then(SuccCb&& s, failure_cb_t f = {})
         {
-            m_ctx->then(std::move(s), std::move(f));
+            using ret_t = typename detail::type_traits<T>::template cb_result<SuccCb>;
+            using succ_cb_t = typename detail::type_traits<T>::template std_fun_t<SuccCb>;
+
+            return op_handle<ret_t>([this, s = succ_cb_t{std::forward<SuccCb>(s)}, &f](auto ctx)
+            {
+                failure_cb_t fail_cont;
+                if (f)
+                {
+                    f = make_fail_cont<ret_t>(std::move(f), ctx);
+                }
+                else
+                {
+                    f = make_fail_skip(ctx);
+                }
+
+                m_ctx->set_continuation(
+                        make_succ_cont<ret_t>(std::move(s), ctx),
+                        std::move(fail_cont)
+                );
+            });
+        }
+
+        auto on_failure(failure_cb_t f)
+        {
+            return op_handle<void>([this, &f](auto ctx)
+            {
+                m_ctx->set_continuation(
+                        make_succ_skip<void>(ctx),
+                        make_fail_cont<void>(std::move(f), ctx)
+                );
+            });
         }
 
     private:
+        template <typename Ret, typename C>
+        static auto make_succ_skip(C ctx)
+        {
+            return [ctx = ctx](auto&&... result)
+            {
+                if constexpr (std::is_void_v<Ret>)
+                {
+                    ctx->async_return();
+                }
+                else
+                {
+                    ctx->async_return(std::move(result)...);
+                }
+            };
+        }
+
+        template <typename Ret, typename S, typename C>
+        static auto make_succ_cont(S user_cb, C ctx)
+        {
+            return [ctx = ctx, s_cb = std::move(user_cb)](auto&&... result)
+            {
+                if constexpr (std::is_void_v<Ret>)
+                {
+                    s_cb(std::move(result)...);
+                    ctx->async_return();
+                }
+                else
+                {
+                    ctx->async_return(s_cb(std::move(result)...));
+                }
+            };
+        }
+
+        template <typename C>
+        static auto make_fail_skip(C ctx)
+        {
+            return [ctx = ctx](failure_type&& err)
+            {
+                ctx->async_return(std::move(err));
+            };
+        }
+
+        template <typename Ret, typename C>
+        static auto make_fail_cont(failure_cb_t user_cb, C ctx)
+        {
+            return [ctx = ctx, f_cb = std::move(user_cb)](failure_type&& err)
+            {
+                f_cb(std::move(err));
+                if constexpr (std::is_void_v<Ret>)
+                {
+                    ctx->async_return();
+                }
+                else
+                {
+                    ctx->async_return(Ret{});
+                }
+            };
+        }
+
         std::shared_ptr<ctx_t> m_ctx;
     };
 
     template <typename Ret>
-    auto op(std::function<void(std::shared_ptr<context<Ret>>)> fn)
+    auto op(std::function<void(std::shared_ptr<context<Ret, std::error_code>>)> fn)
     {
         return op_handle<Ret>{std::move(fn)};
     }
-
-    /*auto op(std::function<void(std::shared_ptr<context<void>>)> fn)
-    {
-        return op_handle<void>{std::move(fn)};
-    }*/
 }

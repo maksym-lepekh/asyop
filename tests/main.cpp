@@ -26,47 +26,55 @@
 
 using namespace std::literals;
 
-TEST_CASE( "Try unit tests", "[stub]" )
-{
-    auto opt = std::optional<int>{};
 
-    REQUIRE(!(bool)opt);
-}
-
-TEST_CASE("Event loop", "[asio]")
+TEST_CASE("Chaining with fail", "[asio]")
 {
     auto io = asio::io_service{};
-    auto timer = asio::steady_timer{io, 2s};
+    auto timer = asio::steady_timer{io, 500ms};
 
     asy::this_thread::set_event_loop(io);
 
-    asy::op<int>([&timer](auto ctx){
-        std::cout << "op...\n";
+    bool op1 = false;
+    bool op2 = false;
+    bool op3 = false;
+    bool op4 = false;
+    bool op5 = false;
 
-        timer.async_wait([ctx](auto& ec) {
+    asy::op<int>([&](auto ctx){
+        timer.async_wait([&, ctx](auto& ec) {
+            REQUIRE_FALSE( (op1 && op2 && op3 && op4 && op5) );
+            op1 = true;
             ctx->async_return(42);
         });
+    })
+    .then([&](auto&& val){
+        REQUIRE_FALSE( (op2 && op3 && op4 && op5) );
+        REQUIRE(op1);
+        REQUIRE(val == 42);
+        op2 = true;
+        return val * 2;
+    })
+    .then([&](auto&& val){
+        REQUIRE_FALSE( (op3 && op4 && op5) );
+        REQUIRE( (op1 && op2) );
+        REQUIRE(val == 84);
+        op3 = true;
+        return val * 2;
+    })
+    .on_failure([&](auto&& err){
+        REQUIRE_FALSE( (op4 && op5) );
+        REQUIRE( (op1 && op2 && op3) );
+        op4 = true;
+    })
+    .then([&](){
+        REQUIRE_FALSE( (op4 && op5) );
+        REQUIRE( (op1 && op2 && op3) );
+        op5 = true;
+        return 15;
     });
 
     io.run();
-}
 
-TEST_CASE("Event loop 2", "[asio]")
-{
-    auto io = asio::io_service{};
-    auto timer = asio::steady_timer{io, 2s};
-
-    asy::this_thread::set_event_loop(io);
-
-    asy::op<int>([&timer](auto ctx){
-        std::cout << "op...\n";
-
-        timer.async_wait([ctx](auto& ec) {
-            ctx->async_return(42);
-        });
-    }).then([](auto& val){
-        std::cout << "returned " << val << "\n";
-    });
-
-    io.run();
+    REQUIRE_FALSE(op4);
+    REQUIRE( (op1 && op2 && op3 && op5) );
 }
