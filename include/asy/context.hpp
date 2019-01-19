@@ -1,4 +1,4 @@
-// Copyright 2018 Maksym Lepekh
+// Copyright 2018-2019 Maksym Lepekh
 // 
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -16,6 +16,7 @@
 #include <functional>
 #include <tuple>
 #include <variant>
+#include <memory>
 #include <type_traits>
 #include <system_error>
 
@@ -166,4 +167,7 @@ namespace asy
 
         std::variant<std::monostate, cb_pair_t, success_t, failure_t, detail::done_t> m_pending;
     };
+
+    template <typename Ret>
+    using context_ptr = std::shared_ptr<context<Ret, std::error_code>>;
 }

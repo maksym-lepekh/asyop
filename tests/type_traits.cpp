@@ -1,4 +1,4 @@
-// Copyright 2018 Maksym Lepekh
+// Copyright 2018-2019 Maksym Lepekh
 // 
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -163,21 +163,21 @@ TEST_CASE("Is template specialization", "[deduce]")
 {
     SECTION("Single argument template")
     {
-        using ret = asy::detail::is_specialization_of<single_template_t, single_template_t<int>>;
+        using ret = asy::detail::specialization_of<single_template_t, single_template_t<int>>;
         REQUIRE( ret::value );
         REQUIRE( std::is_same_v<ret::first_arg, int> );
     }
 
     SECTION("Multiple argument template")
     {
-        using ret = asy::detail::is_specialization_of<multi_template_t, multi_template_t<int, double, char>>;
+        using ret = asy::detail::specialization_of<multi_template_t, multi_template_t<int, double, char>>;
         REQUIRE( ret::value );
         REQUIRE( std::is_same_v<ret::first_arg, int> );
     }
 
     SECTION("Variadic argument template")
     {
-        using ret = asy::detail::is_specialization_of<variadic_template_t, variadic_template_t<int, double, char>>;
+        using ret = asy::detail::specialization_of<variadic_template_t, variadic_template_t<int, double, char>>;
         REQUIRE( ret::value );
         REQUIRE( std::is_same_v<ret::first_arg, int> );
     }

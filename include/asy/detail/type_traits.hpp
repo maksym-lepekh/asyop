@@ -1,4 +1,4 @@
-// Copyright 2018 Maksym Lepekh
+// Copyright 2018-2019 Maksym Lepekh
 // 
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -20,10 +20,10 @@
 namespace asy::detail
 {
     template <template <typename...> typename, typename...>
-    struct is_specialization_of : std::false_type {};
+    struct specialization_of : std::false_type {};
 
     template <template <typename...> typename Templ, typename... OtherArgs, typename TemplArg>
-    struct is_specialization_of<Templ, Templ<TemplArg, OtherArgs...>> : std::true_type {
+    struct specialization_of<Templ, Templ<TemplArg, OtherArgs...>> : std::true_type {
        using first_arg = TemplArg;
     };
 

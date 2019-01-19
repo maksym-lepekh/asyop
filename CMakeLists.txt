@@ -33,7 +33,10 @@ add_library(asyop::asio ALIAS asyop-asio)
 # standalone
 if (NOT_SUBDIR)
     # tests
-    add_executable(tests tests/main.cpp tests/type_traits.cpp)
+    add_executable(tests
+            tests/main.cpp
+            tests/type_traits.cpp
+            tests/continuation.cpp)
     target_link_libraries(tests PRIVATE Catch2::Catch2 asyop-asio)
 
     # test driver

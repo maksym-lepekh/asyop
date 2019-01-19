@@ -1,4 +1,4 @@
-// Copyright 2018 Maksym Lepekh
+// Copyright 2018-2019 Maksym Lepekh
 // 
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -148,5 +148,13 @@ namespace asy
     auto op(std::function<void(std::shared_ptr<context<Ret, std::error_code>>)> fn)
     {
         return op_handle<Ret>{std::move(fn)};
+    }
+
+    template <typename Ret>
+    auto op()
+    {
+        return op_handle<Ret>{[](context_ptr<Ret> ctx){
+            ctx->async_return();
+        }};
     }
 }
