@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.12)
+cmake_minimum_required(VERSION 3.9)
 
 if (NOT DEFINED PROJECT_NAME)
     set(NOT_SUBDIR ON)

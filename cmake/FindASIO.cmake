@@ -25,7 +25,7 @@ else()
             endif()
         endif()
     else()
-        find_path(ASIO_ROOT include/asio.hpp
+        find_path(ASIO_PATH include/asio.hpp
                 PATHS
                 # Where asio lives relative to it's official repository
                 ${CMAKE_CURRENT_LIST_DIR}/../../asio/asio
@@ -33,7 +33,7 @@ else()
                 # Where asio should live
                 ${CMAKE_CURRENT_LIST_DIR}/../../asio
                 )
-        if(NOT ASIO_ROOT)
+        if(NOT ASIO_PATH)
             if(ASIO_FIND_REQUIRED)
                 message(FATAL_ERROR "ASIO headers could not be found.")
             else()
@@ -45,7 +45,7 @@ else()
             add_library(ASIO::ASIO INTERFACE IMPORTED GLOBAL)
             set_target_properties(ASIO::ASIO PROPERTIES
                     INTERFACE_COMPILE_DEFINITIONS "ASIO_STANDALONE"
-                    INTERFACE_INCLUDE_DIRECTORIES "${ASIO_ROOT}/include"
+                    INTERFACE_INCLUDE_DIRECTORIES "${ASIO_PATH}/include"
                     )
             target_link_libraries(ASIO::ASIO INTERFACE Threads::Threads)
             set(ASIO_FOUND TRUE)
