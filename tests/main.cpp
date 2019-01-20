@@ -30,7 +30,7 @@ using namespace std::literals;
 TEST_CASE("Chaining with fail", "[asio]")
 {
     auto io = asio::io_service{};
-    auto timer = asio::steady_timer{io, 500ms};
+    auto timer = asio::steady_timer{io, 1ms};
 
     asy::this_thread::set_event_loop(io);
 
@@ -40,7 +40,7 @@ TEST_CASE("Chaining with fail", "[asio]")
     bool op4 = false;
     bool op5 = false;
 
-    asy::op<int>([&](auto ctx){
+    asy::op([&](asy::context<int> ctx){
         timer.async_wait([&, ctx](auto& ec) {
             REQUIRE_FALSE( (op1 && op2 && op3 && op4 && op5) );
             op1 = true;

@@ -14,6 +14,8 @@
 #pragma once
 
 #include "context.hpp"
+#include "detail/continuation_info.hpp"
+#include "detail/continuations.hpp"
 
 #include <memory>
 #include <functional>
@@ -34,10 +36,10 @@ namespace asy
         using success_cb_t = typename ctx_t::success_cb_t;
         using failure_cb_t = typename ctx_t::failure_cb_t;
 
-        explicit op_handle(fn_t exec)
+        template <typename Fn, typename... Args>
+        explicit op_handle(Fn&& exec, Args&&... args): m_ctx(std::make_shared<ctx_t>())
         {
-            m_ctx = std::make_shared<ctx_t>();
-            exec(m_ctx);
+            std::forward<Fn>(exec)(m_ctx, std::forward<Args>(args)...);
         }
 
         void cancel()
@@ -45,109 +47,118 @@ namespace asy
             m_ctx->cancel();
         }
 
-        template <typename SuccCb>
-        auto then(SuccCb&& s, failure_cb_t f = {})
+        template <typename Fn>
+        auto then(Fn&& fn)
         {
-            using ret_t = typename detail::type_traits<T>::template cb_result<SuccCb>;
-            using succ_cb_t = typename detail::type_traits<T>::template std_fun_t<SuccCb>;
+            using info = detail::continuation_info<Fn, T>;
+            static_assert(info::type != detail::cont_type::invalid, "Functor has unsupported type");
+            using ret_t = typename info::ret_type;
 
-            return op_handle<ret_t>([this, s = succ_cb_t{std::forward<SuccCb>(s)}, &f](auto ctx)
-            {
-                failure_cb_t fail_cont;
-                if (f)
-                {
-                    f = make_fail_cont<ret_t>(std::move(f), ctx);
-                }
-                else
-                {
-                    f = make_fail_skip(ctx);
-                }
-
+            return op_handle<ret_t>([this, &fn](context<ret_t> ctx){
                 m_ctx->set_continuation(
-                        make_succ_cont<ret_t>(std::move(s), ctx),
-                        std::move(fail_cont)
-                );
+                        make_success_cont(std::forward<Fn>(fn), ctx),
+                        detail::make_skip_failcont<failure_type>(ctx));
             });
         }
 
-        auto on_failure(failure_cb_t f)
+        template <typename SuccCb, typename FailCb>
+        auto then(SuccCb&& s, FailCb f)
         {
-            return op_handle<void>([this, &f](auto ctx)
-            {
+            using info = detail::continuation_info<SuccCb, T>;
+            static_assert(info::type != detail::cont_type::invalid, "Functor has unsupported type");
+            using ret_t = typename info::ret_type;
+
+            return op_handle<ret_t>([this, &s, &f](context<ret_t> ctx){
                 m_ctx->set_continuation(
-                        make_succ_skip<void>(ctx),
-                        make_fail_cont<void>(std::move(f), ctx)
-                );
+                        make_success_cont(std::forward<SuccCb>(s), ctx),
+                        make_fail_cont(std::forward<FailCb>(f), ctx));
+            });
+        }
+
+        template <typename Fn>
+        auto on_failure(Fn&& fn)
+        {
+            return op_handle<void>([this, &fn](context<void> ctx){
+                m_ctx->set_continuation(
+                        detail::make_skip_cont<T>(ctx),
+                        make_fail_cont(std::forward<Fn>(fn), ctx));
             });
         }
 
     private:
-        template <typename Ret, typename C>
-        static auto make_succ_skip(C ctx)
+        template <typename Fn, typename Ctx>
+        auto make_success_cont(Fn&& fn, Ctx ctx)
         {
-            return [ctx = ctx](auto&&... result)
+            using info = detail::continuation_info<Fn, T>;
+            static_assert(info::type != detail::cont_type::invalid, "Functor has unsupported type");
+            using ret_t = typename info::ret_type;
+
+            if constexpr (info::type == detail::cont_type::simple || info::type == detail::cont_type::ambiguous_simple)
             {
-                if constexpr (std::is_void_v<Ret>)
-                {
-                    ctx->async_return();
-                }
-                else
-                {
-                    ctx->async_return(std::move(result)...);
-                }
-            };
+                return detail::make_simple_cont<T, ret_t>(std::forward<Fn>(fn), ctx);
+            }
+            else if constexpr (info::type == detail::cont_type::areturn || info::type == detail::cont_type::ambiguous_areturn)
+            {
+                return detail::make_areturn_cont<T, ret_t>(std::forward<Fn>(fn), ctx);
+            }
+            else
+            {
+                return [fn = std::forward<Fn>(fn), ctx](T&& input){
+                    // todo void unput
+                    op_handle<ret_t>(fn, std::move(input)).then(
+                        [ctx](ret_t&& output){ ctx->async_return(std::move(output)); },
+                        [ctx](auto&& err){ ctx->async_return(std::move(err)); });
+                };
+            }
         }
 
-        template <typename Ret, typename S, typename C>
-        static auto make_succ_cont(S user_cb, C ctx)
+        template <typename Fn, typename Ctx>
+        auto make_fail_cont(Fn&& fn, Ctx ctx)
         {
-            return [ctx = ctx, s_cb = std::move(user_cb)](auto&&... result)
-            {
-                if constexpr (std::is_void_v<Ret>)
-                {
-                    s_cb(std::move(result)...);
-                    ctx->async_return();
-                }
-                else
-                {
-                    ctx->async_return(s_cb(std::move(result)...));
-                }
-            };
-        }
+            using info = detail::continuation_info<Fn, failure_type>;
+            static_assert(info::type != detail::cont_type::invalid, "Functor has unsupported type");
 
-        template <typename C>
-        static auto make_fail_skip(C ctx)
-        {
-            return [ctx = ctx](failure_type&& err)
+            if constexpr (info::type == detail::cont_type::simple || info::type == detail::cont_type::ambiguous_simple)
             {
-                ctx->async_return(std::move(err));
-            };
-        }
-
-        template <typename Ret, typename C>
-        static auto make_fail_cont(failure_cb_t user_cb, C ctx)
-        {
-            return [ctx = ctx, f_cb = std::move(user_cb)](failure_type&& err)
+                return detail::make_simple_failcont<failure_type>(std::forward<Fn>(fn), ctx);
+            }
+            else if constexpr (info::type == detail::cont_type::areturn || info::type == detail::cont_type::ambiguous_areturn)
             {
-                f_cb(std::move(err));
-                if constexpr (std::is_void_v<Ret>)
-                {
-                    ctx->async_return();
-                }
-                else
-                {
-                    ctx->async_return(Ret{});
-                }
-            };
+                return detail::make_areturn_failcont<failure_type>(std::forward<Fn>(fn), ctx);
+            }
+            else
+            {
+                return [fn = std::forward<Fn>(fn), ctx](T&& input){
+                    // todo void input
+                    op_handle<void>(fn, std::move(input)).then(
+                        [ctx](){ ctx->async_return(); },
+                        [ctx](auto&& err){ ctx->async_return(err); });
+                };
+            }
         }
 
         std::shared_ptr<ctx_t> m_ctx;
     };
 
-    template <typename Ret>
-    auto op(std::function<void(context<Ret>)> fn)
+    template <typename F, typename... Args>
+    auto op(F&& fn, Args&&... args)
     {
-        return op_handle<Ret>{std::move(fn)};
+        using info = detail::continuation_info<F, void>;
+        static_assert(info::type != detail::cont_type::invalid, "Functor has unsupported type");
+        using ret_t = typename info::ret_type;
+
+        if constexpr (info::type == detail::cont_type::simple || info::type == detail::cont_type::ambiguous_simple)
+        {
+            return op_handle<ret_t>{[&fn](context<void> ctx){
+                ctx->async_return(fn());
+            }};
+        }
+        else if constexpr (info::type == detail::cont_type::areturn || info::type == detail::cont_type::ambiguous_areturn)
+        {
+            return fn();
+        }
+
+        return op_handle<ret_t>{fn};
     }
 
     template <typename Ret>
@@ -157,4 +168,5 @@ namespace asy
             ctx->async_return();
         }};
     }
+
 }

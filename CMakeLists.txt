@@ -36,7 +36,8 @@ if (NOT_SUBDIR)
     add_executable(tests
             tests/main.cpp
             tests/type_traits.cpp
-            tests/continuation.cpp)
+            tests/continuation_info.cpp
+            tests/then.cpp)
     target_link_libraries(tests PRIVATE Catch2::Catch2 asyop-asio)
 
     # test driver
