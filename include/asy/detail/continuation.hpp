@@ -21,13 +21,13 @@ namespace asy
 {
     template <typename T>
     class op_handle;
-
-    template <typename T, typename Err>
-    class context;
 }
 
 namespace asy::detail
 {
+    template <typename T, typename Err>
+    class context;
+
     enum struct cont_type
     {
         simple,

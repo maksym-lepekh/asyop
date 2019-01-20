@@ -46,10 +46,7 @@ namespace asy::detail
 
     using posted_fn = std::function<void()>;
     extern thread_local std::function<void(posted_fn)> post_impl;
-}
 
-namespace asy
-{
     template <typename Val, typename Err>
     class context
     {
@@ -167,7 +164,10 @@ namespace asy
 
         std::variant<std::monostate, cb_pair_t, success_t, failure_t, detail::done_t> m_pending;
     };
+}
 
+namespace asy
+{
     template <typename Ret>
-    using context_ptr = std::shared_ptr<context<Ret, std::error_code>>;
+    using context = std::shared_ptr<detail::context<Ret, std::error_code>>;
 }

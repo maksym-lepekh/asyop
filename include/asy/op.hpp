@@ -27,7 +27,7 @@ namespace asy
     public:
         using failure_type = std::error_code;
 
-        using ctx_t = context<T, failure_type>;
+        using ctx_t = detail::context<T, failure_type>;
         using ctx_arg_t = std::shared_ptr<ctx_t>;
         using fn_t = std::function<void(ctx_arg_t)>;
 
@@ -145,7 +145,7 @@ namespace asy
     };
 
     template <typename Ret>
-    auto op(std::function<void(std::shared_ptr<context<Ret, std::error_code>>)> fn)
+    auto op(std::function<void(context<Ret>)> fn)
     {
         return op_handle<Ret>{std::move(fn)};
     }
@@ -153,7 +153,7 @@ namespace asy
     template <typename Ret>
     auto op()
     {
-        return op_handle<Ret>{[](context_ptr<Ret> ctx){
+        return op_handle<Ret>{[](context<Ret> ctx){
             ctx->async_return();
         }};
     }

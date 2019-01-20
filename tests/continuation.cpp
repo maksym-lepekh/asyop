@@ -42,7 +42,7 @@ TEST_CASE("Continuation type", "[deduce]")
 
     SECTION("Async continuation")
     {
-        auto l = [](asy::context_ptr<double>, int&&){};
+        auto l = [](asy::context<double>, int&&){};
         constexpr auto l_type = get_cont_type<decltype(l), int>();
         REQUIRE(l_type == cont_type::async);
     }
@@ -70,7 +70,7 @@ TEST_CASE("Continuation type", "[deduce]")
 
     SECTION("Async continuation (void input)")
     {
-        auto l = [](asy::context_ptr<double>){};
+        auto l = [](asy::context<double>){};
         constexpr auto l_type = get_cont_type<decltype(l), void>();
         REQUIRE(l_type == cont_type::async);
     }
@@ -81,10 +81,10 @@ TEST_CASE("Continuation type", "[deduce]")
         auto l2 = [](int&&, double){ return double{}; };
         auto l3 = [](double){ return double{}; };
         auto l4 = [](){};
-        auto l5 = [](asy::context_ptr<double>, int){ };
-        auto l6 = [](asy::context_ptr<double>){ };
-        auto l7 = [](asy::context_ptr<double>, int&&){ return double{}; };
-        auto l8 = [](asy::context_ptr<double>, int&&){ return asy::op<double>(); };
+        auto l5 = [](asy::context<double>, int){ };
+        auto l6 = [](asy::context<double>){ };
+        auto l7 = [](asy::context<double>, int&&){ return double{}; };
+        auto l8 = [](asy::context<double>, int&&){ return asy::op<double>(); };
 
         REQUIRE(get_cont_type<decltype(l1), int>() == cont_type::invalid);
         REQUIRE(get_cont_type<decltype(l2), int>() == cont_type::invalid);
@@ -111,7 +111,7 @@ TEST_CASE("Continuation info", "[deduce]")
     {
         auto l1 = [](int&&){ return double{}; };
         auto l2 = [](int&&){ return asy::op<double>(); };
-        auto l3 = [](asy::context_ptr<double>, int&&){ };
+        auto l3 = [](asy::context<double>, int&&){ };
 
         REQUIRE(continuation_info<decltype(l1), int>::type == cont_type::simple);
         REQUIRE(std::is_same_v<continuation_info<decltype(l1), int>::ret_type, double>);
@@ -127,7 +127,7 @@ TEST_CASE("Continuation info", "[deduce]")
     {
         auto l1 = [](int&&){ };
         auto l2 = [](int&&){ return asy::op<void>(); };
-        auto l3 = [](asy::context_ptr<void>, int&&){ };
+        auto l3 = [](asy::context<void>, int&&){ };
 
         REQUIRE(continuation_info<decltype(l1), int>::type == cont_type::simple);
         REQUIRE(std::is_same_v<continuation_info<decltype(l1), int>::ret_type, void>);
@@ -145,9 +145,9 @@ TEST_CASE("Continuation info", "[deduce]")
         auto l2 = [](int&&, double){ return double{}; };
         auto l3 = [](double){ return double{}; };
         auto l4 = [](){};
-        auto l5 = [](asy::context_ptr<double>){ };
-        auto l6 = [](asy::context_ptr<double>, int&&){ return double{}; };
-        auto l7 = [](asy::context_ptr<double>, int&&){ return asy::op<double>(); };
+        auto l5 = [](asy::context<double>){ };
+        auto l6 = [](asy::context<double>, int&&){ return double{}; };
+        auto l7 = [](asy::context<double>, int&&){ return asy::op<double>(); };
 
         REQUIRE(continuation_info<decltype(l1), int>::type == cont_type::invalid);
         REQUIRE(continuation_info<decltype(l2), int>::type == cont_type::invalid);
