@@ -16,12 +16,19 @@ addons:
       - cmake
       - libasio-dev
 
-script:
+before_script:
   # Export CC and CXX to tell cmake which compiler to use
   - export CC=/usr/bin/gcc-7
   - export CXX=/usr/bin/g++-7
-  # Run your build commands next
+  # Install Catch2
+  - git clone --branch v2.5.0 https://github.com/catchorg/Catch2.git
+  - mkdir Catch2_build && cd Catch2_build
+  - cmake ../Catch2/
+  - sudo make install -j $(nproc)
+  - cd ..
+
+script:
   - mkdir out && cd out
   - cmake ..
-  - cmake --build .
+  - cmake --build . -- -j $(nproc)
   - ctest --output-on-failure
