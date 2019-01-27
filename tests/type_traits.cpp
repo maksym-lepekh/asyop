@@ -75,6 +75,8 @@ TEST_CASE("Simple continuation", "[deduce]")
         REQUIRE( info::arg_n == 2 );
         REQUIRE( std::is_same_v<info::ret_type, char> );
         REQUIRE( std::is_same_v<info::arg1_type, int> );
+        REQUIRE( std::is_same_v<std::tuple_element_t<0, info::args_type>, int> );
+        REQUIRE( std::is_same_v<std::tuple_element_t<1, info::args_type>, double> );
     }
 }
 
@@ -131,6 +133,8 @@ TEST_CASE("Lambda continuation", "[deduce]")
         REQUIRE( info::arg_n == 2 );
         REQUIRE( std::is_same_v<info::ret_type, char> );
         REQUIRE( std::is_same_v<info::arg1_type, int> );
+        REQUIRE( std::is_same_v<std::tuple_element_t<0, info::args_type>, int> );
+        REQUIRE( std::is_same_v<std::tuple_element_t<1, info::args_type>, double> );
     }
 
     SECTION("generic lambda")

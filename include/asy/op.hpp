@@ -127,7 +127,7 @@ namespace asy
     template <typename F, typename... Args>
     auto op(F&& fn, Args&&... args)
     {
-        using info = detail::continuation_info<F, void>;
+        using info = detail::continuation_info<F, void, Args...>;
 
         if constexpr (info::type == detail::cont_type::invalid && sizeof...(Args) == 0)
         {
@@ -143,16 +143,18 @@ namespace asy
 
             if constexpr (info::type == detail::cont_type::simple || info::type == detail::cont_type::ambiguous_simple)
             {
-                return op_handle<ret_t>{[&fn](context<void> ctx){
-                    ctx->async_return(fn());
+                return op_handle<ret_t>{[&fn](context<ret_t> ctx, Args&&... args){
+                    ctx->async_return(fn(std::forward<Args>(args)...));
                 }, std::forward<Args>(args)...};
             }
             else if constexpr (info::type == detail::cont_type::areturn || info::type == detail::cont_type::ambiguous_areturn)
             {
                 return fn(std::forward<Args>(args)...);
             }
-
-            return op_handle<ret_t>{fn, std::forward<Args>(args)...};
+            else
+            {
+                return op_handle<ret_t>{fn, std::forward<Args>(args)...};
+            }
         }
     }
 

@@ -34,10 +34,11 @@ if (NOT_SUBDIR)
     find_package(ASIO REQUIRED)
 
     add_executable(tests
-            tests/main.cpp
-            tests/type_traits.cpp
-            tests/continuation_info.cpp
-            tests/then.cpp)
+        tests/main.cpp
+        tests/type_traits.cpp
+        tests/continuation_info.cpp
+        tests/then.cpp
+        tests/op.cpp)
     target_link_libraries(tests PRIVATE Catch2::Catch2 asyop-asio)
 
     enable_testing()
