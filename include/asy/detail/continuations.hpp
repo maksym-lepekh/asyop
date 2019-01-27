@@ -92,6 +92,67 @@ namespace asy::detail
         };
     }
 
+    template <typename Input, typename Output, typename Op, typename Fn, typename Ctx>
+    auto make_async_cont(Fn&& fn, Ctx parent_ctx)
+    {
+        if constexpr (std::is_void_v<Input>)
+        {
+            return [fn = std::forward<Fn>(fn), parent_ctx](){
+                if constexpr (std::is_void_v<Output>)
+                {
+                    Op(fn).then(
+                            [parent_ctx](){ parent_ctx->async_return(); },
+                            [parent_ctx](auto&& err){ parent_ctx->async_return(std::forward<decltype(err)>(err)); });
+                }
+                else
+                {
+                    Op(fn).then(
+                            [parent_ctx](Output&& output){ parent_ctx->async_return(std::move(output)); },
+                            [parent_ctx](auto&& err){ parent_ctx->async_return(std::forward<decltype(err)>(err)); });
+                }
+            };
+        }
+        else
+        {
+            return [fn = std::forward<Fn>(fn), parent_ctx](Input&& input){
+                if constexpr (std::is_void_v<Output>)
+                {
+                    Op(fn, std::move(input)).then(
+                            [parent_ctx](){ parent_ctx->async_return(); },
+                            [parent_ctx](auto&& err){ parent_ctx->async_return(std::forward<decltype(err)>(err)); });
+                }
+                else
+                {
+                    Op(fn, std::move(input)).then(
+                            [parent_ctx](Output&& output){ parent_ctx->async_return(std::move(output)); },
+                            [parent_ctx](auto&& err){ parent_ctx->async_return(std::forward<decltype(err)>(err)); });
+                }
+            };
+        }
+    }
+
+    template <typename Input, typename Op, typename Fn, typename Ctx>
+    auto make_async_failcont(Fn&& fn, Ctx parent_ctx)
+    {
+        if constexpr (std::is_void_v<Input>)
+        {
+            return [fn = std::forward<Fn>(fn), parent_ctx](){
+                Op(fn).then(
+                        [parent_ctx](){ parent_ctx->async_return(); },
+                        [parent_ctx](auto&& err){ parent_ctx->async_return(err); });
+            };
+        }
+        else
+        {
+            return [fn = std::forward<Fn>(fn), parent_ctx](Input&& input){
+                Op(fn, std::move(input)).then(
+                        [parent_ctx](){ parent_ctx->async_return(); },
+                        [parent_ctx](auto&& err){ parent_ctx->async_return(err); });
+            };
+        }
+
+    }
+
     template <typename Input, typename Ctx>
     static auto make_skip_cont(Ctx ctx)
     {

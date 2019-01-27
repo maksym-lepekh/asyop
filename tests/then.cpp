@@ -33,7 +33,8 @@ TEST_CASE("asy::op then", "[asio]")
 
     SECTION("Simple continuation")
     {
-        asy::op<int>().then([&](int&&){
+        asy::op<int>(42).then([&](int&& input){
+            REQUIRE( input == 42 );
             timer.cancel();
         });
 
@@ -101,9 +102,9 @@ TEST_CASE("asy::op then", "[asio]")
 
     SECTION("Chain with on_failure")
     {
-        asy::op<int>()
+        asy::op<int>(1337)
         .then([&](asy::context<double> ctx, int&& input){
-            REQUIRE( input == 0 );
+            REQUIRE( input == 1337 );
             ctx->async_return(std::make_error_code(std::errc::address_in_use));
         })
         .on_failure([](std::error_code&& err){
