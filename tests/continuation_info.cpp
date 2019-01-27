@@ -35,7 +35,7 @@ TEST_CASE("Continuation type", "[deduce]")
 
     SECTION("Async return val continuation")
     {
-        auto l = [](int&&){ return asy::op<double>(); };
+        auto l = [](int&&){ return asy::op(0.0); };
         constexpr auto l_type = get_cont_type<decltype(l), int>();
         REQUIRE(l_type == cont_type::areturn);
     }
@@ -63,7 +63,7 @@ TEST_CASE("Continuation type", "[deduce]")
 
     SECTION("Async return val continuation (void input)")
     {
-        auto l = [](){ return asy::op<double>(); };
+        auto l = [](){ return asy::op(0.0); };
         constexpr auto l_type = get_cont_type<decltype(l), void>();
         REQUIRE(l_type == cont_type::areturn);
     }
@@ -84,7 +84,7 @@ TEST_CASE("Continuation type", "[deduce]")
         auto l5 = [](asy::context<double>, int){ };
         auto l6 = [](asy::context<double>){ };
         auto l7 = [](asy::context<double>, int&&){ return double{}; };
-        auto l8 = [](asy::context<double>, int&&){ return asy::op<double>(); };
+        auto l8 = [](asy::context<double>, int&&){ return asy::op<double>(0.0); };
 
         REQUIRE(get_cont_type<decltype(l1), int>() == cont_type::invalid);
         REQUIRE(get_cont_type<decltype(l2), int>() == cont_type::invalid);
@@ -110,7 +110,7 @@ TEST_CASE("Continuation info", "[deduce]")
     SECTION("Returning double")
     {
         auto l1 = [](int&&){ return double{}; };
-        auto l2 = [](int&&){ return asy::op<double>(); };
+        auto l2 = [](int&&){ return asy::op<double>(0.0); };
         auto l3 = [](asy::context<double>, int&&){ };
 
         REQUIRE(continuation_info<decltype(l1), int>::type == cont_type::simple);
