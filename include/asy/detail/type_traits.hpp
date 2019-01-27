@@ -14,6 +14,7 @@
 #pragma once
 
 #include <type_traits>
+#include <tuple>
 #include <memory>
 
 
@@ -49,6 +50,7 @@ namespace asy::detail
         static constexpr auto arg_n = sizeof...(Args) + 1;
         using ret_type = Ret;
         using arg1_type = Arg1;
+        using args_type = std::tuple<Arg1, Args...>;
     };
 
     template <typename Ret, typename... Args>

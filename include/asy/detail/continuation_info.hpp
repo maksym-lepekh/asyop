@@ -39,13 +39,13 @@ namespace asy::detail
     };
 
 
-    template <typename F, typename Input>
+    template <typename F, typename Input, typename... Aux>
     constexpr cont_type get_cont_type_input()
     {
         using info = functor_info<F>;
         if constexpr (info::arg_n > 0)
         {
-            if ((info::arg_n == 1) && (std::is_same_v<typename info::arg1_type, Input&&>))
+            if (std::is_invocable_v<F, Input&&, Aux...>)
             {
                 using ret_t = typename info::ret_type;
                 if constexpr (specialization_of<op_handle, ret_t>::value)
@@ -60,7 +60,7 @@ namespace asy::detail
                 {
                     if constexpr (specialization_of<context, typename is_shared_ptr::first_arg>::value)
                     {
-                        constexpr bool is_call_with_context = std::is_invocable_v<F, typename info::arg1_type, Input&&>;
+                        constexpr bool is_call_with_context = std::is_invocable_v<F, typename info::arg1_type, Input&&, Aux...>;
                         if constexpr (is_call_with_context && std::is_same_v<typename info::ret_type, void>)
                             return cont_type::async;
                     }
@@ -70,11 +70,11 @@ namespace asy::detail
         return cont_type::invalid;
     }
 
-    template <typename F>
+    template <typename F, typename... Aux>
     constexpr cont_type get_cont_type_void()
     {
         using info = functor_info<F>;
-        if constexpr (info::arg_n == 0)
+        if constexpr (info::arg_n == sizeof...(Aux))
         {
             using ret_t = typename info::ret_type;
             if constexpr (specialization_of<op_handle, ret_t>::value)
@@ -89,7 +89,7 @@ namespace asy::detail
             {
                 if constexpr (specialization_of<context, typename is_shared_ptr::first_arg>::value)
                 {
-                    constexpr bool is_call_with_context = std::is_invocable_v<F, typename info::arg1_type>;
+                    constexpr bool is_call_with_context = std::is_invocable_v<F, typename info::arg1_type, Aux...>;
                     if constexpr (is_call_with_context && std::is_same_v<typename info::ret_type, void>)
                         return cont_type::async;
                 }
@@ -98,12 +98,12 @@ namespace asy::detail
         return cont_type::invalid;
     }
 
-    template <typename F, typename Input>
+    template <typename F, typename Input, typename... Aux>
     constexpr cont_type get_cont_type_ambiguous()
     {
-        if constexpr (std::is_invocable_v<F, Input&&>)
+        if constexpr (std::is_invocable_v<F, Input&&, Aux...>)
         {
-            using ret_t = std::invoke_result_t<F, Input&&>;
+            using ret_t = std::invoke_result_t<F, Input&&, Aux...>;
             if constexpr (specialization_of<op_handle, ret_t>::value)
                 return cont_type::ambiguous_areturn;
             else
@@ -112,23 +112,23 @@ namespace asy::detail
         return cont_type::invalid;
     }
 
-    template <typename F, typename Input>
+    template <typename F, typename Input, typename... Aux>
     constexpr cont_type get_cont_type()
     {
         using info = functor_info<F>;
         if constexpr (info::is_ambiguous)
         {
-            if constexpr (std::is_same_v<Input, void>)
+            if constexpr (std::is_same_v<Input, void> && (sizeof...(Aux) == 0))
                 return cont_type::invalid;
             else
-                return get_cont_type_ambiguous<F, Input>();
+                return get_cont_type_ambiguous<F, Input, Aux...>();
         }
         else
         {
             if constexpr (std::is_same_v<Input, void>)
-                return get_cont_type_void<F>();
+                return get_cont_type_void<F, Aux...>();
             else
-                return get_cont_type_input<F, Input>();
+                return get_cont_type_input<F, Input, Aux...>();
         }
     }
 
@@ -138,58 +138,59 @@ namespace asy::detail
         static constexpr auto type = Type;
     };
 
-    template <typename F, typename Input, cont_type Type>
+    template <typename F, typename Input, cont_type Type, typename... Aux>
     struct cont_info_typed: cont_info_base<Type>
     {
         static constexpr auto type = cont_type::invalid;
     };
 
-    template <typename F, typename Input>
-    struct cont_info_typed<F, Input, cont_type::simple>: cont_info_base<cont_type::simple>
+    template <typename F, typename Input, typename... Aux>
+    struct cont_info_typed<F, Input, cont_type::simple, Aux...>: cont_info_base<cont_type::simple>
     {
         using ret_type = typename functor_info<F>::ret_type;
     };
 
-    template <typename F, typename Input>
-    struct cont_info_typed<F, Input, cont_type::areturn>: cont_info_base<cont_type::areturn>
+    template <typename F, typename Input, typename... Aux>
+    struct cont_info_typed<F, Input, cont_type::areturn, Aux...>: cont_info_base<cont_type::areturn>
     {
         using ret_type = typename specialization_of<op_handle, typename functor_info<F>::ret_type>::first_arg;
     };
 
-    template <typename F, typename Input>
-    struct cont_info_typed<F, Input, cont_type::async>: cont_info_base<cont_type::async>
+    template <typename F, typename Input, typename... Aux>
+    struct cont_info_typed<F, Input, cont_type::async, Aux...>: cont_info_base<cont_type::async>
     {
         using _shptr = typename functor_info<F>::arg1_type;
         using _ctx = typename specialization_of<std::shared_ptr, _shptr>::first_arg;
         using ret_type = typename specialization_of<context, _ctx>::first_arg;
     };
 
-    template <typename F, typename Input>
-    struct cont_info_typed<F, Input, cont_type::ambiguous_simple>: cont_info_base<cont_type::ambiguous_simple>
+    template <typename F, typename Input, typename... Aux>
+    struct cont_info_typed<F, Input, cont_type::ambiguous_simple, Aux...>: cont_info_base<cont_type::ambiguous_simple>
     {
-        using ret_type = std::invoke_result_t<F, Input&&>;
+        using ret_type = std::invoke_result_t<F, Input&&, Aux...>;
     };
 
-    template <typename F, typename Input>
-    struct cont_info_typed<F, Input, cont_type::ambiguous_areturn>: cont_info_base<cont_type::ambiguous_areturn>
+    template <typename F, typename Input, typename... Aux>
+    struct cont_info_typed<F, Input, cont_type::ambiguous_areturn, Aux...>: cont_info_base<cont_type::ambiguous_areturn>
     {
-        using ret_type = typename specialization_of<op_handle, std::invoke_result_t<F, Input&&>>::first_arg;
+        using ret_type = typename specialization_of<op_handle, std::invoke_result_t<F, Input&&, Aux...>>::first_arg;
     };
 
 
-    template <typename F, typename Input, bool IsStdFun>
+    template <typename F, typename Input, bool IsStdFun, typename... Aux>
     struct cont_info_unwrap;
 
-    template <typename F, typename Input>
-    struct cont_info_unwrap<F, Input, true>: cont_info_typed<
+    template <typename F, typename Input, typename... Aux>
+    struct cont_info_unwrap<F, Input, true, Aux...>: cont_info_typed<
             typename specialization_of<std::function, F>::first_arg,
             Input,
-            get_cont_type<typename specialization_of<std::function, F>::first_arg, Input>()>{};
+            get_cont_type<typename specialization_of<std::function, F>::first_arg, Input, Aux...>(),
+            Aux...>{};
 
-    template <typename F, typename Input>
-    struct cont_info_unwrap<F, Input, false>: cont_info_typed<F, Input, get_cont_type<F, Input>()>{};
+    template <typename F, typename Input, typename... Aux>
+    struct cont_info_unwrap<F, Input, false, Aux...>: cont_info_typed<F, Input, get_cont_type<F, Input, Aux...>(), Aux...>{};
 
 
-    template <typename F, typename Input>
-    struct continuation_info: cont_info_unwrap<F, Input, specialization_of<std::function, F>::value>{};
+    template <typename F, typename Input, typename... Aux>
+    struct continuation_info: cont_info_unwrap<F, Input, specialization_of<std::function, F>::value, Aux...>{};
 }
