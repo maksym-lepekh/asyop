@@ -29,10 +29,10 @@ TEST_CASE("Simple continuation", "[deduce]")
         using T = decltype(void_int_fn);
         using info = asy::detail::functor_info<T>;
 
-        REQUIRE_FALSE( info::is_ambiguous );
-        REQUIRE( info::arg_n == 1 );
-        REQUIRE( std::is_same_v<info::ret_type, void> );
-        REQUIRE( std::is_same_v<info::arg1_type, int> );
+        STATIC_REQUIRE_FALSE( info::is_ambiguous );
+        STATIC_REQUIRE( info::arg_n == 1 );
+        STATIC_REQUIRE( std::is_same_v<info::ret_type, void> );
+        STATIC_REQUIRE( std::is_same_v<info::arg1_type, int> );
     }
 
     SECTION("void() function")
@@ -40,9 +40,9 @@ TEST_CASE("Simple continuation", "[deduce]")
         using T = decltype(void_void_fn);
         using info = asy::detail::functor_info<T>;
 
-        REQUIRE_FALSE( info::is_ambiguous );
-        REQUIRE( info::arg_n == 0 );
-        REQUIRE( std::is_same_v<info::ret_type, void> );
+        STATIC_REQUIRE_FALSE( info::is_ambiguous );
+        STATIC_REQUIRE( info::arg_n == 0 );
+        STATIC_REQUIRE( std::is_same_v<info::ret_type, void> );
     }
 
     SECTION("char(int) function")
@@ -50,10 +50,10 @@ TEST_CASE("Simple continuation", "[deduce]")
         using T = decltype(char_int_fn);
         using info = asy::detail::functor_info<T>;
 
-        REQUIRE_FALSE( info::is_ambiguous );
-        REQUIRE( info::arg_n == 1 );
-        REQUIRE( std::is_same_v<info::ret_type, char> );
-        REQUIRE( std::is_same_v<info::arg1_type, int> );
+        STATIC_REQUIRE_FALSE( info::is_ambiguous );
+        STATIC_REQUIRE( info::arg_n == 1 );
+        STATIC_REQUIRE( std::is_same_v<info::ret_type, char> );
+        STATIC_REQUIRE( std::is_same_v<info::arg1_type, int> );
     }
 
     SECTION("char() function")
@@ -61,9 +61,9 @@ TEST_CASE("Simple continuation", "[deduce]")
         using T = decltype(char_void_fn);
         using info = asy::detail::functor_info<T>;
 
-        REQUIRE_FALSE( info::is_ambiguous );
-        REQUIRE( info::arg_n == 0 );
-        REQUIRE( std::is_same_v<info::ret_type, char> );
+        STATIC_REQUIRE_FALSE( info::is_ambiguous );
+        STATIC_REQUIRE( info::arg_n == 0 );
+        STATIC_REQUIRE( std::is_same_v<info::ret_type, char> );
     }
 
     SECTION("char(int, double) function")
@@ -71,12 +71,12 @@ TEST_CASE("Simple continuation", "[deduce]")
         using T = decltype(char_int_double_fn);
         using info = asy::detail::functor_info<T>;
 
-        REQUIRE_FALSE( info::is_ambiguous );
-        REQUIRE( info::arg_n == 2 );
-        REQUIRE( std::is_same_v<info::ret_type, char> );
-        REQUIRE( std::is_same_v<info::arg1_type, int> );
-        REQUIRE( std::is_same_v<std::tuple_element_t<0, info::args_type>, int> );
-        REQUIRE( std::is_same_v<std::tuple_element_t<1, info::args_type>, double> );
+        STATIC_REQUIRE_FALSE( info::is_ambiguous );
+        STATIC_REQUIRE( info::arg_n == 2 );
+        STATIC_REQUIRE( std::is_same_v<info::ret_type, char> );
+        STATIC_REQUIRE( std::is_same_v<info::arg1_type, int> );
+        STATIC_REQUIRE( std::is_same_v<std::tuple_element_t<0, info::args_type>, int> );
+        STATIC_REQUIRE( std::is_same_v<std::tuple_element_t<1, info::args_type>, double> );
     }
 }
 
@@ -87,9 +87,9 @@ TEST_CASE("Lambda continuation", "[deduce]")
         auto l = [](){};
         using info = asy::detail::functor_info<decltype(l)>;
 
-        REQUIRE_FALSE( info::is_ambiguous );
-        REQUIRE( info::arg_n == 0 );
-        REQUIRE( std::is_same_v<info::ret_type, void> );
+        STATIC_REQUIRE_FALSE( info::is_ambiguous );
+        STATIC_REQUIRE( info::arg_n == 0 );
+        STATIC_REQUIRE( std::is_same_v<info::ret_type, void> );
     }
 
     SECTION("void(int)")
@@ -97,10 +97,10 @@ TEST_CASE("Lambda continuation", "[deduce]")
         auto l = [](int){};
         using info = asy::detail::functor_info<decltype(l)>;
 
-        REQUIRE_FALSE( info::is_ambiguous );
-        REQUIRE( info::arg_n == 1 );
-        REQUIRE( std::is_same_v<info::ret_type, void> );
-        REQUIRE( std::is_same_v<info::arg1_type, int> );
+        STATIC_REQUIRE_FALSE( info::is_ambiguous );
+        STATIC_REQUIRE( info::arg_n == 1 );
+        STATIC_REQUIRE( std::is_same_v<info::ret_type, void> );
+        STATIC_REQUIRE( std::is_same_v<info::arg1_type, int> );
     }
 
     SECTION("char(int)")
@@ -108,10 +108,10 @@ TEST_CASE("Lambda continuation", "[deduce]")
         auto l = [](int){ return char{}; };
         using info = asy::detail::functor_info<decltype(l)>;
 
-        REQUIRE_FALSE( info::is_ambiguous );
-        REQUIRE( info::arg_n == 1 );
-        REQUIRE( std::is_same_v<info::ret_type, char> );
-        REQUIRE( std::is_same_v<info::arg1_type, int> );
+        STATIC_REQUIRE_FALSE( info::is_ambiguous );
+        STATIC_REQUIRE( info::arg_n == 1 );
+        STATIC_REQUIRE( std::is_same_v<info::ret_type, char> );
+        STATIC_REQUIRE( std::is_same_v<info::arg1_type, int> );
     }
 
     SECTION("char()")
@@ -119,9 +119,9 @@ TEST_CASE("Lambda continuation", "[deduce]")
         auto l = [](){ return char{}; };
         using info = asy::detail::functor_info<decltype(l)>;
 
-        REQUIRE_FALSE( info::is_ambiguous );
-        REQUIRE( info::arg_n == 0 );
-        REQUIRE( std::is_same_v<info::ret_type, char> );
+        STATIC_REQUIRE_FALSE( info::is_ambiguous );
+        STATIC_REQUIRE( info::arg_n == 0 );
+        STATIC_REQUIRE( std::is_same_v<info::ret_type, char> );
     }
 
     SECTION("char(int, double)")
@@ -129,12 +129,12 @@ TEST_CASE("Lambda continuation", "[deduce]")
         auto l = [](int, double){ return char{}; };
         using info = asy::detail::functor_info<decltype(l)>;
 
-        REQUIRE_FALSE( info::is_ambiguous );
-        REQUIRE( info::arg_n == 2 );
-        REQUIRE( std::is_same_v<info::ret_type, char> );
-        REQUIRE( std::is_same_v<info::arg1_type, int> );
-        REQUIRE( std::is_same_v<std::tuple_element_t<0, info::args_type>, int> );
-        REQUIRE( std::is_same_v<std::tuple_element_t<1, info::args_type>, double> );
+        STATIC_REQUIRE_FALSE( info::is_ambiguous );
+        STATIC_REQUIRE( info::arg_n == 2 );
+        STATIC_REQUIRE( std::is_same_v<info::ret_type, char> );
+        STATIC_REQUIRE( std::is_same_v<info::arg1_type, int> );
+        STATIC_REQUIRE( std::is_same_v<std::tuple_element_t<0, info::args_type>, int> );
+        STATIC_REQUIRE( std::is_same_v<std::tuple_element_t<1, info::args_type>, double> );
     }
 
     SECTION("generic lambda")
@@ -142,7 +142,7 @@ TEST_CASE("Lambda continuation", "[deduce]")
         auto l = [](auto){ return char{}; };
         using info = asy::detail::functor_info<decltype(l)>;
 
-        REQUIRE( info::is_ambiguous );
+        STATIC_REQUIRE( info::is_ambiguous );
     }
 
     SECTION("overloaded struct")
@@ -154,7 +154,7 @@ TEST_CASE("Lambda continuation", "[deduce]")
         };
         using info = asy::detail::functor_info<functor>;
 
-        REQUIRE( info::is_ambiguous );
+        STATIC_REQUIRE( info::is_ambiguous );
     }
 }
 
@@ -168,21 +168,21 @@ TEST_CASE("Is template specialization", "[deduce]")
     SECTION("Single argument template")
     {
         using ret = asy::detail::specialization_of<single_template_t, single_template_t<int>>;
-        REQUIRE( ret::value );
-        REQUIRE( std::is_same_v<ret::first_arg, int> );
+        STATIC_REQUIRE( ret::value );
+        STATIC_REQUIRE( std::is_same_v<ret::first_arg, int> );
     }
 
     SECTION("Multiple argument template")
     {
         using ret = asy::detail::specialization_of<multi_template_t, multi_template_t<int, double, char>>;
-        REQUIRE( ret::value );
-        REQUIRE( std::is_same_v<ret::first_arg, int> );
+        STATIC_REQUIRE( ret::value );
+        STATIC_REQUIRE( std::is_same_v<ret::first_arg, int> );
     }
 
     SECTION("Variadic argument template")
     {
         using ret = asy::detail::specialization_of<variadic_template_t, variadic_template_t<int, double, char>>;
-        REQUIRE( ret::value );
-        REQUIRE( std::is_same_v<ret::first_arg, int> );
+        STATIC_REQUIRE( ret::value );
+        STATIC_REQUIRE( std::is_same_v<ret::first_arg, int> );
     }
 }

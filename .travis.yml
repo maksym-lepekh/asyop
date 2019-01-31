@@ -23,7 +23,7 @@ before_script:
   # Install Catch2
   - git clone --branch v2.5.0 https://github.com/catchorg/Catch2.git
   - mkdir Catch2_build && cd Catch2_build
-  - cmake ../Catch2/
+  - cmake -DBUILD_TESTING=OFF ../Catch2/
   - sudo make install -j $(nproc)
   - cd ..
 

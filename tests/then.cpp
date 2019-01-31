@@ -34,7 +34,7 @@ TEST_CASE("asy::op then", "[asio]")
     SECTION("Simple continuation")
     {
         asy::op<int>(42).then([&](int&& input){
-            REQUIRE( input == 42 );
+            CHECK( input == 42 );
             timer.cancel();
         });
 
@@ -64,15 +64,15 @@ TEST_CASE("asy::op then", "[asio]")
     SECTION("Mixed chain")
     {
         asy::op<int>().then([&](asy::context<double> ctx, int&& input){
-            REQUIRE( input == 0 );
+            CHECK( input == 0 );
             ctx->async_return(42.0);
         })
         .then([&](double && input){
-            REQUIRE( input == 42.0 );
+            CHECK( input == 42.0 );
             return asy::op<std::string>();
         })
         .then([&](std::string&& input){
-            REQUIRE( input.empty() );
+            CHECK( input.empty() );
             timer.cancel();
         });
 
@@ -82,7 +82,7 @@ TEST_CASE("asy::op then", "[asio]")
     SECTION("Chain with fail")
     {
         asy::op<int>().then([&](asy::context<double> ctx, int&& input){
-            REQUIRE( input == 0 );
+            CHECK( input == 0 );
             ctx->async_return(std::make_error_code(std::errc::address_in_use));
         })
         .then([&](double&& input){
@@ -90,10 +90,10 @@ TEST_CASE("asy::op then", "[asio]")
             return asy::op<std::string>();
         },
         [&](std::error_code&& err){
-            REQUIRE( err == std::make_error_code(std::errc::address_in_use) );
+            CHECK( err == std::make_error_code(std::errc::address_in_use) );
         })
         .then([&](std::string&& input){
-            REQUIRE( input.empty() );
+            CHECK( input.empty() );
             timer.cancel();
         });
 
@@ -104,11 +104,11 @@ TEST_CASE("asy::op then", "[asio]")
     {
         asy::op<int>(1337)
         .then([&](asy::context<double> ctx, int&& input){
-            REQUIRE( input == 1337 );
+            CHECK( input == 1337 );
             ctx->async_return(std::make_error_code(std::errc::address_in_use));
         })
         .on_failure([](std::error_code&& err){
-            REQUIRE( err == std::make_error_code(std::errc::address_in_use) );
+            CHECK( err == std::make_error_code(std::errc::address_in_use) );
         })
         .then([&](){ timer.cancel(); });
 
