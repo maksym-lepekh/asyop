@@ -153,31 +153,31 @@ TEST_CASE("Chaining with fail", "[asio]")
             ctx->async_return(42);
         });
     })
-            .then([&](auto&& val){
-                CHECK_FALSE( (op2 && op3 && op4 && op5) );
-                CHECK(op1);
-                CHECK(val == 42);
-                op2 = true;
-                return val * 2;
-            })
-            .then([&](auto&& val){
-                CHECK_FALSE( (op3 && op4 && op5) );
-                CHECK( (op1 && op2) );
-                CHECK(val == 84);
-                op3 = true;
-                return val * 2;
-            })
-            .on_failure([&](auto&& err){
-                CHECK_FALSE( (op4 && op5) );
-                CHECK( (op1 && op2 && op3) );
-                op4 = true;
-            })
-            .then([&](){
-                CHECK_FALSE( (op4 && op5) );
-                CHECK( (op1 && op2 && op3) );
-                op5 = true;
-                return 15;
-            });
+    .then([&](auto&& val){
+        CHECK_FALSE( (op2 && op3 && op4 && op5) );
+        CHECK(op1);
+        CHECK(val == 42);
+        op2 = true;
+        return val * 2;
+    })
+    .then([&](auto&& val){
+        CHECK_FALSE( (op3 && op4 && op5) );
+        CHECK( (op1 && op2) );
+        CHECK(val == 84);
+        op3 = true;
+        return val * 2;
+    })
+    .on_failure([&](auto&& err){
+        CHECK_FALSE( (op4 && op5) );
+        CHECK( (op1 && op2 && op3) );
+        op4 = true;
+    })
+    .then([&](){
+        CHECK_FALSE( (op4 && op5) );
+        CHECK( (op1 && op2 && op3) );
+        op5 = true;
+        return 15;
+    });
 
     io.run();
 
