@@ -13,6 +13,7 @@
 // limitations under the License.
 #include <catch2/catch.hpp>
 #include <string>
+#include <functional>
 #include <asy/detail/continuation_info.hpp>
 #include <asy/op.hpp>
 
@@ -244,5 +245,42 @@ TEST_CASE("Continuation info", "[deduce]")
         CHECK(continuation_info<decltype(l4), int>::type == cont_type::invalid);
         CHECK(continuation_info<decltype(l5), int>::type == cont_type::invalid);
         CHECK(continuation_info<decltype(l6), int>::type == cont_type::invalid);
+    }
+}
+
+TEST_CASE("Continuation info from std::function", "[deduce]")
+{
+    using namespace asy::detail;
+
+    SECTION("Returning double")
+    {
+        using f1 = std::function<double(int&&)>;
+        using f2 = std::function<asy::op_handle<double>(int&&)>;
+        using f3 = std::function<void(asy::context<double>, int&&)>;
+
+        STATIC_REQUIRE(continuation_info<f1, int>::type == cont_type::simple);
+        STATIC_REQUIRE(std::is_same_v<continuation_info<f1, int>::ret_type, double>);
+
+        STATIC_REQUIRE(continuation_info<f2, int>::type == cont_type::areturn);
+        STATIC_REQUIRE(std::is_same_v<continuation_info<f2, int>::ret_type, double>);
+
+        STATIC_REQUIRE(continuation_info<f3, int>::type == cont_type::async);
+        STATIC_REQUIRE(std::is_same_v<continuation_info<f3, int>::ret_type, double>);
+    }
+
+    SECTION("Returning double with aux")
+    {
+        using f1 = std::function<double(int&&, std::string)>;
+        using f2 = std::function<asy::op_handle<double>(int&&, std::string)>;
+        using f3 = std::function<void(asy::context<double>, int&&, std::string)>;
+
+        STATIC_REQUIRE(continuation_info<f1, int, std::string>::type == cont_type::simple);
+        STATIC_REQUIRE(std::is_same_v<continuation_info<f1, int, std::string>::ret_type, double>);
+
+        STATIC_REQUIRE(continuation_info<f2, int, std::string>::type == cont_type::areturn);
+        STATIC_REQUIRE(std::is_same_v<continuation_info<f2, int, std::string>::ret_type, double>);
+
+        STATIC_REQUIRE(continuation_info<f3, int, std::string>::type == cont_type::async);
+        STATIC_REQUIRE(std::is_same_v<continuation_info<f3, int, std::string>::ret_type, double>);
     }
 }

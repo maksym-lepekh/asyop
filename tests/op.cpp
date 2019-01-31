@@ -85,3 +85,50 @@ TEST_CASE("Op with aux", "[asio]")
     }
 }
 
+TEST_CASE("Op from std::function", "[asio]")
+{
+    auto io = asio::io_service{};
+    auto timer = asio::steady_timer{io, 50ms};
+
+    timer.async_wait([](const asio::error_code& err){
+        if (!err) FAIL("Timeout");
+    });
+
+    asy::this_thread::set_event_loop(io);
+
+    SECTION("Simple")
+    {
+        auto f = std::function<std::string()>{[](){ return "abc"; }};
+
+        asy::op(f).then([&](auto&& s){
+            CHECK(s == "abc");
+            timer.cancel();
+        });
+
+        io.run();
+    }
+
+    SECTION("Areturn")
+    {
+        auto f = std::function<asy::op_handle<std::string>()>{[](){ return asy::op<std::string>("abc"); }};
+
+        asy::op(f).then([&](auto&& s){
+            CHECK(s == "abc");
+            timer.cancel();
+        });
+
+        io.run();
+    }
+
+    SECTION("Async")
+    {
+        auto f = std::function<void(asy::context<std::string>)>{[](auto ctx){ ctx->async_return("abc"); }};
+
+        asy::op(f).then([&](auto&& s){
+            CHECK(s == "abc");
+            timer.cancel();
+        });
+
+        io.run();
+    }
+}
