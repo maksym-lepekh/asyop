@@ -14,6 +14,7 @@
 #pragma once
 
 #include "type_traits.hpp"
+#include "value_or_error.hpp"
 #include <functional>
 #include <type_traits>
 
@@ -132,6 +133,27 @@ namespace asy::detail
         }
     }
 
+    template <typename, bool>
+    struct vor_unwrap_impl;
+
+    template <typename Ret>
+    struct vor_unwrap_impl<Ret, false>
+    {
+        static constexpr auto vor = false;
+        using ret_type = Ret;
+    };
+
+    template <typename Ret>
+    struct vor_unwrap_impl<Ret, true>
+    {
+        static constexpr auto vor = true;
+        using ret_type = typename ValueOrError<Ret>::success_type;
+        using err_type = typename ValueOrError<Ret>::failure_type;
+    };
+
+    template <typename Ret>
+    using vor_unwrap = vor_unwrap_impl<Ret, is_ValueOrError<Ret>>;
+
     template <cont_type Type>
     struct cont_info_base
     {
@@ -145,15 +167,18 @@ namespace asy::detail
     };
 
     template <typename F, typename Input, typename... Aux>
-    struct cont_info_typed<F, Input, cont_type::simple, Aux...>: cont_info_base<cont_type::simple>
+    struct cont_info_typed<F, Input, cont_type::simple, Aux...>:
+            cont_info_base<cont_type::simple>,
+            vor_unwrap<typename functor_info<F>::ret_type>
     {
-        using ret_type = typename functor_info<F>::ret_type;
+        using ret_type_orig = typename functor_info<F>::ret_type;
     };
 
     template <typename F, typename Input, typename... Aux>
     struct cont_info_typed<F, Input, cont_type::areturn, Aux...>: cont_info_base<cont_type::areturn>
     {
         using ret_type = typename specialization_of<op_handle, typename functor_info<F>::ret_type>::first_arg;
+        using ret_type_orig = typename functor_info<F>::ret_type;
     };
 
     template <typename F, typename Input, typename... Aux>
@@ -162,18 +187,22 @@ namespace asy::detail
         using _shptr = typename functor_info<F>::arg1_type;
         using _ctx = typename specialization_of<std::shared_ptr, _shptr>::first_arg;
         using ret_type = typename specialization_of<context, _ctx>::first_arg;
+        using ret_type_orig = void;
     };
 
     template <typename F, typename Input, typename... Aux>
-    struct cont_info_typed<F, Input, cont_type::ambiguous_simple, Aux...>: cont_info_base<cont_type::ambiguous_simple>
+    struct cont_info_typed<F, Input, cont_type::ambiguous_simple, Aux...>:
+            cont_info_base<cont_type::ambiguous_simple>,
+            vor_unwrap<std::invoke_result_t<F, Input&&, Aux...>>
     {
-        using ret_type = std::invoke_result_t<F, Input&&, Aux...>;
+        using ret_type_orig = std::invoke_result_t<F, Input&&, Aux...>;
     };
 
     template <typename F, typename Input, typename... Aux>
     struct cont_info_typed<F, Input, cont_type::ambiguous_areturn, Aux...>: cont_info_base<cont_type::ambiguous_areturn>
     {
         using ret_type = typename specialization_of<op_handle, std::invoke_result_t<F, Input&&, Aux...>>::first_arg;
+        using ret_type_orig = std::invoke_result_t<F, Input&&, Aux...>;
     };
 
 

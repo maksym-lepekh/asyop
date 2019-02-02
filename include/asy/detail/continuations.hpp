@@ -15,7 +15,7 @@
 
 namespace asy::detail
 {
-    template <typename Input, typename Output, typename Fn, typename Ctx>
+    template <typename Input, typename Output, bool VoR, typename Fn, typename Ctx>
     auto make_simple_cont(Fn&& fn, Ctx parent_ctx)
     {
         if constexpr (std::is_void_v<Input>)
@@ -24,6 +24,12 @@ namespace asy::detail
                 if constexpr (std::is_void_v<Output>){
                     fn();
                     parent_ctx->async_return();
+                } else if constexpr (VoR) {
+                    auto&& ret = fn();
+                    if (ret.has_value())
+                        parent_ctx->async_return(std::move(ret.value()));
+                    else
+                        parent_ctx->async_return(std::move(ret.error()));
                 } else {
                     parent_ctx->async_return(fn());
                 }
@@ -36,6 +42,12 @@ namespace asy::detail
                 if constexpr (std::is_void_v<Output>){
                     fn(std::move(input));
                     parent_ctx->async_return();
+                } else if constexpr (VoR) {
+                    auto&& ret = fn(std::move(input));
+                    if (ret.has_value())
+                        parent_ctx->async_return(std::move(ret.value()));
+                    else
+                        parent_ctx->async_return(std::move(ret.error()));
                 } else {
                     parent_ctx->async_return(fn(std::move(input)));
                 }
@@ -43,12 +55,23 @@ namespace asy::detail
         }
     }
 
-    template <typename Input, typename Fn, typename Ctx>
+    template <typename Input, bool VoR, typename Fn, typename Ctx>
     auto make_simple_failcont(Fn&& fn, Ctx parent_ctx)
     {
         return [fn = std::forward<Fn>(fn), parent_ctx](Input&& err){
-            fn(std::move(err));
-            parent_ctx->async_return();
+            if constexpr (VoR)
+            {
+                auto&& ret = fn(std::move(err));
+                if (ret.has_value())
+                    parent_ctx->async_return();
+                else
+                    parent_ctx->async_return(std::move(ret.error()));
+            }
+            else
+            {
+                fn(std::move(err));
+                parent_ctx->async_return();
+            }
         };
     }
 
