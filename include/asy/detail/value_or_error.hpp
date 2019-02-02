@@ -56,8 +56,8 @@ namespace asy::detail
 
     template <typename T>
     struct value_or_error<T, true>: std::true_type{
-        using success_type = decltype(std::declval<T>().value());
-        using failure_type = decltype(std::declval<T>().error());
+        using success_type = std::remove_cv_t<std::remove_reference_t<decltype(std::declval<T>().value())>>;
+        using failure_type = std::remove_cv_t<std::remove_reference_t<decltype(std::declval<T>().error())>>;
     };
 
     // pretend to be concept

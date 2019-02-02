@@ -17,6 +17,7 @@
 #include <asy/event_loop_asio.hpp>
 #include <chrono>
 #include <string>
+#include "vor.hpp"
 
 using namespace std::literals;
 
@@ -106,6 +107,36 @@ TEST_CASE("asy::op then", "[asio]")
         .then([&](asy::context<double> ctx, int&& input){
             CHECK( input == 1337 );
             ctx->async_return(std::make_error_code(std::errc::address_in_use));
+        })
+        .on_failure([](std::error_code&& err){
+            CHECK( err == std::make_error_code(std::errc::address_in_use) );
+        })
+        .then([&](){ timer.cancel(); });
+
+        io.run();
+    }
+
+    SECTION("Simple continuation with ValueOrError")
+    {
+        asy::op<int>(42)
+        .then([](int&& input)->vor<std::string>{
+            CHECK( input == 42 );
+            return std::to_string(input);
+        })
+        .then([&](std::string&& input){
+            CHECK( input == "42" );
+            timer.cancel();
+        });
+
+        io.run();
+    }
+
+    SECTION("Chain with on_failure and ValueOrError")
+    {
+        asy::op<int>(1337)
+        .then([&](int&& input)->vor<std::string>{
+            CHECK( input == 1337 );
+            return std::make_error_code(std::errc::address_in_use);
         })
         .on_failure([](std::error_code&& err){
             CHECK( err == std::make_error_code(std::errc::address_in_use) );

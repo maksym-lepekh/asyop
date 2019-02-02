@@ -16,6 +16,7 @@
 #include <functional>
 #include <asy/detail/continuation_info.hpp>
 #include <asy/op.hpp>
+#include "vor.hpp"
 
 TEST_CASE("Continuation type", "[deduce]")
 {
@@ -283,4 +284,15 @@ TEST_CASE("Continuation info from std::function", "[deduce]")
         STATIC_REQUIRE(continuation_info<f3, int, std::string>::type == cont_type::async);
         STATIC_REQUIRE(std::is_same_v<continuation_info<f3, int, std::string>::ret_type, double>);
     }
+}
+
+TEST_CASE("Continuation with ValueOrError", "[deduce]")
+{
+
+    auto l = [](int&&){ return vor<std::string>{}; };
+    using info = asy::detail::continuation_info<decltype(l), int>;
+
+    STATIC_REQUIRE(info::type == asy::detail::cont_type::simple);
+    STATIC_REQUIRE(std::is_same_v<info::ret_type, std::string>);
+    STATIC_REQUIRE(std::is_same_v<info::ret_type_orig, vor<std::string>>);
 }
