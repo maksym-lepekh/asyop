@@ -89,7 +89,7 @@ namespace asy
 
             if constexpr (info::type == detail::cont_type::simple || info::type == detail::cont_type::ambiguous_simple)
             {
-                return detail::make_simple_cont<T, ret_t, info::vor>(std::forward<Fn>(fn), ctx);
+                return detail::make_simple_cont<T, ret_t, info::voe_type>(std::forward<Fn>(fn), ctx);
             }
             else if constexpr (info::type == detail::cont_type::areturn || info::type == detail::cont_type::ambiguous_areturn)
             {
@@ -109,7 +109,7 @@ namespace asy
 
             if constexpr (info::type == detail::cont_type::simple || info::type == detail::cont_type::ambiguous_simple)
             {
-                return detail::make_simple_failcont<failure_type, info::vor>(std::forward<Fn>(fn), ctx);
+                return detail::make_simple_failcont<failure_type, info::voe_type>(std::forward<Fn>(fn), ctx);
             }
             else if constexpr (info::type == detail::cont_type::areturn || info::type == detail::cont_type::ambiguous_areturn)
             {

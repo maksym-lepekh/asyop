@@ -15,10 +15,11 @@
 
 #include <variant>
 #include <system_error>
+#include <optional>
 
 
 template <typename T>
-struct vor: std::variant<T, std::error_code>
+struct voe: std::variant<T, std::error_code>
 {
     using std::variant<T, std::error_code>::variant;
 
@@ -27,9 +28,36 @@ struct vor: std::variant<T, std::error_code>
         return this->index() == 0;
     }
 
+    bool has_value() const
+    {
+        return this->index() == 0;
+    }
+
+
     T& value()
     {
         return std::get<0>(*this);
+    }
+
+    std::error_code& error()
+    {
+        return std::get<1>(*this);
+    }
+};
+
+template <typename T>
+struct von: public std::optional<T>
+{
+    using std::optional<T>::optional;
+};
+
+struct noe: std::variant<std::monostate, std::error_code>
+{
+    using std::variant<std::monostate, std::error_code>::variant;
+
+    bool has_value()
+    {
+        return this->index() == 0;
     }
 
     std::error_code& error()

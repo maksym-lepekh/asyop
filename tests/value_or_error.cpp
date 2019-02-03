@@ -14,6 +14,7 @@
 #include <catch2/catch.hpp>
 #include <asy/detail/value_or_error.hpp>
 #include <string>
+#include "voe.hpp"
 
 TEST_CASE("ValueOrError", "[deduce]")
 {
@@ -44,7 +45,7 @@ TEST_CASE("ValueOrError", "[deduce]")
         STATIC_REQUIRE_FALSE(asy::detail::is_ValueOrError<test>);
     }
 
-    SECTION("Bad value type")
+    SECTION("Void value type")
     {
         struct test
         {
@@ -53,7 +54,8 @@ TEST_CASE("ValueOrError", "[deduce]")
             int error() { return {}; }
         };
 
-        STATIC_REQUIRE_FALSE(asy::detail::is_ValueOrError<test>);
+        STATIC_REQUIRE(asy::detail::is_ValueOrError<test>);
+        STATIC_REQUIRE(asy::detail::ValueOrError<test>::voe_type == asy::detail::voe_t::noe);
     }
 
     SECTION("Bad error type")
@@ -65,17 +67,17 @@ TEST_CASE("ValueOrError", "[deduce]")
             void error() { }
         };
 
-        STATIC_REQUIRE_FALSE(asy::detail::is_ValueOrError<test>);
+        STATIC_REQUIRE(asy::detail::is_ValueOrError<test>);
+        STATIC_REQUIRE(asy::detail::ValueOrError<test>::voe_type == asy::detail::voe_t::von);
     }
 
     SECTION("Bad access")
     {
         struct test
         {
+        private:
             bool has_value() { return {}; }
             std::string value() { error(); return {}; }
-
-        private:
             int error() { return {}; }
         };
 
@@ -87,9 +89,39 @@ TEST_CASE("ValueOrError", "[deduce]")
         struct test
         {
             bool has_value() { return {}; }
-            std::string value() { return {}; }
+            std::string get_value() { return {}; }
         };
 
         STATIC_REQUIRE_FALSE(asy::detail::is_ValueOrError<test>);
+    }
+}
+
+TEST_CASE("Testing VoE, VoN, NoE types", "[deduce]")
+{
+    SECTION("VoE")
+    {
+        using info = asy::detail::ValueOrError<voe<std::string>>;
+        STATIC_REQUIRE(info::value);
+        STATIC_REQUIRE(info::voe_type == asy::detail::voe_t::voe);
+        STATIC_REQUIRE(std::is_same_v<info::success_type, std::string>);
+        STATIC_REQUIRE(std::is_same_v<info::failure_type, std::error_code>);
+    }
+
+    SECTION("VoN")
+    {
+        using info = asy::detail::ValueOrError<von<std::string>>;
+        STATIC_REQUIRE(info::value);
+        STATIC_REQUIRE(info::voe_type == asy::detail::voe_t::von);
+        STATIC_REQUIRE(std::is_same_v<info::success_type, std::string>);
+        STATIC_REQUIRE(std::is_same_v<info::failure_type, void>);
+    }
+
+    SECTION("NoE")
+    {
+        using info = asy::detail::ValueOrError<noe>;
+        STATIC_REQUIRE(info::value);
+        STATIC_REQUIRE(info::voe_type == asy::detail::voe_t::noe);
+        STATIC_REQUIRE(std::is_same_v<info::success_type, void>);
+        STATIC_REQUIRE(std::is_same_v<info::failure_type, std::error_code>);
     }
 }
