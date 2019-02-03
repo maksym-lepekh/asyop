@@ -17,7 +17,7 @@
 #include <asy/event_loop_asio.hpp>
 #include <chrono>
 #include <string>
-#include "vor.hpp"
+#include "voe.hpp"
 
 using namespace std::literals;
 
@@ -119,7 +119,7 @@ TEST_CASE("asy::op then", "[asio]")
     SECTION("Simple continuation with ValueOrError")
     {
         asy::op<int>(42)
-        .then([](int&& input)->vor<std::string>{
+        .then([](int&& input)->voe<std::string>{
             CHECK( input == 42 );
             return std::to_string(input);
         })
@@ -134,7 +134,64 @@ TEST_CASE("asy::op then", "[asio]")
     SECTION("Chain with on_failure and ValueOrError")
     {
         asy::op<int>(1337)
-        .then([&](int&& input)->vor<std::string>{
+        .then([&](int&& input)->voe<std::string>{
+            CHECK( input == 1337 );
+            return std::make_error_code(std::errc::address_in_use);
+        })
+        .on_failure([](std::error_code&& err){
+            CHECK( err == std::make_error_code(std::errc::address_in_use) );
+        })
+        .then([&](){ timer.cancel(); });
+
+        io.run();
+    }
+
+    SECTION("Simple continuation with ValueOrNone")
+    {
+        asy::op<int>(42)
+        .then([](int&& input)->von<std::string>{
+            CHECK( input == 42 );
+            return std::to_string(input);
+        })
+        .then([&](std::string&& input){
+            CHECK( input == "42" );
+            timer.cancel();
+        });
+
+        io.run();
+    }
+
+    SECTION("Chain with on_failure and ValueOrNone")
+    {
+        asy::op<int>(1337)
+        .then([&](int&& input)->von<std::string>{
+            CHECK( input == 1337 );
+            return std::nullopt;
+        })
+        .on_failure([](std::error_code&& err){
+            CHECK( err == std::error_code() );
+        })
+        .then([&](){ timer.cancel(); });
+
+        io.run();
+    }
+
+    SECTION("Simple continuation with NoneOrError")
+    {
+        asy::op<int>(42)
+        .then([](int&& input)->noe{
+            CHECK( input == 42 );
+            return {};
+        })
+        .then([&](){ timer.cancel(); });
+
+        io.run();
+    }
+
+    SECTION("Chain with on_failure and NoneOrError")
+    {
+        asy::op<int>(1337)
+        .then([](int&& input)->noe{
             CHECK( input == 1337 );
             return std::make_error_code(std::errc::address_in_use);
         })

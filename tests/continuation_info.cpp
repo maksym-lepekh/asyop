@@ -16,7 +16,7 @@
 #include <functional>
 #include <asy/detail/continuation_info.hpp>
 #include <asy/op.hpp>
-#include "vor.hpp"
+#include "voe.hpp"
 
 TEST_CASE("Continuation type", "[deduce]")
 {
@@ -289,10 +289,34 @@ TEST_CASE("Continuation info from std::function", "[deduce]")
 TEST_CASE("Continuation with ValueOrError", "[deduce]")
 {
 
-    auto l = [](int&&){ return vor<std::string>{}; };
+    auto l = [](int&&){ return voe<std::string>{}; };
     using info = asy::detail::continuation_info<decltype(l), int>;
 
     STATIC_REQUIRE(info::type == asy::detail::cont_type::simple);
+    STATIC_REQUIRE(info::voe_type == asy::detail::voe_t::voe);
     STATIC_REQUIRE(std::is_same_v<info::ret_type, std::string>);
-    STATIC_REQUIRE(std::is_same_v<info::ret_type_orig, vor<std::string>>);
+    STATIC_REQUIRE(std::is_same_v<info::ret_type_orig, voe<std::string>>);
+}
+
+TEST_CASE("Continuation with NoneOrError", "[deduce]")
+{
+    auto l = [](int&&){ return noe{}; };
+    using info = asy::detail::continuation_info<decltype(l), int>;
+
+    STATIC_REQUIRE(info::type == asy::detail::cont_type::simple);
+    STATIC_REQUIRE(info::voe_type == asy::detail::voe_t::noe);
+    STATIC_REQUIRE(std::is_same_v<info::ret_type, void>);
+    STATIC_REQUIRE(std::is_same_v<info::ret_type_orig, noe>);
+}
+
+TEST_CASE("Continuation with ValueOrNone", "[deduce]")
+{
+
+    auto l = [](int&&){ return von<std::string>{}; };
+    using info = asy::detail::continuation_info<decltype(l), int>;
+
+    STATIC_REQUIRE(info::type == asy::detail::cont_type::simple);
+    STATIC_REQUIRE(info::voe_type == asy::detail::voe_t::von);
+    STATIC_REQUIRE(std::is_same_v<info::ret_type, std::string>);
+    STATIC_REQUIRE(std::is_same_v<info::ret_type_orig, von<std::string>>);
 }

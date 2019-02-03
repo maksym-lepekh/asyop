@@ -57,7 +57,7 @@ namespace asy::detail
         using failure_cb_t = std::function<void(Err&&)>;
         using cb_pair_t = std::tuple<success_cb_t, failure_cb_t>;
 
-        void async_return(success_t&& val = {})
+        void async_success(success_t&& val = {})
         {
             if (std::get_if<detail::done_t>(&m_pending))
             {
@@ -78,7 +78,7 @@ namespace asy::detail
             }
         }
 
-        void async_return(failure_t&& val)
+        void async_failure(failure_t&& val = {})
         {
             if (std::get_if<detail::done_t>(&m_pending))
             {
@@ -93,6 +93,16 @@ namespace asy::detail
             {
                 m_pending = val;
             }
+        }
+
+        void async_return(success_t&& val = {})
+        {
+            async_success(std::move(val));
+        }
+
+        void async_return(failure_t&& val)
+        {
+            async_failure(std::move(val));
         }
 
         void cancel()

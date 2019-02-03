@@ -15,7 +15,7 @@
 
 namespace asy::detail
 {
-    template <typename Input, typename Output, bool VoR, typename Fn, typename Ctx>
+    template <typename Input, typename Output, voe_t VoE, typename Fn, typename Ctx>
     auto make_simple_cont(Fn&& fn, Ctx parent_ctx)
     {
         if constexpr (std::is_void_v<Input>)
@@ -23,15 +23,27 @@ namespace asy::detail
             return [fn = std::forward<Fn>(fn), parent_ctx](){
                 if constexpr (std::is_void_v<Output>){
                     fn();
-                    parent_ctx->async_return();
-                } else if constexpr (VoR) {
+                    parent_ctx->async_success();
+                } else if constexpr (VoE == voe_t::voe) {
                     auto&& ret = fn();
                     if (ret.has_value())
-                        parent_ctx->async_return(std::move(ret.value()));
+                        parent_ctx->async_success(std::move(ret.value()));
                     else
-                        parent_ctx->async_return(std::move(ret.error()));
+                        parent_ctx->async_failure(std::move(ret.error()));
+                } else if constexpr (VoE == voe_t::von) {
+                    auto&& ret = fn();
+                    if (ret.has_value())
+                        parent_ctx->async_success(std::move(ret.value()));
+                    else
+                        parent_ctx->async_failure();
+                } else if constexpr (VoE == voe_t::noe) {
+                    auto&& ret = fn();
+                    if (ret.has_value())
+                        parent_ctx->async_success();
+                    else
+                        parent_ctx->async_failure(std::move(ret.error()));
                 } else {
-                    parent_ctx->async_return(fn());
+                    parent_ctx->async_success(fn());
                 }
             };
         }
@@ -41,36 +53,56 @@ namespace asy::detail
             {
                 if constexpr (std::is_void_v<Output>){
                     fn(std::move(input));
-                    parent_ctx->async_return();
-                } else if constexpr (VoR) {
+                    parent_ctx->async_success();
+                } else if constexpr (VoE == voe_t::voe) {
                     auto&& ret = fn(std::move(input));
                     if (ret.has_value())
-                        parent_ctx->async_return(std::move(ret.value()));
+                        parent_ctx->async_success(std::move(ret.value()));
                     else
-                        parent_ctx->async_return(std::move(ret.error()));
+                        parent_ctx->async_failure(std::move(ret.error()));
+                } else if constexpr (VoE == voe_t::von) {
+                    auto&& ret = fn(std::move(input));
+                    if (ret.has_value())
+                        parent_ctx->async_success(std::move(ret.value()));
+                    else
+                        parent_ctx->async_failure();
+                } else if constexpr (VoE == voe_t::noe) {
+                    auto&& ret = fn(std::move(input));
+                    if (ret.has_value())
+                        parent_ctx->async_success();
+                    else
+                        parent_ctx->async_failure(std::move(ret.error()));
                 } else {
-                    parent_ctx->async_return(fn(std::move(input)));
+                    parent_ctx->async_success(fn(std::move(input)));
                 }
             };
         }
     }
 
-    template <typename Input, bool VoR, typename Fn, typename Ctx>
+    template <typename Input, voe_t VoE, typename Fn, typename Ctx>
     auto make_simple_failcont(Fn&& fn, Ctx parent_ctx)
     {
         return [fn = std::forward<Fn>(fn), parent_ctx](Input&& err){
-            if constexpr (VoR)
+            if constexpr (VoE == voe_t::voe || VoE == voe_t::noe)
             {
                 auto&& ret = fn(std::move(err));
                 if (ret.has_value())
-                    parent_ctx->async_return();
+                    parent_ctx->async_success();
                 else
-                    parent_ctx->async_return(std::move(ret.error()));
+                    parent_ctx->async_failure(std::move(ret.error()));
+            }
+            if constexpr (VoE == voe_t::von)
+            {
+                auto&& ret = fn(std::move(err));
+                if (ret.has_value())
+                    parent_ctx->async_success();
+                else
+                    parent_ctx->async_failure();
             }
             else
             {
                 fn(std::move(err));
-                parent_ctx->async_return();
+                parent_ctx->async_success();
             }
         };
     }
@@ -83,11 +115,11 @@ namespace asy::detail
             return [fn = std::forward<Fn>(fn), parent_ctx]() {
                 auto handle = fn();
                 if constexpr (std::is_void_v<Output>) {
-                    handle.then([parent_ctx]() { parent_ctx->async_return(); },
-                            [parent_ctx](auto&& err) { parent_ctx->async_return(std::move(err)); });
+                    handle.then([parent_ctx]() { parent_ctx->async_success(); },
+                            [parent_ctx](auto&& err) { parent_ctx->async_failure(std::forward<decltype(err)>(err)); });
                 } else {
-                    handle.then([parent_ctx](Output&& output) { parent_ctx->async_return(std::move(output)); },
-                            [parent_ctx](auto&& err) { parent_ctx->async_return(std::move(err)); });
+                    handle.then([parent_ctx](Output&& output) { parent_ctx->async_success(std::move(output)); },
+                            [parent_ctx](auto&& err) { parent_ctx->async_failure(std::forward<decltype(err)>(err)); });
                 }
             };
         }
@@ -96,11 +128,11 @@ namespace asy::detail
             return [fn = std::forward<Fn>(fn), parent_ctx](Input&& input) {
                 auto handle = fn(std::move(input));
                 if constexpr (std::is_void_v<Output>) {
-                    handle.then([parent_ctx]() { parent_ctx->async_return(); },
-                                [parent_ctx](auto&& err) { parent_ctx->async_return(std::move(err)); });
+                    handle.then([parent_ctx]() { parent_ctx->async_success(); },
+                                [parent_ctx](auto&& err) { parent_ctx->async_failure(std::forward<decltype(err)>(err)); });
                 } else {
-                    handle.then([parent_ctx](Output&& output) { parent_ctx->async_return(std::move(output)); },
-                                [parent_ctx](auto&& err) { parent_ctx->async_return(std::move(err)); });
+                    handle.then([parent_ctx](Output&& output) { parent_ctx->async_success(std::move(output)); },
+                                [parent_ctx](auto&& err) { parent_ctx->async_failure(std::forward<decltype(err)>(err)); });
                 }
             };
         }
@@ -111,7 +143,7 @@ namespace asy::detail
     {
         return [fn = std::forward<Fn>(fn), parent_ctx](Input&& err){
             auto handle = fn(std::move(err));
-            handle.then([parent_ctx](){ parent_ctx->async_return(); });
+            handle.then([parent_ctx](){ parent_ctx->async_success(); });
         };
     }
 
@@ -124,14 +156,14 @@ namespace asy::detail
                 if constexpr (std::is_void_v<Output>)
                 {
                     Op(fn).then(
-                            [parent_ctx](){ parent_ctx->async_return(); },
-                            [parent_ctx](auto&& err){ parent_ctx->async_return(std::forward<decltype(err)>(err)); });
+                            [parent_ctx](){ parent_ctx->async_success(); },
+                            [parent_ctx](auto&& err){ parent_ctx->async_failure(std::forward<decltype(err)>(err)); });
                 }
                 else
                 {
                     Op(fn).then(
-                            [parent_ctx](Output&& output){ parent_ctx->async_return(std::move(output)); },
-                            [parent_ctx](auto&& err){ parent_ctx->async_return(std::forward<decltype(err)>(err)); });
+                            [parent_ctx](Output&& output){ parent_ctx->async_success(std::move(output)); },
+                            [parent_ctx](auto&& err){ parent_ctx->async_failure(std::forward<decltype(err)>(err)); });
                 }
             };
         }
@@ -141,14 +173,14 @@ namespace asy::detail
                 if constexpr (std::is_void_v<Output>)
                 {
                     Op(fn, std::move(input)).then(
-                            [parent_ctx](){ parent_ctx->async_return(); },
-                            [parent_ctx](auto&& err){ parent_ctx->async_return(std::forward<decltype(err)>(err)); });
+                            [parent_ctx](){ parent_ctx->async_success(); },
+                            [parent_ctx](auto&& err){ parent_ctx->async_failure(std::forward<decltype(err)>(err)); });
                 }
                 else
                 {
                     Op(fn, std::move(input)).then(
-                            [parent_ctx](Output&& output){ parent_ctx->async_return(std::move(output)); },
-                            [parent_ctx](auto&& err){ parent_ctx->async_return(std::forward<decltype(err)>(err)); });
+                            [parent_ctx](Output&& output){ parent_ctx->async_success(std::move(output)); },
+                            [parent_ctx](auto&& err){ parent_ctx->async_failure(std::forward<decltype(err)>(err)); });
                 }
             };
         }
@@ -161,16 +193,16 @@ namespace asy::detail
         {
             return [fn = std::forward<Fn>(fn), parent_ctx](){
                 Op(fn).then(
-                        [parent_ctx](){ parent_ctx->async_return(); },
-                        [parent_ctx](auto&& err){ parent_ctx->async_return(err); });
+                        [parent_ctx](){ parent_ctx->async_success(); },
+                        [parent_ctx](auto&& err){ parent_ctx->async_failure(std::forward<decltype(err)>(err)); });
             };
         }
         else
         {
             return [fn = std::forward<Fn>(fn), parent_ctx](Input&& input){
                 Op(fn, std::move(input)).then(
-                        [parent_ctx](){ parent_ctx->async_return(); },
-                        [parent_ctx](auto&& err){ parent_ctx->async_return(err); });
+                        [parent_ctx](){ parent_ctx->async_success(); },
+                        [parent_ctx](auto&& err){ parent_ctx->async_failure(std::forward<decltype(err)>(err)); });
             };
         }
 
@@ -181,11 +213,11 @@ namespace asy::detail
     {
         if constexpr (std::is_void_v<Input>)
         {
-            return [ctx](){ ctx->async_return(); };
+            return [ctx](){ ctx->async_success(); };
         }
         else
         {
-            return [ctx](Input&& input){ ctx->async_return(); };
+            return [ctx](Input&& input){ ctx->async_success(); };
         }
     }
 
@@ -194,7 +226,7 @@ namespace asy::detail
     {
         return [ctx](Input&& err)
         {
-            ctx->async_return(std::move(err));
+            ctx->async_failure(std::move(err));
         };
     }
 }
