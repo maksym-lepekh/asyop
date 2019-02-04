@@ -18,37 +18,46 @@
 #include <variant>
 #include <memory>
 #include <type_traits>
-#include <system_error>
 
 
 namespace asy::detail
 {
-    struct void_t{};
-    struct done_t{};
+    struct void_t
+    {
+    };
+    struct done_t
+    {
+    };
 
-    template <typename T>
+    template<typename T>
     struct type_traits
     {
         using success = T;
         using success_cb = std::function<void(T&&)>;
-        template <typename F> using cb_result = std::invoke_result_t<F, T&&>;
-        template <typename F> using std_fun_t = std::function<cb_result<F>(T&&)>;
+        template<typename F> using cb_result = std::invoke_result_t<F, T&&>;
+        template<typename F> using std_fun_t = std::function<cb_result<F>(T&&)>;
     };
 
-    template <>
+    template<>
     struct type_traits<void>
     {
         using success = void_t;
         using success_cb = std::function<void()>;
-        template <typename F> using cb_result = std::invoke_result_t<F>;
-        template <typename F> using std_fun_t = std::function<cb_result<F>()>;
+        template<typename F> using cb_result = std::invoke_result_t<F>;
+        template<typename F> using std_fun_t = std::function<cb_result<F>()>;
     };
+
+    template<typename Err>
+    struct error_traits;
 
     using posted_fn = std::function<void()>;
     extern thread_local std::function<void(posted_fn)> post_impl;
+}
 
+namespace asy
+{
     template <typename Val, typename Err>
-    class context
+    class basic_context
     {
     public:
         using success_t = typename detail::type_traits<Val>::success;
@@ -112,7 +121,7 @@ namespace asy::detail
                 return;
             }
 
-            auto val = std::make_error_code(std::errc::operation_canceled);
+            auto val = detail::error_traits<Err>::get_cancelled();
             if (auto cbs = std::get_if<cb_pair_t>(&m_pending))
             {
                 post(std::get<failure_cb_t>(*cbs), val);
@@ -155,7 +164,7 @@ namespace asy::detail
         {
             if (f)
             {
-                detail::post_impl([handler = std::move(f), param = std::move(arg)]() mutable {
+                detail::post_impl([handler = std::forward<F>(f), param = std::forward<Arg>(arg)]() mutable {
                     handler(std::move(param));
                 });
             }
@@ -166,7 +175,7 @@ namespace asy::detail
         {
             if (f)
             {
-                detail::post_impl([handler = std::move(f)]() {
+                detail::post_impl([handler = std::forward<F>(f)]() {
                     handler();
                 });
             }
@@ -174,10 +183,7 @@ namespace asy::detail
 
         std::variant<std::monostate, cb_pair_t, success_t, failure_t, detail::done_t> m_pending;
     };
-}
 
-namespace asy
-{
-    template <typename Ret>
-    using context = std::shared_ptr<detail::context<Ret, std::error_code>>;
+    template <typename Ret, typename Err>
+    using basic_context_ptr = std::shared_ptr<basic_context<Ret, Err>>;
 }

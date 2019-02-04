@@ -13,6 +13,8 @@
 // limitations under the License.
 #pragma once
 
+#include "continuation_info.hpp"
+
 namespace asy::detail
 {
     template <typename Input, typename Output, voe_t VoE, typename Fn, typename Ctx>
@@ -228,5 +230,46 @@ namespace asy::detail
         {
             ctx->async_failure(std::move(err));
         };
+    }
+
+    template <typename T, typename Err, typename Fn, typename Ctx>
+    auto make_success_cont(Fn&& fn, Ctx ctx)
+    {
+        using info = continuation_info<Fn, T>;
+        static_assert(info::type != cont_type::invalid, "Functor has unsupported type");
+        using ret_t = typename info::ret_type;
+
+        if constexpr (info::type == cont_type::simple || info::type == cont_type::ambiguous_simple)
+        {
+            return make_simple_cont<T, ret_t, info::voe_type>(std::forward<Fn>(fn), ctx);
+        }
+        else if constexpr (info::type == cont_type::areturn || info::type == cont_type::ambiguous_areturn)
+        {
+            return make_areturn_cont<T, ret_t>(std::forward<Fn>(fn), ctx);
+        }
+        else
+        {
+            return make_async_cont<T, ret_t, basic_op_handle<ret_t, Err>>(std::forward<Fn>(fn), ctx);
+        }
+    }
+
+    template <typename T, typename Err, typename Fn, typename Ctx>
+    auto make_fail_cont(Fn&& fn, Ctx ctx)
+    {
+        using info = continuation_info<Fn, Err>;
+        static_assert(info::type != cont_type::invalid, "Functor has unsupported type");
+
+        if constexpr (info::type == cont_type::simple || info::type == cont_type::ambiguous_simple)
+        {
+            return make_simple_failcont<Err, info::voe_type>(std::forward<Fn>(fn), ctx);
+        }
+        else if constexpr (info::type == cont_type::areturn || info::type == cont_type::ambiguous_areturn)
+        {
+            return make_areturn_failcont<Err>(std::forward<Fn>(fn), ctx);
+        }
+        else
+        {
+            return make_async_failcont<Err, basic_op_handle<void, Err>>(std::forward<Fn>(fn), ctx);
+        }
     }
 }
