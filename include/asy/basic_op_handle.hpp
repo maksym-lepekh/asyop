@@ -29,6 +29,13 @@ namespace asy
             std::forward<Fn>(exec)(m_ctx, std::forward<Args>(args)...);
         }
 
+        template <typename Fn, typename... Args>
+        explicit basic_op_handle(std::shared_ptr<detail::context_base> parent, Fn&& exec, Args&&... args)
+            : m_ctx(std::make_shared<basic_context<T, Err>>(parent))
+        {
+            std::forward<Fn>(exec)(m_ctx, std::forward<Args>(args)...);
+        }
+
         void cancel()
         {
             m_ctx->cancel();
@@ -41,11 +48,14 @@ namespace asy
             static_assert(info::type != detail::cont_type::invalid, "Functor has unsupported type");
             using ret_t = typename info::ret_type;
 
-            return basic_op_handle<ret_t, Err>([this, &fn](basic_context_ptr<ret_t, Err> ctx){
-                m_ctx->set_continuation(
-                        detail::make_success_cont<T, Err>(std::forward<Fn>(fn), ctx),
-                        detail::make_skip_failcont<Err>(ctx));
-            });
+            return basic_op_handle<ret_t, Err>(
+                    std::static_pointer_cast<detail::context_base>(m_ctx),
+                    [this, &fn](basic_context_ptr<ret_t, Err> ctx)
+                    {
+                        m_ctx->set_continuation(
+                                detail::make_success_cont<T, Err>(std::forward<Fn>(fn), ctx),
+                                detail::make_skip_failcont<Err>(ctx));
+                    });
         }
 
         template <typename SuccCb, typename FailCb>
@@ -55,21 +65,27 @@ namespace asy
             static_assert(info::type != detail::cont_type::invalid, "Functor has unsupported type");
             using ret_t = typename info::ret_type;
 
-            return basic_op_handle<ret_t, Err>([this, &s, &f](basic_context_ptr<ret_t, Err> ctx){
-                m_ctx->set_continuation(
-                        detail::make_success_cont<T, Err>(std::forward<SuccCb>(s), ctx),
-                        detail::make_fail_cont<T, Err>(std::forward<FailCb>(f), ctx));
-            });
+            return basic_op_handle<ret_t, Err>(
+                    std::static_pointer_cast<detail::context_base>(m_ctx),
+                    [this, &s, &f](basic_context_ptr<ret_t, Err> ctx)
+                    {
+                        m_ctx->set_continuation(
+                                detail::make_success_cont<T, Err>(std::forward<SuccCb>(s), ctx),
+                                detail::make_fail_cont<T, Err>(std::forward<FailCb>(f), ctx));
+                    });
         }
 
         template <typename Fn>
         auto on_failure(Fn&& fn)
         {
-            return basic_op_handle<void, Err>([this, &fn](basic_context_ptr<void, Err> ctx){
-                m_ctx->set_continuation(
-                        detail::make_skip_cont<T>(ctx),
-                        detail::make_fail_cont<T, Err>(std::forward<Fn>(fn), ctx));
-            });
+            return basic_op_handle<void, Err>(
+                    std::static_pointer_cast<detail::context_base>(m_ctx),
+                    [this, &fn](basic_context_ptr<void, Err> ctx)
+                    {
+                        m_ctx->set_continuation(
+                                detail::make_skip_cont<T>(ctx),
+                                detail::make_fail_cont<T, Err>(std::forward<Fn>(fn), ctx));
+                    });
         }
 
     private:

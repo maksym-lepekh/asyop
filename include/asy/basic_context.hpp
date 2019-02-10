@@ -18,6 +18,7 @@
 #include <variant>
 #include <memory>
 #include <type_traits>
+#include <utility>
 
 
 namespace asy::detail
@@ -52,12 +53,18 @@ namespace asy::detail
 
     using posted_fn = std::function<void()>;
     extern thread_local std::function<void(posted_fn)> post_impl;
+
+    struct context_base
+    {
+        virtual void cancel() = 0;
+        virtual bool is_done() = 0;
+    };
 }
 
 namespace asy
 {
     template <typename Val, typename Err>
-    class basic_context
+    class basic_context: public detail::context_base
     {
     public:
         using success_t = typename detail::type_traits<Val>::success;
@@ -65,6 +72,10 @@ namespace asy
         using success_cb_t = typename detail::type_traits<Val>::success_cb;
         using failure_cb_t = std::function<void(Err&&)>;
         using cb_pair_t = std::tuple<success_cb_t, failure_cb_t>;
+
+        basic_context() = default;
+
+        explicit basic_context(std::shared_ptr<detail::context_base> parent): m_parent(std::move(parent)) {}
 
         void async_success(success_t&& val = {})
         {
@@ -80,6 +91,7 @@ namespace asy
                     post(std::get<success_cb_t>(*cbs), val);
 
                 m_pending = detail::done_t{};
+                m_parent.reset();
             }
             else
             {
@@ -97,6 +109,7 @@ namespace asy
             {
                 post(std::get<failure_cb_t>(*cbs), val);
                 m_pending = detail::done_t{};
+                m_parent.reset();
             }
             else
             {
@@ -114,10 +127,16 @@ namespace asy
             async_failure(std::move(val));
         }
 
-        void cancel()
+        void cancel() override
         {
             if (std::get_if<detail::done_t>(&m_pending))
             {
+                return;
+            }
+
+            if (m_parent && !m_parent->is_done())
+            {
+                m_parent->cancel();
                 return;
             }
 
@@ -126,6 +145,7 @@ namespace asy
             {
                 post(std::get<failure_cb_t>(*cbs), val);
                 m_pending = detail::done_t{};
+                m_parent.reset();
             }
             else
             {
@@ -133,7 +153,7 @@ namespace asy
             }
         }
 
-        void set_continuation(success_cb_t success_cb, failure_cb_t failure_cb = {})
+        void set_continuation(success_cb_t success_cb, failure_cb_t failure_cb)
         {
             if (std::get_if<detail::done_t>(&m_pending))
             {
@@ -146,16 +166,23 @@ namespace asy
                 else
                     post(success_cb, *s_val);
                 m_pending = detail::done_t{};
+                m_parent.reset();
             }
             else if (auto f_val = std::get_if<failure_t>(&m_pending))
             {
                 post(failure_cb, *f_val);
                 m_pending = detail::done_t{};
+                m_parent.reset();
             }
             else
             {
                 m_pending = cb_pair_t{std::move(success_cb), std::move(failure_cb)};
             }
+        }
+
+        bool is_done() override
+        {
+            return m_pending.index() == 4;
         }
 
     private:
@@ -182,6 +209,7 @@ namespace asy
         }
 
         std::variant<std::monostate, cb_pair_t, success_t, failure_t, detail::done_t> m_pending;
+        std::shared_ptr<detail::context_base> m_parent;
     };
 
     template <typename Ret, typename Err>
