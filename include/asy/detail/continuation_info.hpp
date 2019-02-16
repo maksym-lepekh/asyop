@@ -20,15 +20,15 @@
 
 namespace asy
 {
-    template <typename T>
-    class op_handle;
+    template <typename T, typename Err>
+    class basic_op_handle;
+
+    template <typename T, typename Err>
+    class basic_context;
 }
 
 namespace asy::detail
 {
-    template <typename T, typename Err>
-    class context;
-
     enum struct cont_type
     {
         simple,
@@ -49,7 +49,7 @@ namespace asy::detail
             if (std::is_invocable_v<F, Input&&, Aux...>)
             {
                 using ret_t = typename info::ret_type;
-                if constexpr (specialization_of<op_handle, ret_t>::value)
+                if constexpr (specialization_of<basic_op_handle, ret_t>::value)
                     return cont_type::areturn;
                 else
                     return cont_type::simple;
@@ -59,7 +59,7 @@ namespace asy::detail
                 using is_shared_ptr = specialization_of<std::shared_ptr, typename info::arg1_type>;
                 if constexpr (is_shared_ptr::value)
                 {
-                    if constexpr (specialization_of<context, typename is_shared_ptr::first_arg>::value)
+                    if constexpr (specialization_of<basic_context, typename is_shared_ptr::first_arg>::value)
                     {
                         constexpr bool is_call_with_context = std::is_invocable_v<F, typename info::arg1_type, Input&&, Aux...>;
                         if constexpr (is_call_with_context && std::is_same_v<typename info::ret_type, void>)
@@ -78,7 +78,7 @@ namespace asy::detail
         if constexpr (info::arg_n == sizeof...(Aux))
         {
             using ret_t = typename info::ret_type;
-            if constexpr (specialization_of<op_handle, ret_t>::value)
+            if constexpr (specialization_of<basic_op_handle, ret_t>::value)
                 return cont_type::areturn;
             else
                 return cont_type::simple;
@@ -88,7 +88,7 @@ namespace asy::detail
             using is_shared_ptr = specialization_of<std::shared_ptr, typename info::arg1_type>;
             if constexpr (is_shared_ptr::value)
             {
-                if constexpr (specialization_of<context, typename is_shared_ptr::first_arg>::value)
+                if constexpr (specialization_of<basic_context, typename is_shared_ptr::first_arg>::value)
                 {
                     constexpr bool is_call_with_context = std::is_invocable_v<F, typename info::arg1_type, Aux...>;
                     if constexpr (is_call_with_context && std::is_same_v<typename info::ret_type, void>)
@@ -105,7 +105,7 @@ namespace asy::detail
         if constexpr (std::is_invocable_v<F, Input&&, Aux...>)
         {
             using ret_t = std::invoke_result_t<F, Input&&, Aux...>;
-            if constexpr (specialization_of<op_handle, ret_t>::value)
+            if constexpr (specialization_of<basic_op_handle, ret_t>::value)
                 return cont_type::ambiguous_areturn;
             else
                 return cont_type::ambiguous_simple;
@@ -179,7 +179,7 @@ namespace asy::detail
     template <typename F, typename Input, typename... Aux>
     struct cont_info_typed<F, Input, cont_type::areturn, Aux...>: cont_info_base<cont_type::areturn>
     {
-        using ret_type = typename specialization_of<op_handle, typename functor_info<F>::ret_type>::first_arg;
+        using ret_type = typename specialization_of<basic_op_handle, typename functor_info<F>::ret_type>::first_arg;
         using ret_type_orig = typename functor_info<F>::ret_type;
     };
 
@@ -188,7 +188,7 @@ namespace asy::detail
     {
         using _shptr = typename functor_info<F>::arg1_type;
         using _ctx = typename specialization_of<std::shared_ptr, _shptr>::first_arg;
-        using ret_type = typename specialization_of<context, _ctx>::first_arg;
+        using ret_type = typename specialization_of<basic_context, _ctx>::first_arg;
         using ret_type_orig = void;
     };
 
@@ -203,7 +203,7 @@ namespace asy::detail
     template <typename F, typename Input, typename... Aux>
     struct cont_info_typed<F, Input, cont_type::ambiguous_areturn, Aux...>: cont_info_base<cont_type::ambiguous_areturn>
     {
-        using ret_type = typename specialization_of<op_handle, std::invoke_result_t<F, Input&&, Aux...>>::first_arg;
+        using ret_type = typename specialization_of<basic_op_handle, std::invoke_result_t<F, Input&&, Aux...>>::first_arg;
         using ret_type_orig = std::invoke_result_t<F, Input&&, Aux...>;
     };
 

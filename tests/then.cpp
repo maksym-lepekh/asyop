@@ -202,4 +202,133 @@ TEST_CASE("asy::op then", "[asio]")
 
         io.run();
     }
+
+    SECTION("Cancel")
+    {
+        auto test_timer = asio::steady_timer{io, 50ms};
+
+        auto handle = asy::op<int>(1337)
+        .then([&](asy::context<double> ctx, int&& input){
+            CHECK( input == 1337 );
+
+            test_timer.async_wait([ctx](const asio::error_code& err){
+                if (!err)
+                {
+                    ctx->async_success(42.0);
+                }
+            });
+        })
+        .on_failure([](std::error_code&& err){
+            CHECK( err == std::make_error_code(std::errc::operation_canceled) );
+        })
+        .then([&](){
+            test_timer.cancel();
+            timer.cancel();
+        });
+
+        handle.cancel();
+        io.run();
+    }
+
+    SECTION("Cancel, simple")
+    {
+        auto test_timer = asio::steady_timer{io, 50ms};
+        auto finally_called = false;
+
+        auto handle = asy::op([&](asy::context<int> ctx){
+            test_timer.async_wait([ctx](const asio::error_code& err)
+            {
+                CHECK(err == make_error_code(asio::error::operation_aborted));
+                if (!err) ctx->async_success(42);
+            });
+        }).then([](int&&){ FAIL("Wrong path"); }, [&](auto&& err){
+            CHECK( err == std::make_error_code(std::errc::operation_canceled) );
+            test_timer.cancel();
+            timer.cancel();
+        }).then([&](){
+            finally_called = true;
+        });
+
+        handle.cancel();
+        io.run();
+        CHECK(finally_called);
+    }
+
+    SECTION("Cancel, on_failure")
+    {
+        auto test_timer = asio::steady_timer{io, 50ms};
+        auto finally_called = false;
+
+        auto handle = asy::op([&](asy::context<int> ctx){
+            test_timer.async_wait([ctx](const asio::error_code& err){
+                CHECK(err == make_error_code(asio::error::operation_aborted));
+                if (!err) ctx->async_success(42);
+            });
+        }).on_failure([&](auto&& err){
+            CHECK( err == std::make_error_code(std::errc::operation_canceled) );
+            test_timer.cancel();
+            timer.cancel();
+        }).then([&](){
+            finally_called = true;
+        });
+
+        handle.cancel();
+        io.run();
+        CHECK(finally_called);
+    }
+
+    SECTION("Cancel, double on_failure")
+    {
+        auto test_timer = asio::steady_timer{io, 50ms};
+        auto finally_called = false;
+        auto second_failure = false;
+
+        auto handle = asy::op([&](asy::context<int> ctx){
+            test_timer.async_wait([ctx](const asio::error_code& err){
+                CHECK(err == make_error_code(asio::error::operation_aborted));
+                if (!err) ctx->async_success(42);
+            });
+        }).on_failure([&](auto&& err){
+            CHECK( err == std::make_error_code(std::errc::operation_canceled) );
+            test_timer.cancel();
+            timer.cancel();
+        }).on_failure([&](auto&& err){
+            second_failure = true;
+        }).then([&](){
+            finally_called = true;
+        });
+
+        handle.cancel();
+        io.run();
+        CHECK(finally_called);
+        CHECK_FALSE(second_failure);
+    }
+
+    SECTION("Cancel, mixed")
+    {
+        auto test_timer = asio::steady_timer{io, 50ms};
+        auto finally_called = false;
+        auto second_failure = false;
+
+        auto handle = asy::op([&](asy::context<int> ctx){
+            test_timer.async_wait([ctx](const asio::error_code& err)
+                                  {
+                                      CHECK(err == make_error_code(asio::error::operation_aborted));
+                                      if (!err) ctx->async_success(42);
+                                  });
+        }).then([](int&&){ FAIL("Wrong path"); }, [&](auto&& err){
+            CHECK( err == std::make_error_code(std::errc::operation_canceled) );
+            test_timer.cancel();
+            timer.cancel();
+        }).on_failure([&](auto&& err){
+            second_failure = true;
+        }).then([&](){
+            finally_called = true;
+        });
+
+        handle.cancel();
+        io.run();
+        CHECK(finally_called);
+        CHECK_FALSE(second_failure);
+    }
 }
