@@ -14,6 +14,7 @@
 #pragma once
 
 #include "detail/continuation_info.hpp"
+#include "basic_ops.hpp"
 #include "basic_context.hpp"
 #include "basic_op_handle.hpp"
 #include "basic_op.hpp"
@@ -50,5 +51,23 @@ namespace asy
     decltype(auto) op()
     {
         return basic_op<Ret, std::error_code>();
+    }
+
+    template <typename... Fs>
+    decltype(auto) when_all(Fs&&...fs)
+    {
+        return basic_when_all<std::error_code>(std::forward<Fs>(fs)...);
+    }
+
+    template <typename... Fs>
+    decltype(auto) when_success(Fs&&...fs)
+    {
+        return basic_when_success<std::error_code>(std::forward<Fs>(fs)...);
+    }
+
+    template <typename... Fs>
+    decltype(auto) when_any(Fs&&...fs)
+    {
+        return basic_when_any<std::error_code>(std::forward<Fs>(fs)...);
     }
 }

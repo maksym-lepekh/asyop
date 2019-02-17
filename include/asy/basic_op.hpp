@@ -24,7 +24,11 @@ namespace asy
     {
         using info = detail::continuation_info<F, void, Args...>;
 
-        if constexpr (info::type == detail::cont_type::invalid && sizeof...(Args) == 0)
+        if constexpr (detail::specialization_of<basic_op_handle, F>::value && sizeof...(Args) == 0)
+        {
+            return std::forward<F>(fn);
+        }
+        else if constexpr (info::type == detail::cont_type::invalid && sizeof...(Args) == 0)
         {
             using ret_t = std::decay_t<F>;
             return basic_op_handle<ret_t, Err>{[](basic_context_ptr<ret_t, Err> ctx, F&& init){
@@ -52,6 +56,8 @@ namespace asy
             }
         }
     }
+
+
 
     template <typename Ret, typename Err>
     auto basic_op()

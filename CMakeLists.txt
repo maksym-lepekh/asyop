@@ -39,6 +39,7 @@ if (NOT_SUBDIR)
         tests/continuation_info.cpp
         tests/then.cpp
         tests/op.cpp
+        tests/ops.cpp
         tests/value_or_error.cpp)
     target_link_libraries(tests PRIVATE Catch2::Catch2 asyop-asio)
 
