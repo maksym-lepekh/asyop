@@ -11,12 +11,12 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
-#include <asy/event_loop_asio.hpp>
+#include <asy/evloop_asio.hpp>
 #include <asy/op.hpp>
 #include <optional>
 
 
-void asy::this_thread::set_event_loop(asio::io_service& s)
+void asy::this_thread::set_event_loop(::asio::io_service& s)
 {
     detail::post_impl = [&s](detail::posted_fn fn){
         s.post(std::move(fn));
