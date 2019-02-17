@@ -51,8 +51,11 @@ namespace asy::detail
     template<typename Err>
     struct error_traits;
 
-    using posted_fn = std::function<void()>;
-    extern thread_local std::function<void(posted_fn)> post_impl;
+    inline namespace v1
+    {
+        using posted_fn = std::function<void()>;
+        extern thread_local std::function<void(posted_fn)> post_impl;
+    }
 
     struct context_base
     {

@@ -15,7 +15,7 @@
 
 #include <asio.hpp>
 
-namespace asy::this_thread
+namespace asy::this_thread { inline namespace v1
 {
     void set_event_loop(asio::io_service& s);
-}
+}}
