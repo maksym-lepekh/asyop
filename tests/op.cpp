@@ -133,6 +133,25 @@ TEST_CASE("Op from std::function", "[asio]")
     }
 }
 
+TEST_CASE("Op pass-through", "[asio]")
+{
+    auto io = asio::io_service{};
+    auto timer = asio::steady_timer{io, 50ms};
+
+    timer.async_wait([](const asio::error_code& err){
+        if (!err) FAIL("Timeout");
+    });
+
+    asy::this_thread::set_event_loop(io);
+
+    asy::op(asy::op<int>(42)).then([&](int&& input){
+        CHECK(input == 42);
+        timer.cancel();
+    });
+
+    io.run();
+}
+
 TEST_CASE("Chaining with fail", "[asio]")
 {
     auto io = asio::io_service{};

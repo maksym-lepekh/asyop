@@ -23,6 +23,9 @@ namespace asy
     class basic_op_handle
     {
     public:
+        using output_t = T;
+        using error_t = Err;
+
         template <typename Fn, typename... Args>
         explicit basic_op_handle(Fn&& exec, Args&&... args): m_ctx(std::make_shared<basic_context<T, Err>>())
         {
