@@ -15,10 +15,20 @@
 #include <asy/op.hpp>
 #include <optional>
 
+namespace
+{
+    thread_local asio::io_service* svc = nullptr;
+}
 
 void asy::this_thread::set_event_loop(::asio::io_service& s)
 {
-    detail::post_impl = [&s](detail::posted_fn fn){
-        s.post(std::move(fn));
+    svc = &s;
+    detail::post_impl = [](detail::posted_fn fn){
+        svc->post(std::move(fn));
     };
+}
+
+asio::io_service& asy::this_thread::get_event_loop()
+{
+    return *svc;
 }

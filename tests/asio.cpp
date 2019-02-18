@@ -56,3 +56,48 @@ TEST_CASE("asiofy", "[asio]")
         io.run();
     }
 }
+
+TEST_CASE("sleep", "[asio]")
+{
+    using namespace std::literals;
+
+    auto io = asio::io_service{};
+    auto fail_timer = asio::steady_timer{io, 50ms};
+
+    fail_timer.async_wait([](const asio::error_code& err){
+        if (!err) FAIL("Timeout");
+    });
+
+    asy::this_thread::set_event_loop(io);
+
+    SECTION("Timer success")
+    {
+        auto now = std::chrono::steady_clock::now();
+
+        asy::asio::sleep(5ms).then([&]()
+        {
+            auto after = std::chrono::steady_clock::now();
+            CHECK((now + 5ms) <= after);
+            fail_timer.cancel();
+        });
+
+        io.run();
+    }
+
+    SECTION("Timer cancelled")
+    {
+        auto now = std::chrono::steady_clock::now();
+        auto h = asy::asio::sleep(5ms);
+
+        h.then([](){ FAIL("Wrong path"); }, [&](asio::error_code e)
+        {
+            auto after = std::chrono::steady_clock::now();
+            CHECK((now + 5ms) > after);
+            CHECK(e == make_error_code(std::errc::operation_canceled));
+            fail_timer.cancel();
+        });
+
+        h.cancel();
+        io.run();
+    }
+}

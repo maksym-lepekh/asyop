@@ -20,6 +20,7 @@
 
 namespace asy::this_thread { inline namespace v1
 {
+    asio::io_service& get_event_loop();
     void set_event_loop(asio::io_service& s);
 }}
 
@@ -68,5 +69,14 @@ namespace asy::asio
                         }
                     });
                 }, std::forward<Call>(call));
+    }
+
+    template <typename Rep, typename Per>
+    auto sleep(std::chrono::duration<Rep, Per> dur)
+    {
+        auto timer = std::make_shared<::asio::steady_timer>(this_thread::get_event_loop(), dur);
+        auto h = fy<>([&](auto&& handler){ timer->async_wait(handler); });
+
+        return add_cancel(h, [timer]{ timer->cancel(); });
     }
 }
