@@ -35,7 +35,7 @@ TEST_CASE("asiofy", "[asio]")
     {
         auto timer = asio::steady_timer{io, 5ms};
 
-        asy::asio::fy<>([&](auto&& handler){ timer.async_wait(handler); })
+        asy::fy<>([&](auto&& handler){ timer.async_wait(handler); })
         .then([&](){ fail_timer.cancel(); });
 
         io.run();
@@ -132,7 +132,7 @@ TEST_CASE("timed_op", "[asio]")
     {
         auto now = std::chrono::steady_clock::now();
 
-        asy::asio::timed_op(5ms, asy::asio::sleep(10ms).then([]{ return 42; }))
+        asy::timed_op(5ms, asy::sleep(10ms).then([]{ return 42; }))
         .on_failure([&](auto&& err){
             CHECK(err == make_error_code(std::errc::timed_out));
             fail_timer.cancel();
@@ -145,7 +145,7 @@ TEST_CASE("timed_op", "[asio]")
     {
         auto now = std::chrono::steady_clock::now();
 
-        auto h = asy::asio::timed_op(5ms, asy::asio::sleep(10ms).then([]{ return 42; }))
+        auto h = asy::timed_op(5ms, asy::sleep(10ms).then([]{ return 42; }))
                 .on_failure([&](auto&& err){
                     CHECK(err == make_error_code(std::errc::operation_canceled));
                     fail_timer.cancel();

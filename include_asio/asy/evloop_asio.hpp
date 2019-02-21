@@ -42,7 +42,7 @@ namespace asy::detail::asio
     using get_ret_t = typename get_ret_impl<sizeof...(Args), Args...>::type;
 }
 
-namespace asy::asio
+namespace asy { inline namespace asio
 {
     template <typename Call, typename... HandlerArgs>
     auto fy(Call&& call)
@@ -105,4 +105,4 @@ namespace asy::asio
             }
         });
     }
-}
+}}
