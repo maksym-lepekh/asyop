@@ -14,6 +14,7 @@
 #include <asy/evloop_asio.hpp>
 #include <asy/op.hpp>
 #include <optional>
+#include <cassert>
 
 namespace
 {
@@ -24,11 +25,13 @@ void asy::this_thread::set_event_loop(::asio::io_service& s)
 {
     svc = &s;
     detail::post_impl = [](detail::posted_fn fn){
+        assert(svc != nullptr);
         svc->post(std::move(fn));
     };
 }
 
 asio::io_service& asy::this_thread::get_event_loop()
 {
+    assert(svc != nullptr);
     return *svc;
 }
