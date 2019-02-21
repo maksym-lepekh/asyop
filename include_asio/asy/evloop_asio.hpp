@@ -79,4 +79,30 @@ namespace asy::asio
 
         return add_cancel(h, [timer]{ timer->cancel(); });
     }
+
+    template <typename Rep, typename Per, typename F, typename... Args>
+    auto timed_op(std::chrono::duration<Rep, Per> dur, F&& f, Args&&... args)
+    {
+        auto user_op = asy::op(std::forward<F>(f), std::forward<Args>(args)...);
+        auto timer_op = sleep(dur).then([]{ return asy::detail::void_t{}; });
+
+        using ret_t = typename decltype(user_op)::output_t;
+        using err_t = typename decltype(user_op)::error_t;
+        using input_t = std::variant<ret_t, asy::detail::void_t>;
+
+        return when_any(user_op, timer_op).then([](asy::basic_context_ptr<ret_t, err_t> ctx, input_t&& input)
+        {
+            if (input.index() == 0)
+            {
+                if constexpr (std::is_void_v<ret_t>)
+                    ctx->async_success();
+                else
+                    ctx->async_success(std::move(std::get<0>(input)));
+            }
+            else
+            {
+                ctx->async_failure(make_error_code(std::errc::timed_out));
+            }
+        });
+    }
 }

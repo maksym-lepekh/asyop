@@ -101,3 +101,57 @@ TEST_CASE("sleep", "[asio]")
         io.run();
     }
 }
+
+TEST_CASE("timed_op", "[asio]")
+{
+    using namespace std::literals;
+
+    auto io = asio::io_service{};
+    auto fail_timer = asio::steady_timer{io, 50ms};
+
+    fail_timer.async_wait([](const asio::error_code& err){
+        if (!err) FAIL("Timeout");
+    });
+
+    asy::this_thread::set_event_loop(io);
+
+    SECTION("Success")
+    {
+        auto now = std::chrono::steady_clock::now();
+
+        asy::asio::timed_op(10ms, asy::asio::sleep(5ms).then([]{ return 42; }))
+        .then([&](int&& input){
+            CHECK(input == 42);
+            fail_timer.cancel();
+        });
+
+        io.run();
+    }
+
+    SECTION("Time out")
+    {
+        auto now = std::chrono::steady_clock::now();
+
+        asy::asio::timed_op(5ms, asy::asio::sleep(10ms).then([]{ return 42; }))
+        .on_failure([&](auto&& err){
+            CHECK(err == make_error_code(std::errc::timed_out));
+            fail_timer.cancel();
+        });
+
+        io.run();
+    }
+
+    SECTION("Cancel")
+    {
+        auto now = std::chrono::steady_clock::now();
+
+        auto h = asy::asio::timed_op(5ms, asy::asio::sleep(10ms).then([]{ return 42; }))
+                .on_failure([&](auto&& err){
+                    CHECK(err == make_error_code(std::errc::operation_canceled));
+                    fail_timer.cancel();
+                });
+
+        asy::asio::sleep(1ms).then([&]{ h.cancel(); });
+        io.run();
+    }
+}
