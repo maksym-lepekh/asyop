@@ -24,7 +24,7 @@ namespace asy
     {
         using info = detail::continuation_info<F, void, Args...>;
 
-        if constexpr (detail::specialization_of<basic_op_handle, F>::value && sizeof...(Args) == 0)
+        if constexpr (detail::specialization_of<basic_op_handle, std::decay_t<F>>::value && sizeof...(Args) == 0)
         {
             return std::forward<F>(fn);
         }

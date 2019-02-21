@@ -40,7 +40,8 @@ if (NOT_SUBDIR)
         tests/then.cpp
         tests/op.cpp
         tests/ops.cpp
-        tests/value_or_error.cpp)
+        tests/value_or_error.cpp
+        tests/asio.cpp)
     target_link_libraries(tests PRIVATE Catch2::Catch2 asyop-asio)
 
     enable_testing()

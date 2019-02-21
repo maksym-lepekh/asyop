@@ -11,14 +11,27 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
-#include <asy/event_loop_asio.hpp>
+#include <asy/evloop_asio.hpp>
 #include <asy/op.hpp>
 #include <optional>
+#include <cassert>
 
-
-void asy::this_thread::set_event_loop(asio::io_service& s)
+namespace
 {
-    detail::post_impl = [&s](detail::posted_fn fn){
-        s.post(std::move(fn));
+    thread_local asio::io_service* svc = nullptr;
+}
+
+void asy::this_thread::set_event_loop(::asio::io_service& s)
+{
+    svc = &s;
+    detail::post_impl = [](detail::posted_fn fn){
+        assert(svc != nullptr);
+        svc->post(std::move(fn));
     };
+}
+
+asio::io_service& asy::this_thread::get_event_loop()
+{
+    assert(svc != nullptr);
+    return *svc;
 }

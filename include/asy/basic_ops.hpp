@@ -33,10 +33,34 @@ namespace asy::detail
 
     template<typename In, typename Err>
     using out_var_t = std::variant<std::monostate, In, Err>;
+
+    template <typename T, typename Err>
+    auto make_skip()
+    {
+        if constexpr (std::is_void_v<T>)
+            return [](basic_context_ptr<T, Err> ctx){ ctx->async_success(); };
+        else
+            return [](basic_context_ptr<T, Err> ctx, T&& input){ ctx->async_success(std::move(input)); };
+    }
 }
 
 namespace asy
 {
+
+    template <typename T, typename Err, typename Fn>
+    auto add_cancel(asy::basic_op_handle<T, Err>& handle, Fn&& fn)
+    {
+        return handle.then(detail::make_skip<T, Err>(),
+        [cb = std::forward<Fn>(fn)](basic_context_ptr<void, Err> ctx, Err&& err)
+        {
+            if (err == detail::error_traits<Err>::get_cancelled())
+            {
+                cb();
+            }
+            ctx->async_failure(std::move(err));
+        });
+    }
+
     template <typename Err, typename... Fs>
     auto basic_when_all(Fs&&...fs)
     {
@@ -45,7 +69,7 @@ namespace asy
 
         auto ops = std::make_shared<ops_t>(basic_op<Err>(std::forward<Fs>(fs))...);
 
-        return basic_op_handle<rets_t, Err>([ops](basic_context_ptr<rets_t, Err> ctx, Fs&&...fs)
+        auto h = basic_op_handle<rets_t, Err>([ops](basic_context_ptr<rets_t, Err> ctx, Fs&&...fs)
         {
             auto counter = std::make_shared<int>(sizeof...(Fs));
             auto res = std::make_shared<rets_t>();
@@ -68,20 +92,14 @@ namespace asy
                             }
                         });
             });
-        }, std::forward<Fs>(fs)...).then([](basic_context_ptr<rets_t, Err> ctx, rets_t&& input)
+        }, std::forward<Fs>(fs)...);
+
+        return add_cancel(h, [ops]()
         {
-            ctx->async_success(std::forward<decltype(input)>(input));
-        },
-        [ops](basic_context_ptr<void, Err> ctx, Err&& err)
-        {
-            if (err == detail::error_traits<Err>::get_cancelled())
+            detail::static_for<sizeof...(Fs)>([&](auto idx)
             {
-                detail::static_for<sizeof...(Fs)>([&](auto idx)
-                {
-                    std::get<idx.value>(*ops).cancel();
-                });
-            }
-            ctx->async_failure(std::move(err));
+                std::get<idx.value>(*ops).cancel();
+            });
         });
     }
 
@@ -93,7 +111,7 @@ namespace asy
 
         auto ops = std::make_shared<ops_t>(basic_op<Err>(std::forward<Fs>(fs))...);
 
-        return basic_op_handle<rets_t, Err>([ops](basic_context_ptr<rets_t, Err> ctx, Fs&&...fs)
+        auto h = basic_op_handle<rets_t, Err>([ops](basic_context_ptr<rets_t, Err> ctx, Fs&&...fs)
         {
             auto counter = std::make_shared<int>(sizeof...(Fs));
             auto res = std::make_shared<rets_t>();
@@ -116,20 +134,14 @@ namespace asy
                           });
                       });
             });
-        }, std::forward<Fs>(fs)...).then([](basic_context_ptr<rets_t, Err> ctx, rets_t&& input)
+        }, std::forward<Fs>(fs)...);
+
+        return add_cancel(h, [ops]()
         {
-            ctx->async_success(std::forward<decltype(input)>(input));
-        },
-        [ops](basic_context_ptr<void, Err> ctx, Err&& err)
-        {
-            if (err == detail::error_traits<Err>::get_cancelled())
+            detail::static_for<sizeof...(Fs)>([&](auto idx)
             {
-                detail::static_for<sizeof...(Fs)>([&](auto idx)
-                {
-                    std::get<idx.value>(*ops).cancel();
-                });
-            }
-            ctx->async_failure(std::move(err));
+                std::get<idx.value>(*ops).cancel();
+            });
         });
     }
 
@@ -141,7 +153,7 @@ namespace asy
 
         auto ops = std::make_shared<ops_t>(basic_op<Err>(std::forward<Fs>(fs))...);
 
-        return basic_op_handle<rets_t, Err>([ops](basic_context_ptr<rets_t, Err> ctx, Fs&&...fs)
+        auto h = basic_op_handle<rets_t, Err>([ops](basic_context_ptr<rets_t, Err> ctx, Fs&&...fs)
         {
             detail::static_for<sizeof...(Fs)>([&](auto index){
                 std::get<index.value>(*ops).then(
@@ -160,20 +172,14 @@ namespace asy
                             });
                         });
             });
-        }, std::forward<Fs>(fs)...).then([](basic_context_ptr<rets_t, Err> ctx, rets_t&& input)
+        }, std::forward<Fs>(fs)...);
+
+        return add_cancel(h, [ops]()
         {
-            ctx->async_success(std::forward<decltype(input)>(input));
-        },
-        [ops](basic_context_ptr<void, Err> ctx, Err&& err)
-        {
-            if (err == detail::error_traits<Err>::get_cancelled())
+            detail::static_for<sizeof...(Fs)>([&](auto idx)
             {
-                detail::static_for<sizeof...(Fs)>([&](auto idx)
-                {
-                    std::get<idx.value>(*ops).cancel();
-                });
-            }
-            ctx->async_failure(std::move(err));
+                std::get<idx.value>(*ops).cancel();
+            });
         });
     }
 }
