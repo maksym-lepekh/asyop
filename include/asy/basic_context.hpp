@@ -13,22 +13,21 @@
 // limitations under the License.
 #pragma once
 
+#include "executor.hpp"
+
 #include <functional>
 #include <tuple>
 #include <variant>
 #include <memory>
 #include <type_traits>
 #include <utility>
+#include <mutex>
 
 
 namespace asy::detail
 {
-    struct void_t
-    {
-    };
-    struct done_t
-    {
-    };
+    struct void_t{};
+    struct done_t{};
 
     template<typename T>
     struct type_traits
@@ -50,12 +49,6 @@ namespace asy::detail
 
     template<typename Err>
     struct error_traits;
-
-    inline namespace v1
-    {
-        using posted_fn = std::function<void()>;
-        extern thread_local std::function<void(posted_fn)> post_impl;
-    }
 
     struct context_base
     {
@@ -82,6 +75,7 @@ namespace asy
 
         void async_success(success_t&& val = {})
         {
+            auto guard = synchronize();
             if (std::get_if<detail::done_t>(&m_pending))
             {
                 return;
@@ -91,32 +85,33 @@ namespace asy
                 if constexpr (std::is_void_v<Val>)
                     post(std::get<success_cb_t>(*cbs));
                 else
-                    post(std::get<success_cb_t>(*cbs), val);
+                    post(std::get<success_cb_t>(*cbs), std::move(val));
 
                 m_pending = detail::done_t{};
                 m_parent.reset();
             }
             else
             {
-                m_pending = val;
+                m_pending = std::move(val);
             }
         }
 
         void async_failure(failure_t&& val = {})
         {
+            auto guard = synchronize();
             if (std::get_if<detail::done_t>(&m_pending))
             {
                 return;
             }
             else if (auto cbs = std::get_if<cb_pair_t>(&m_pending))
             {
-                post(std::get<failure_cb_t>(*cbs), val);
+                post(std::get<failure_cb_t>(*cbs), std::move(val));
                 m_pending = detail::done_t{};
                 m_parent.reset();
             }
             else
             {
-                m_pending = val;
+                m_pending = std::move(val);
             }
         }
 
@@ -132,6 +127,7 @@ namespace asy
 
         void cancel() override
         {
+            auto guard = synchronize();
             if (std::get_if<detail::done_t>(&m_pending))
             {
                 return;
@@ -146,18 +142,19 @@ namespace asy
             auto val = detail::error_traits<Err>::get_cancelled();
             if (auto cbs = std::get_if<cb_pair_t>(&m_pending))
             {
-                post(std::get<failure_cb_t>(*cbs), val);
+                post(std::get<failure_cb_t>(*cbs), std::move(val));
                 m_pending = detail::done_t{};
                 m_parent.reset();
             }
             else
             {
-                m_pending = val;
+                m_pending = std::move(val);
             }
         }
 
         void set_continuation(success_cb_t success_cb, failure_cb_t failure_cb)
         {
+            auto guard = synchronize();
             if (std::get_if<detail::done_t>(&m_pending))
             {
                 return;
@@ -167,13 +164,13 @@ namespace asy
                 if constexpr (std::is_void_v<Val>)
                     post(success_cb);
                 else
-                    post(success_cb, *s_val);
+                    post(success_cb, std::move(*s_val));
                 m_pending = detail::done_t{};
                 m_parent.reset();
             }
             else if (auto f_val = std::get_if<failure_t>(&m_pending))
             {
-                post(failure_cb, *f_val);
+                post(failure_cb, std::move(*f_val));
                 m_pending = detail::done_t{};
                 m_parent.reset();
             }
@@ -185,18 +182,21 @@ namespace asy
 
         bool is_done() override
         {
+            auto guard = synchronize();
             return m_pending.index() == 4;
         }
 
     private:
-        template <typename F, typename Arg>
-        void post(F&& f, Arg&& arg)
+        template <typename F, typename... Args>
+        void post(F&& f, Args&&... arg)
         {
             if (f)
             {
-                detail::post_impl([handler = std::forward<F>(f), param = std::forward<Arg>(arg)]() mutable {
-                    handler(std::move(param));
-                });
+                executor::get().schedule_execution(
+                        [handler = std::forward<F>(f), params = std::make_tuple(std::move(arg)...)]() mutable
+                        {
+                            std::apply(handler, std::move(params));
+                        });
             }
         }
 
@@ -205,14 +205,27 @@ namespace asy
         {
             if (f)
             {
-                detail::post_impl([handler = std::forward<F>(f)]() {
-                    handler();
-                });
+                executor::get().schedule_execution([handler = std::forward<F>(f)]() { handler(); });
             }
+        }
+
+        struct sync_guard
+        {
+            sync_guard(std::mutex& m, bool l) : mutex(m), locked(l) { if (locked) mutex.lock(); }
+            ~sync_guard() { if (locked) mutex.unlock(); }
+
+            std::mutex& mutex;
+            bool locked;
+        };
+
+        sync_guard synchronize()
+        {
+            return sync_guard(m_mutex, executor::get().should_sync(std::this_thread::get_id()));
         }
 
         std::variant<std::monostate, cb_pair_t, success_t, failure_t, detail::done_t> m_pending;
         std::shared_ptr<detail::context_base> m_parent;
+        std::mutex m_mutex;
     };
 
     template <typename Ret, typename Err>

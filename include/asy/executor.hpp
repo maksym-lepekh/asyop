@@ -11,27 +11,25 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
-#include <asy/evloop_asio.hpp>
-#include <asy/op.hpp>
-#include <optional>
-#include <cassert>
+#pragma once
 
-namespace
-{
-    thread_local asio::io_service* svc = nullptr;
-}
+#include <functional>
+#include <thread>
 
-void asy::this_thread::set_event_loop(::asio::io_service& s)
+namespace asy { inline namespace v1
 {
-    svc = &s;
-    detail::post_impl = [](detail::posted_fn fn){
-        assert(svc != nullptr);
-        svc->post(std::move(fn));
+    struct executor
+    {
+        using fn_t = std::function<void()>;
+        using impl_t = std::function<void(fn_t)>;
+
+        void schedule_execution(fn_t fn, std::thread::id id = std::this_thread::get_id()) noexcept;
+        bool should_sync(std::thread::id id = std::this_thread::get_id()) const noexcept;
+        void set_impl(std::thread::id id, impl_t impl, bool require_sync);
+
+        static executor& get() noexcept;
+
+    private:
+        executor();
     };
-}
-
-asio::io_service& asy::this_thread::get_event_loop()
-{
-    assert(svc != nullptr);
-    return *svc;
-}
+}}

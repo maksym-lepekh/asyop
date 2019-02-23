@@ -11,37 +11,35 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
+#include <asy/evloop_asio.hpp>
+#include <asy/op.hpp>
 #include <asy/executor.hpp>
-#include <map>
-#include <utility>
+#include <optional>
 #include <cassert>
+#include <map>
 
 namespace
 {
-    auto registry = std::map<std::thread::id, std::pair<asy::executor::impl_t, bool>>{};
+    auto registry = std::map<std::thread::id, asio::io_service*>{};
 }
 
-asy::executor::executor() = default;
-
-asy::executor& asy::executor::get() noexcept
+void asy::this_thread::v1::set_event_loop(::asio::io_service& s)
 {
-    static executor inst;
-    return inst;
+    auto id = std::this_thread::get_id();
+    registry[id] = &s;
+
+    asy::executor::get().set_impl(
+            id,
+            [id](asy::executor::fn_t fn)
+            {
+                registry[id]->post(std::move(fn));
+            },
+            false);
 }
 
-void asy::executor::schedule_execution(asy::executor::fn_t fn, std::thread::id id) noexcept
+asio::io_service& asy::this_thread::v1::get_event_loop()
 {
+    auto id = std::this_thread::get_id();
     assert(registry.find(id) != registry.end());
-    std::invoke(registry[id].first, std::move(fn));
-}
-
-bool asy::executor::should_sync(std::thread::id id) const noexcept
-{
-    assert(registry.find(id) != registry.end());
-    return registry[id].second;
-}
-
-void asy::executor::set_impl(std::thread::id id, asy::executor::impl_t impl, bool require_sync)
-{
-    registry[id] = { std::move(impl), require_sync };
+    return *registry[id];
 }
