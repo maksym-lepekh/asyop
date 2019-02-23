@@ -203,3 +203,48 @@ TEST_CASE("Chaining with fail", "[asio]")
     CHECK_FALSE(op4);
     CHECK( (op1 && op2 && op3 && op5) );
 }
+
+struct move_test_t
+{
+    int val;
+    explicit move_test_t(int v) : val(v) {}
+    move_test_t(move_test_t&& o) noexcept : val(o.val) {}
+    move_test_t(const move_test_t& o) : val(o.val) { FAIL("Copy constructor"); }
+    move_test_t& operator=(move_test_t&& o) noexcept { val = o.val; return *this; }
+    move_test_t& operator=(const move_test_t& o) { val = o.val; FAIL("Copy assignment"); return *this; }
+};
+
+TEST_CASE("No copy", "[asio]")
+{
+    auto io = asio::io_service{};
+    auto timer = asio::steady_timer{io, 50ms};
+
+    timer.async_wait([](const asio::error_code& err){
+        if (!err) FAIL("Timeout");
+    });
+
+    asy::this_thread::set_event_loop(io);
+
+    SECTION("Then after return")
+    {
+        asy::op([]() { return move_test_t{42}; })
+        .then([&](auto&& t) {
+            CHECK(t.val == 42);
+            timer.cancel();
+        });
+
+        io.run();
+    }
+
+    SECTION("Return after then")
+    {
+        asy::sleep(10ms)
+        .then([]() { return move_test_t{42}; })
+        .then([&](auto&& t) {
+            CHECK(t.val == 42);
+            timer.cancel();
+        });
+
+        io.run();
+    }
+}

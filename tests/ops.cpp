@@ -238,8 +238,8 @@ TEST_CASE("Compound then", "[asio]")
 
     SECTION("when_all: cancel")
     {
-        auto timer2 = asio::steady_timer{io, 5ms};
-        auto timer3 = asio::steady_timer{io, 10ms};
+        auto timer2 = asio::steady_timer{io, 10ms};
+        auto timer3 = asio::steady_timer{io, 15ms};
 
         auto handle = asy::when_all(
                 asy::op([&](asy::context<void> ctx)

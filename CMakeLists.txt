@@ -22,7 +22,7 @@ target_include_directories(asyop PUBLIC include)
 # ASIO integration
 find_package(ASIO)
 if (ASIO_FOUND)
-    add_library(asyop-asio SHARED src_asio/event_loop.cpp)
+    add_library(asyop-asio SHARED src_asio/evloop_asio.cpp)
     target_include_directories(asyop-asio PUBLIC include_asio)
     target_link_libraries(asyop-asio PUBLIC asyop ASIO::ASIO)
 endif()

@@ -13,25 +13,33 @@
 // limitations under the License.
 #include <asy/evloop_asio.hpp>
 #include <asy/op.hpp>
+#include <asy/executor.hpp>
 #include <optional>
 #include <cassert>
+#include <map>
 
 namespace
 {
-    thread_local asio::io_service* svc = nullptr;
+    auto registry = std::map<std::thread::id, asio::io_service*>{};
 }
 
 void asy::this_thread::set_event_loop(::asio::io_service& s)
 {
-    svc = &s;
-    detail::post_impl = [](detail::posted_fn fn){
-        assert(svc != nullptr);
-        svc->post(std::move(fn));
-    };
+    auto id = std::this_thread::get_id();
+    registry[id] = &s;
+
+    asy::executor::get().set_impl(
+            id,
+            [id](asy::executor::fn_t fn)
+            {
+                registry[id]->post(std::move(fn));
+            },
+            false);
 }
 
 asio::io_service& asy::this_thread::get_event_loop()
 {
-    assert(svc != nullptr);
-    return *svc;
+    auto id = std::this_thread::get_id();
+    assert(registry.find(id) != registry.end());
+    return *registry[id];
 }
