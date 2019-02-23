@@ -23,7 +23,7 @@ namespace
     auto registry = std::map<std::thread::id, asio::io_service*>{};
 }
 
-void asy::this_thread::set_event_loop(::asio::io_service& s)
+void asy::this_thread::v1::set_event_loop(::asio::io_service& s)
 {
     auto id = std::this_thread::get_id();
     registry[id] = &s;
@@ -37,7 +37,7 @@ void asy::this_thread::set_event_loop(::asio::io_service& s)
             false);
 }
 
-asio::io_service& asy::this_thread::get_event_loop()
+asio::io_service& asy::this_thread::v1::get_event_loop()
 {
     auto id = std::this_thread::get_id();
     assert(registry.find(id) != registry.end());
