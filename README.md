@@ -5,3 +5,5 @@
 ![](https://img.shields.io/codecov/c/gh/maksym-lepekh/asyop.svg?logo=codecov&style=flat-square)
 
 C++17 library for asynchronous operations
+
+[Library guide](https://maksym-lepekh.github.io/asyop/)
