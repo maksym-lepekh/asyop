@@ -13,22 +13,24 @@
 // limitations under the License.
 #pragma once
 
-#include "detail/continuation_info.hpp"
-#include "basic_context.hpp"
-#include "basic_op_handle.hpp"
+#include "core/basic_context.hpp"
+#include "core/basic_op_handle.hpp"
+#include "core/continuation.hpp"
 
 namespace asy
 {
     template <typename Err, typename F, typename... Args>
     auto basic_op(F&& fn, Args&&... args)
     {
-        using info = detail::continuation_info<F, void, Args...>;
-
         if constexpr (detail::specialization_of<basic_op_handle, std::decay_t<F>>::value && sizeof...(Args) == 0)
         {
             return std::forward<F>(fn);
         }
-        else if constexpr (info::type == detail::cont_type::invalid && sizeof...(Args) == 0)
+        else if constexpr (asy::continuation<F, std::tuple<Args...>>::value)
+        {
+            return asy::continuation<F, std::tuple<Args...>>::template to_handle<Err>(std::forward<F>(fn), std::forward<Args>(args)...);
+        }
+        else if constexpr (sizeof...(Args) == 0)
         {
             using ret_t = std::decay_t<F>;
             return basic_op_handle<ret_t, Err>{[](basic_context_ptr<ret_t, Err> ctx, F&& init){
@@ -37,27 +39,9 @@ namespace asy
         }
         else
         {
-            static_assert(info::type != detail::cont_type::invalid, "Functor has unsupported type");
-            using ret_t = typename info::ret_type;
-
-            if constexpr (info::type == detail::cont_type::simple || info::type == detail::cont_type::ambiguous_simple)
-            {
-                return basic_op_handle<ret_t, Err>{[&fn](basic_context_ptr<ret_t, Err> ctx, Args&&... args){
-                    ctx->async_return(fn(std::forward<Args>(args)...));
-                }, std::forward<Args>(args)...};
-            }
-            else if constexpr (info::type == detail::cont_type::areturn || info::type == detail::cont_type::ambiguous_areturn)
-            {
-                return fn(std::forward<Args>(args)...);
-            }
-            else
-            {
-                return basic_op_handle<ret_t, Err>{fn, std::forward<Args>(args)...};
-            }
+            static_assert(sizeof...(Args) == 0, "Invalid argument type");
         }
     }
-
-
 
     template <typename Ret, typename Err>
     auto basic_op()

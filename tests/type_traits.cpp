@@ -13,7 +13,7 @@
 // limitations under the License.
 #include <catch2/catch.hpp>
 #include <type_traits>
-#include <asy/detail/type_traits.hpp>
+#include <asy/common/type_traits.hpp>
 
 
 void void_int_fn(int) {}

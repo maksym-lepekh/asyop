@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 #include <catch2/catch.hpp>
-#include <asy/detail/value_or_error.hpp>
+#include <asy/common/value_or_error.hpp>
 #include <string>
 #include "voe.hpp"
 

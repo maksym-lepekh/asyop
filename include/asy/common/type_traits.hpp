@@ -96,4 +96,22 @@ namespace asy::detail
 
     template <typename F>
     struct functor_info: public functor_info_sel<F, has_call_op<std::remove_reference_t<F>>::value>{};
+
+    template <typename F, typename Arg>
+    struct is_appliable: std::false_type{};
+
+    template <typename F, typename... Args>
+    struct is_appliable<F, std::tuple<Args...>>: std::is_invocable<F, Args...>{};
+
+    template <typename F, typename ArgsTuple>
+    inline constexpr auto is_appliable_v = is_appliable<F, ArgsTuple>::value;
+
+    template <typename F, typename Arg>
+    struct apply_result: std::false_type{};
+
+    template <typename F, typename... Args>
+    struct apply_result<F, std::tuple<Args...>>: std::invoke_result<F, Args...>{};
+
+    template <typename F, typename ArgsTuple>
+    using apply_result_t = typename apply_result<F, ArgsTuple>::type;
 }

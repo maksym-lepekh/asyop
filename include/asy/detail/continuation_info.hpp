@@ -13,8 +13,8 @@
 // limitations under the License.
 #pragma once
 
-#include "type_traits.hpp"
-#include "value_or_error.hpp"
+#include "asy/common/type_traits.hpp"
+#include "asy/common/value_or_error.hpp"
 #include <functional>
 #include <type_traits>
 
