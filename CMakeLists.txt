@@ -35,7 +35,7 @@ if (NOT_SUBDIR)
     add_executable(tests
         tests/main.cpp
         tests/type_traits.cpp
-        tests/continuation_info.cpp
+        tests/continuation.cpp
         tests/then.cpp
         tests/op.cpp
         tests/ops.cpp

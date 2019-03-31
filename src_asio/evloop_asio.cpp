@@ -13,7 +13,7 @@
 // limitations under the License.
 #include <asy/evloop_asio.hpp>
 #include <asy/op.hpp>
-#include <asy/executor.hpp>
+#include <asy/core/executor.hpp>
 #include <optional>
 #include <cassert>
 #include <map>

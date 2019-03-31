@@ -13,10 +13,13 @@
 // limitations under the License.
 #pragma once
 
-#include "detail/continuation_info.hpp"
+#include "core/basic_context.hpp"
+#include "core/basic_op_handle.hpp"
+#include "common/simple_continuation.hpp"
+#include "common/voe_continuation.hpp"
+#include "common/aret_continuation.hpp"
+#include "common/ctx_continuation.hpp"
 #include "basic_ops.hpp"
-#include "basic_context.hpp"
-#include "basic_op_handle.hpp"
 #include "basic_op.hpp"
 
 #include <system_error>
