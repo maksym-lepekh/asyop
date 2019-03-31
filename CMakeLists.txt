@@ -1,5 +1,6 @@
 cmake_minimum_required(VERSION 3.9)
 list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_LIST_DIR}/cmake")
+include(coverage-support)
 
 # detect add_subdirectory
 if (NOT DEFINED PROJECT_NAME)
