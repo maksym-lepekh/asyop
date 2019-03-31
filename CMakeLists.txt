@@ -1,6 +1,5 @@
 cmake_minimum_required(VERSION 3.9)
 list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_LIST_DIR}/cmake")
-include(coverage-support)
 
 # detect add_subdirectory
 if (NOT DEFINED PROJECT_NAME)
@@ -30,6 +29,7 @@ endif()
 
 if (NOT_SUBDIR)
     # standalone project, add tests
+    include(coverage-support)
     find_package(Catch2 REQUIRED)
     find_package(ASIO REQUIRED)
 
