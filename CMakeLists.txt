@@ -29,6 +29,7 @@ endif()
 
 if (NOT_SUBDIR)
     # standalone project, add tests
+    include(coverage-support)
     find_package(Catch2 REQUIRED)
     find_package(ASIO REQUIRED)
 
