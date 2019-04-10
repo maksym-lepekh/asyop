@@ -19,25 +19,15 @@
 #include "type_traits.hpp"
 
 
-namespace asy::detail::simple_continuation
-{
-    template <typename F, typename Args>
-    constexpr auto check()
-    {
-        return detail::is_appliable_v<F, Args>;
-    }
-
-    template <typename F, typename Args>
-    struct impl: std::conditional_t<check<F, Args>(), std::true_type, std::false_type>{};
-}
-
 namespace asy::concept
 {
-    template <typename F, typename Args>
-    inline constexpr auto SimpleContinuation = detail::simple_continuation::impl<F, Args>::value;
-
-    template <typename F, typename Args>
-    using require_SimpleContinuation = std::enable_if_t<SimpleContinuation<F, Args>>;
+    struct SimpleContinuation
+    {
+        template <typename T, typename Args> auto impl(T&& t, Args&&...)
+        -> require<
+                is_true<detail::is_appliable_v<T, Args>>
+        >{}
+    };
 }
 
 namespace asy
@@ -83,6 +73,6 @@ namespace asy
     };
 
     template <typename Functor, typename Input>
-    struct continuation<Functor, Input, concept::require_SimpleContinuation<Functor, Input>>
+    struct continuation<Functor, Input, c::require<c::satisfy<c::SimpleContinuation, Functor, Input>>>
             : simple_continuation<Functor, Input>{};
 }

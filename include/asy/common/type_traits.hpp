@@ -114,4 +114,16 @@ namespace asy::detail
 
     template <typename F, typename ArgsTuple>
     using apply_result_t = typename apply_result<F, ArgsTuple>::type;
+
+    template <typename T, typename Tuple>
+    using tuple_prepend_t = decltype(std::tuple_cat(std::declval<std::tuple<T>>(), std::declval<Tuple>()));
+
+    template <template <typename...> typename Templ, typename... OtherArgs>
+    using specialization_of_first_t = typename detail::specialization_of<Templ, OtherArgs...>::first_arg;
+
+    template <typename F>
+    using functor_ret_t = typename detail::functor_info<F>::ret_type;
+
+    template <typename F>
+    using functor_first_t = typename detail::functor_info<F>::arg1_type;
 }

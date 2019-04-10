@@ -24,54 +24,56 @@
 #include <functional>
 #include "voe.hpp"
 
+using namespace asy::concept;
+
 TEST_CASE("Continuation type", "[deduce]")
 {
     SECTION("Simple continuation")
     {
         auto l = [](int&&){ return double{}; };
-        STATIC_REQUIRE(asy::concept::SimpleContinuation<decltype(l), std::tuple<int&&>>);
+        STATIC_REQUIRE(satisfies<SimpleContinuation, decltype(l), std::tuple<int&&>>);
     }
 
     SECTION("Simple continuation (return void)")
     {
         auto l = [](int&&){};
-        STATIC_REQUIRE(asy::concept::SimpleContinuation<decltype(l), std::tuple<int&&>>);
+        STATIC_REQUIRE(satisfies<SimpleContinuation, decltype(l), std::tuple<int&&>>);
     }
 
     SECTION("Async return val continuation")
     {
         auto l = [](int&&){ return asy::op(0.0); };
-        STATIC_REQUIRE(asy::concept::AretContinuation<decltype(l), std::tuple<int&&>>);
+        STATIC_REQUIRE(satisfies<ARetContinuation, decltype(l), std::tuple<int&&>>);
     }
 
     SECTION("Async continuation")
     {
         auto l = [](asy::context<double>, int&&){};
-        STATIC_REQUIRE(asy::concept::CtxContinuation<decltype(l), std::tuple<int&&>>);
+        STATIC_REQUIRE(satisfies<CtxContinuation, decltype(l), std::tuple<int&&>>);
     }
 
     SECTION("Simple continuation (void input)")
     {
         auto l = [](){ return double{}; };
-        STATIC_REQUIRE(asy::concept::SimpleContinuation<decltype(l), std::tuple<>>);
+        STATIC_REQUIRE(satisfies<SimpleContinuation, decltype(l), std::tuple<>>);
     }
 
     SECTION("Simple continuation (return void, void input)")
     {
         auto l = [](){};
-        STATIC_REQUIRE(asy::concept::SimpleContinuation<decltype(l), std::tuple<>>);
+        STATIC_REQUIRE(satisfies<SimpleContinuation, decltype(l), std::tuple<>>);
     }
 
     SECTION("Async return val continuation (void input)")
     {
         auto l = [](){ return asy::op(0.0); };
-        STATIC_REQUIRE(asy::concept::AretContinuation<decltype(l), std::tuple<>>);
+        STATIC_REQUIRE(satisfies<ARetContinuation, decltype(l), std::tuple<>>);
     }
 
     SECTION("Async continuation (void input)")
     {
         auto l = [](asy::context<double>){};
-        STATIC_REQUIRE(asy::concept::CtxContinuation<decltype(l), std::tuple<>>);
+        STATIC_REQUIRE(satisfies<CtxContinuation, decltype(l), std::tuple<>>);
     }
 
     SECTION("Invalid continuations")
@@ -107,25 +109,25 @@ TEST_CASE("Continuation type with aux", "[deduce]")
     SECTION("Simple continuation")
     {
         auto l = [](int&&, std::string){ return double{}; };
-        STATIC_REQUIRE(asy::concept::SimpleContinuation<decltype(l), std::tuple<int&&, std::string>>);
+        STATIC_REQUIRE(satisfies<SimpleContinuation, decltype(l), std::tuple<int&&, std::string>>);
     }
 
     SECTION("Simple continuation (return void)")
     {
         auto l = [](int&&, std::string){};
-        STATIC_REQUIRE(asy::concept::SimpleContinuation<decltype(l), std::tuple<int&&, std::string>>);
+        STATIC_REQUIRE(satisfies<SimpleContinuation, decltype(l), std::tuple<int&&, std::string>>);
     }
 
     SECTION("Async return val continuation")
     {
         auto l = [](int&&, std::string){ return asy::op<double>(); };
-        STATIC_REQUIRE(asy::concept::AretContinuation<decltype(l), std::tuple<int&&, std::string>>);
+        STATIC_REQUIRE(satisfies<ARetContinuation, decltype(l), std::tuple<int&&, std::string>>);
     }
 
     SECTION("Async continuation")
     {
         auto l = [](asy::context<double>, int&&, std::string){};
-        STATIC_REQUIRE(asy::concept::CtxContinuation<decltype(l), std::tuple<int&&, std::string>>);
+        STATIC_REQUIRE(satisfies<CtxContinuation, decltype(l), std::tuple<int&&, std::string>>);
     }
 
     SECTION("Invalid continuations")
@@ -151,13 +153,13 @@ TEST_CASE("Continuation info", "[deduce]")
         auto l2 = [](int&&){ return asy::op<double>(0.0); };
         auto l3 = [](asy::context<double>, int&&){ };
 
-        STATIC_REQUIRE(asy::concept::SimpleContinuation<decltype(l1), std::tuple<int&&>>);
+        STATIC_REQUIRE(satisfies<SimpleContinuation, decltype(l1), std::tuple<int&&>>);
         STATIC_REQUIRE(std::is_same_v<asy::continuation<decltype(l1), std::tuple<int&&>>::ret_type, double>);
 
-        STATIC_REQUIRE(asy::concept::AretContinuation<decltype(l2), std::tuple<int&&>>);
+        STATIC_REQUIRE(satisfies<ARetContinuation, decltype(l2), std::tuple<int&&>>);
         STATIC_REQUIRE(std::is_same_v<asy::continuation<decltype(l2), std::tuple<int&&>>::ret_type, double>);
 
-        STATIC_REQUIRE(asy::concept::CtxContinuation<decltype(l3), std::tuple<int&&>>);
+        STATIC_REQUIRE(satisfies<CtxContinuation, decltype(l3), std::tuple<int&&>>);
         STATIC_REQUIRE(std::is_same_v<asy::continuation<decltype(l3), std::tuple<int&&>>::ret_type, double>);
     }
 
@@ -167,13 +169,13 @@ TEST_CASE("Continuation info", "[deduce]")
         auto l2 = [](int&&, std::string){ return asy::op<double>(); };
         auto l3 = [](asy::context<double>, int&&, std::string){ };
 
-        STATIC_REQUIRE(asy::concept::SimpleContinuation<decltype(l1), std::tuple<int&&, std::string>>);
+        STATIC_REQUIRE(satisfies<SimpleContinuation, decltype(l1), std::tuple<int&&, std::string>>);
         STATIC_REQUIRE(std::is_same_v<asy::continuation<decltype(l1), std::tuple<int&&, std::string>>::ret_type, double>);
 
-        STATIC_REQUIRE(asy::concept::AretContinuation<decltype(l2), std::tuple<int&&, std::string>>);
+        STATIC_REQUIRE(satisfies<ARetContinuation, decltype(l2), std::tuple<int&&, std::string>>);
         STATIC_REQUIRE(std::is_same_v<asy::continuation<decltype(l2), std::tuple<int&&, std::string>>::ret_type, double>);
 
-        STATIC_REQUIRE(asy::concept::CtxContinuation<decltype(l3), std::tuple<int&&, std::string>>);
+        STATIC_REQUIRE(satisfies<CtxContinuation, decltype(l3), std::tuple<int&&, std::string>>);
         STATIC_REQUIRE(std::is_same_v<asy::continuation<decltype(l3), std::tuple<int&&, std::string>>::ret_type, double>);
     }
 
@@ -183,13 +185,13 @@ TEST_CASE("Continuation info", "[deduce]")
         auto l2 = [](int&&){ return asy::op<void>(); };
         auto l3 = [](asy::context<void>, int&&){ };
 
-        STATIC_REQUIRE(asy::concept::SimpleContinuation<decltype(l1), std::tuple<int&&>>);
+        STATIC_REQUIRE(satisfies<SimpleContinuation, decltype(l1), std::tuple<int&&>>);
         STATIC_REQUIRE(std::is_same_v<asy::continuation<decltype(l1), std::tuple<int&&>>::ret_type, void>);
 
-        STATIC_REQUIRE(asy::concept::AretContinuation<decltype(l2), std::tuple<int&&>>);
+        STATIC_REQUIRE(satisfies<ARetContinuation, decltype(l2), std::tuple<int&&>>);
         STATIC_REQUIRE(std::is_same_v<asy::continuation<decltype(l2), std::tuple<int&&>>::ret_type, void>);
 
-        STATIC_REQUIRE(asy::concept::CtxContinuation<decltype(l3), std::tuple<int&&>>);
+        STATIC_REQUIRE(satisfies<CtxContinuation, decltype(l3), std::tuple<int&&>>);
         STATIC_REQUIRE(std::is_same_v<asy::continuation<decltype(l3), std::tuple<int&&>>::ret_type, void>);
     }
 }
@@ -204,13 +206,13 @@ TEST_CASE("Continuation info from std::function", "[deduce]")
         using f2 = std::function<asy::op_handle<double>(int&&)>;
         using f3 = std::function<void(asy::context<double>, int&&)>;
 
-        STATIC_REQUIRE(asy::concept::SimpleContinuation<f1, std::tuple<int&&>>);
+        STATIC_REQUIRE(satisfies<SimpleContinuation, f1, std::tuple<int&&>>);
         STATIC_REQUIRE(std::is_same_v<asy::continuation<f1, std::tuple<int&&>>::ret_type, double>);
 
-        STATIC_REQUIRE(asy::concept::AretContinuation<f2, std::tuple<int&&>>);
+        STATIC_REQUIRE(satisfies<ARetContinuation, f2, std::tuple<int&&>>);
         STATIC_REQUIRE(std::is_same_v<asy::continuation<f2, std::tuple<int&&>>::ret_type, double>);
 
-        STATIC_REQUIRE(asy::concept::CtxContinuation<f3, std::tuple<int&&>>);
+        STATIC_REQUIRE(satisfies<CtxContinuation, f3, std::tuple<int&&>>);
         STATIC_REQUIRE(std::is_same_v<asy::continuation<f3, std::tuple<int&&>>::ret_type, double>);
     }
 
@@ -220,25 +222,25 @@ TEST_CASE("Continuation info from std::function", "[deduce]")
         using f2 = std::function<asy::op_handle<double>(int&&, std::string)>;
         using f3 = std::function<void(asy::context<double>, int&&, std::string)>;
 
-        STATIC_REQUIRE(asy::concept::SimpleContinuation<f1, std::tuple<int&&, std::string>>);
+        STATIC_REQUIRE(satisfies<SimpleContinuation, f1, std::tuple<int&&, std::string>>);
         STATIC_REQUIRE(std::is_same_v<asy::continuation<f1, std::tuple<int&&, std::string>>::ret_type, double>);
 
-        STATIC_REQUIRE(asy::concept::AretContinuation<f2, std::tuple<int&&, std::string>>);
+        STATIC_REQUIRE(satisfies<ARetContinuation, f2, std::tuple<int&&, std::string>>);
         STATIC_REQUIRE(std::is_same_v<asy::continuation<f2, std::tuple<int&&, std::string>>::ret_type, double>);
 
-        STATIC_REQUIRE(asy::concept::CtxContinuation<f3, std::tuple<int&&, std::string>>);
+        STATIC_REQUIRE(satisfies<CtxContinuation, f3, std::tuple<int&&, std::string>>);
         STATIC_REQUIRE(std::is_same_v<asy::continuation<f3, std::tuple<int&&, std::string>>::ret_type, double>);
     }
 }
 
 TEST_CASE("Continuation with ValueOrError", "[deduce]")
 {
-
     auto l = [](int&&){ return voe<std::string>{}; };
-    using info = asy::continuation<decltype(l), std::tuple<int&&>>;
+    STATIC_REQUIRE(satisfies<VoEContinuation, decltype(l), std::tuple<int&&>>);
+    STATIC_REQUIRE(!satisfies<NoEContinuation, decltype(l), std::tuple<int&&>>);
+    STATIC_REQUIRE(!satisfies<VoNContinuation, decltype(l), std::tuple<int&&>>);
 
-    STATIC_REQUIRE(asy::concept::VoEContinuation<decltype(l), std::tuple<int&&>>);
-    STATIC_REQUIRE(info::voe_type == asy::detail::voe_t::voe);
+    using info = asy::continuation<decltype(l), std::tuple<int&&>>;
     STATIC_REQUIRE(std::is_same_v<info::ret_type, std::string>);
     STATIC_REQUIRE(std::is_same_v<info::ret_type_orig, voe<std::string>>);
 }
@@ -246,10 +248,11 @@ TEST_CASE("Continuation with ValueOrError", "[deduce]")
 TEST_CASE("Continuation with NoneOrError", "[deduce]")
 {
     auto l = [](int&&){ return noe{}; };
-    using info = asy::continuation<decltype(l), std::tuple<int&&>>;
+    STATIC_REQUIRE(!satisfies<VoEContinuation, decltype(l), std::tuple<int&&>>);
+    STATIC_REQUIRE(satisfies<NoEContinuation, decltype(l), std::tuple<int&&>>);
+    STATIC_REQUIRE(!satisfies<VoNContinuation, decltype(l), std::tuple<int&&>>);
 
-    STATIC_REQUIRE(asy::concept::VoEContinuation<decltype(l), std::tuple<int&&>>);
-    STATIC_REQUIRE(info::voe_type == asy::detail::voe_t::noe);
+    using info = asy::continuation<decltype(l), std::tuple<int&&>>;
     STATIC_REQUIRE(std::is_same_v<info::ret_type, void>);
     STATIC_REQUIRE(std::is_same_v<info::ret_type_orig, noe>);
 }
@@ -257,10 +260,11 @@ TEST_CASE("Continuation with NoneOrError", "[deduce]")
 TEST_CASE("Continuation with ValueOrNone", "[deduce]")
 {
     auto l = [](int&&){ return von<std::string>{}; };
-    using info = asy::continuation<decltype(l), std::tuple<int&&>>;
+    STATIC_REQUIRE(!satisfies<VoEContinuation, decltype(l), std::tuple<int&&>>);
+    STATIC_REQUIRE(!satisfies<NoEContinuation, decltype(l), std::tuple<int&&>>);
+    STATIC_REQUIRE(satisfies<VoNContinuation, decltype(l), std::tuple<int&&>>);
 
-    STATIC_REQUIRE(asy::concept::VoEContinuation<decltype(l), std::tuple<int&&>>);
-    STATIC_REQUIRE(info::voe_type == asy::detail::voe_t::von);
+    using info = asy::continuation<decltype(l), std::tuple<int&&>>;
     STATIC_REQUIRE(std::is_same_v<info::ret_type, std::string>);
     STATIC_REQUIRE(std::is_same_v<info::ret_type_orig, von<std::string>>);
 }

@@ -16,41 +16,28 @@
 #include <type_traits>
 #include <asy/core/basic_op_handle.hpp>
 #include <asy/core/basic_context.hpp>
+#include <asy/core/support/concept.hpp>
 #include "type_traits.hpp"
 #include "simple_continuation.hpp"
 
-namespace asy::detail::aret_continuation
-{
-    template <typename F, typename Args>
-    constexpr auto check()
-    {
-        if constexpr (detail::is_appliable_v<F, Args>)
-        {
-            return detail::specialization_of<asy::basic_op_handle, detail::apply_result_t<F, Args>>::value;
-        }
-        else
-        {
-            return false;
-        }
-    }
-
-    template <typename F, typename Args>
-    struct impl: std::conditional_t<check<F, Args>(), std::true_type, std::false_type>{};
-}
 
 namespace asy::concept
 {
-    template <typename F, typename Args>
-    inline constexpr auto AretContinuation = detail::aret_continuation::impl<F, Args>::value;
-
-    template <typename F, typename Args>
-    using require_AretContinuation = std::enable_if_t<AretContinuation<F, Args>>;
+    struct ARetContinuation
+    {
+        template <typename T, typename Args> auto impl(T&& t, Args&&...)
+        -> require<
+                is_true<detail::is_appliable_v<T, Args>>,
+                is_true<detail::specialization_of<asy::basic_op_handle, detail::apply_result_t<T, Args>>::value>
+        >{}
+    };
 }
 
 namespace asy
 {
     template <typename Functor, typename Input>
-    struct simple_continuation<Functor, Input, concept::require_AretContinuation<Functor, Input>> : std::true_type
+    struct simple_continuation<Functor, Input, c::require<c::satisfy<c::ARetContinuation, Functor, Input>>>
+            : std::true_type
     {
         using ret_type_orig = detail::apply_result_t<Functor, Input>;
         using ret_type = typename detail::specialization_of<asy::basic_op_handle, ret_type_orig>::first_arg;

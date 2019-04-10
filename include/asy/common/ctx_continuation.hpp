@@ -19,53 +19,28 @@
 #include "../core/basic_op_handle.hpp"
 #include "../core/basic_context.hpp"
 
-namespace asy::detail::ctx_continuation
-{
-    template <typename F, typename Args>
-    constexpr auto check()
-    {
-        using info = functor_info<F>;
-
-        if constexpr (!info::is_ambiguous)
-        {
-            if constexpr (info::arg_n == (std::tuple_size_v<Args> + 1))
-            {
-                using first_arg_t = typename info::arg1_type;
-                using is_shared_ptr = specialization_of<std::shared_ptr, first_arg_t>;
-
-                if constexpr (is_shared_ptr::value)
-                {
-                    if constexpr (specialization_of<basic_context, typename is_shared_ptr::first_arg>::value)
-                    {
-                        using ArgsWithCtx = decltype(std::tuple_cat(std::declval<std::tuple<first_arg_t>>(), std::declval<Args>()));
-                        constexpr bool is_call_with_context = detail::is_appliable_v<F, ArgsWithCtx>;
-
-                        return is_call_with_context && std::is_same_v<typename info::ret_type, void>;
-                    }
-                }
-            }
-        }
-
-        return false;
-    }
-
-    template <typename F, typename Args>
-    struct impl: std::conditional_t<check<F, Args>(), std::true_type, std::false_type>{};
-}
 
 namespace asy::concept
 {
-    template <typename F, typename Args>
-    inline constexpr auto CtxContinuation = detail::ctx_continuation::impl<F, Args>::value;
+    template <typename F>
+    using context_arg_first = detail::specialization_of<basic_context, detail::specialization_of_first_t<std::shared_ptr, detail::functor_first_t<F>>>;
 
-    template <typename F, typename Args>
-    using require_CtxContinuation = std::enable_if_t<CtxContinuation<F, Args>>;
+    struct CtxContinuation
+    {
+        template <typename T, typename Args>
+        auto impl(T&& t, Args&&...)
+        -> require<
+                is_true<std::is_void_v<detail::functor_ret_t<T>>>,
+                is_true<context_arg_first<T>::value>,
+                is_true<detail::is_appliable_v<T, detail::tuple_prepend_t<typename detail::functor_info<T>::arg1_type, Args>>>
+        >{}
+    };
 }
 
 namespace asy
 {
     template <typename Functor, typename Input>
-    struct continuation<Functor, Input, concept::require_CtxContinuation<Functor, Input>> : std::true_type
+    struct continuation<Functor, Input, c::require<c::satisfy<c::CtxContinuation, Functor, Input>>> : std::true_type
     {
         using _shptr = typename detail::functor_info<Functor>::arg1_type;
         using _ctx = typename detail::specialization_of<std::shared_ptr, _shptr>::first_arg;
