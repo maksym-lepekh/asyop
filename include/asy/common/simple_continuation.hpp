@@ -16,6 +16,7 @@
 #include <type_traits>
 #include <asy/core/basic_context.hpp>
 #include <asy/core/basic_op_handle.hpp>
+#include <asy/core/support/concept.hpp>
 #include "type_traits.hpp"
 
 
@@ -23,19 +24,29 @@ namespace asy::concept
 {
     struct SimpleContinuation
     {
-        template <typename T, typename Args> auto impl(T&& t, Args&&...)
+        template <typename T, typename... Args>
+        auto impl(T&& t, Args&&...)
         -> require<
-                is_true<detail::is_appliable_v<T, Args>>
+                is_true<std::is_invocable_v<T, Args...>>
         >{}
     };
 }
 
 namespace asy
 {
-    template <typename Functor, typename Input, typename Sfinae = void>
+    template <typename Proto, typename Sfinae = void>
     struct simple_continuation : std::true_type
     {
-        using ret_type = detail::apply_result_t<Functor, Input>;
+        template <typename F>
+        struct unpack_invoke_result_t;
+
+        template <typename F, typename... Args>
+        struct unpack_invoke_result_t<F(Args...)>
+        {
+            using type = std::invoke_result_t<F, Args...>;
+        };
+
+        using ret_type = typename unpack_invoke_result_t<Proto>::type;
 
         template <typename Err, typename F, typename... Args>
         static auto to_handle(F&& f, Args&&... args)
@@ -72,7 +83,7 @@ namespace asy
         }
     };
 
-    template <typename Functor, typename Input>
-    struct continuation<Functor, Input, c::require<c::satisfy<c::SimpleContinuation, Functor, Input>>>
-            : simple_continuation<Functor, Input>{};
+    template <typename Functor, typename... Input>
+    struct continuation<Functor(Input...), c::require<c::satisfy<c::SimpleContinuation, Functor, Input...>>>
+            : simple_continuation<Functor(Input...)>{};
 }

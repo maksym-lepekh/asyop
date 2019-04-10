@@ -48,7 +48,7 @@ namespace asy
         {
             if constexpr (std::is_void_v<T>)
             {
-                using info = continuation<Fn, std::tuple<>>;
+                using info = continuation<Fn()>;
                 using ret_t = typename info::ret_type;
 
                 return basic_op_handle<ret_t, Err>(
@@ -62,7 +62,7 @@ namespace asy
             }
             else
             {
-                using info = continuation<Fn, std::tuple<T&&>>;
+                using info = continuation<Fn(T&&)>;
                 using ret_t = typename info::ret_type;
 
                 return basic_op_handle<ret_t, Err>(
@@ -79,11 +79,11 @@ namespace asy
         template <typename SuccCb, typename FailCb>
         auto then(SuccCb&& s, FailCb&& f)
         {
-            using f_info = continuation<FailCb, std::tuple<Err&&>>;
+            using f_info = continuation<FailCb(Err&&)>;
 
             if constexpr (std::is_void_v<T>)
             {
-                using s_info = continuation<SuccCb, std::tuple<>>;
+                using s_info = continuation<SuccCb()>;
                 using ret_t = typename s_info::ret_type;
 
                 return basic_op_handle<ret_t, Err>(
@@ -97,7 +97,7 @@ namespace asy
             }
             else
             {
-                using s_info = continuation<SuccCb, std::tuple<T&&>>;
+                using s_info = continuation<SuccCb(T&&)>;
                 using ret_t = typename s_info::ret_type;
 
                 return basic_op_handle<ret_t, Err>(
@@ -114,7 +114,7 @@ namespace asy
         template <typename Fn>
         auto on_failure(Fn&& fn)
         {
-            using info = continuation<Fn, std::tuple<Err&&>>;
+            using info = continuation<Fn(Err&&)>;
 
             return basic_op_handle<void, Err>(
                     std::static_pointer_cast<detail::context_base>(m_ctx),

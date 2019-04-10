@@ -18,7 +18,7 @@
 
 namespace asy
 {
-    template <typename Functor, typename Input, typename Sfinae = void>
+    template <typename Functor, typename Sfinae = void>
     struct continuation : std::false_type
     {
         /// Invoke the functor and return op handle

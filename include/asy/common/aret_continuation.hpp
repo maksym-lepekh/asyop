@@ -25,22 +25,22 @@ namespace asy::concept
 {
     struct ARetContinuation
     {
-        template <typename T, typename Args> auto impl(T&& t, Args&&...)
+        template <typename T, typename... Args> auto impl(T&& t, Args&&...)
         -> require<
-                is_true<detail::is_appliable_v<T, Args>>,
-                is_true<detail::specialization_of<asy::basic_op_handle, detail::apply_result_t<T, Args>>::value>
+                is_true<std::is_invocable_v<T, Args...>>,
+                is_true<tt::specialization_of<asy::basic_op_handle, std::invoke_result_t<T, Args...>>::value>
         >{}
     };
 }
 
 namespace asy
 {
-    template <typename Functor, typename Input>
-    struct simple_continuation<Functor, Input, c::require<c::satisfy<c::ARetContinuation, Functor, Input>>>
+    template <typename Functor, typename... Input>
+    struct simple_continuation<Functor(Input...), c::require<c::satisfy<c::ARetContinuation, Functor, Input...>>>
             : std::true_type
     {
-        using ret_type_orig = detail::apply_result_t<Functor, Input>;
-        using ret_type = typename detail::specialization_of<asy::basic_op_handle, ret_type_orig>::first_arg;
+        using ret_type_orig = std::invoke_result_t<Functor, Input...>;
+        using ret_type = typename tt::specialization_of<asy::basic_op_handle, ret_type_orig>::first_arg;
 
         template<typename Err, typename F, typename... Args>
         static auto to_handle(F&& f, Args&& ... args)

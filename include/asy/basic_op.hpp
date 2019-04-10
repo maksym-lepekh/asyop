@@ -22,13 +22,13 @@ namespace asy
     template <typename Err, typename F, typename... Args>
     auto basic_op(F&& fn, Args&&... args)
     {
-        if constexpr (detail::specialization_of<basic_op_handle, std::decay_t<F>>::value && sizeof...(Args) == 0)
+        if constexpr (tt::specialization_of<basic_op_handle, std::decay_t<F>>::value && sizeof...(Args) == 0)
         {
             return std::forward<F>(fn);
         }
-        else if constexpr (asy::continuation<F, std::tuple<Args...>>::value)
+        else if constexpr (asy::continuation<F(Args...)>::value)
         {
-            return asy::continuation<F, std::tuple<Args...>>::template to_handle<Err>(std::forward<F>(fn), std::forward<Args>(args)...);
+            return asy::continuation<F(Args...)>::template to_handle<Err>(std::forward<F>(fn), std::forward<Args>(args)...);
         }
         else if constexpr (sizeof...(Args) == 0)
         {

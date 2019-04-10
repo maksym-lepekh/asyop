@@ -55,39 +55,39 @@ namespace asy::concept
 
     struct VoEContinuation
     {
-        template <typename T, typename Args> auto impl(T&& t, Args&&...)
+        template <typename T, typename... Args> auto impl(T&& t, Args&&...)
         -> require<
-                is_true<detail::is_appliable_v<T, Args>>,
-                satisfy<ValueOrError, detail::apply_result_t<T, Args>>
+                is_true<std::is_invocable_v<T, Args...>>,
+                satisfy<ValueOrError, std::invoke_result_t<T, Args...>>
         >{}
     };
 
     struct VoNContinuation
     {
-        template <typename T, typename Args> auto impl(T&& t, Args&&...)
+        template <typename T, typename... Args> auto impl(T&& t, Args&&...)
         -> require<
-                is_true<detail::is_appliable_v<T, Args>>,
-                satisfy<ValueOrNone, detail::apply_result_t<T, Args>>
+                is_true<std::is_invocable_v<T, Args...>>,
+                satisfy<ValueOrNone, std::invoke_result_t<T, Args...>>
         >{}
     };
 
     struct NoEContinuation
     {
-        template <typename T, typename Args> auto impl(T&& t, Args&&...)
+        template <typename T, typename... Args> auto impl(T&& t, Args&&...)
         -> require<
-                is_true<detail::is_appliable_v<T, Args>>,
-                satisfy<NoneOrError, detail::apply_result_t<T, Args>>
+                is_true<std::is_invocable_v<T, Args...>>,
+                satisfy<NoneOrError, std::invoke_result_t<T, Args...>>
         >{}
     };
 }
 
 namespace asy
 {
-    template <typename Functor, typename Input>
-    struct simple_continuation<Functor, Input, c::require<c::satisfy<c::VoEContinuation, Functor, Input>>>
+    template <typename Functor, typename... Input>
+    struct simple_continuation<Functor(Input...), c::require<c::satisfy<c::VoEContinuation, Functor, Input...>>>
             : std::true_type
     {
-        using ret_type_orig = detail::apply_result_t<Functor, Input>;
+        using ret_type_orig = std::invoke_result_t<Functor, Input...>;
         using ret_type = std::remove_reference_t<decltype(std::declval<ret_type_orig>().value())>;
         using err_type = std::remove_reference_t<decltype(std::declval<ret_type_orig>().error())>;
 
@@ -119,11 +119,11 @@ namespace asy
         }
     };
 
-    template <typename Functor, typename Input>
-    struct simple_continuation<Functor, Input, c::require<c::satisfy<c::VoNContinuation, Functor, Input>>>
+    template <typename Functor, typename... Input>
+    struct simple_continuation<Functor(Input...), c::require<c::satisfy<c::VoNContinuation, Functor, Input...>>>
             : std::true_type
     {
-        using ret_type_orig = detail::apply_result_t<Functor, Input>;
+        using ret_type_orig = std::invoke_result_t<Functor, Input...>;
         using ret_type = std::remove_reference_t<decltype(std::declval<ret_type_orig>().value())>;
         using err_type = void;
 
@@ -155,11 +155,11 @@ namespace asy
         }
     };
 
-    template <typename Functor, typename Input>
-    struct simple_continuation<Functor, Input, c::require<c::satisfy<c::NoEContinuation, Functor, Input>>>
+    template <typename Functor, typename... Input>
+    struct simple_continuation<Functor(Input...), c::require<c::satisfy<c::NoEContinuation, Functor, Input...>>>
             : std::true_type
     {
-        using ret_type_orig = detail::apply_result_t<Functor, Input>;
+        using ret_type_orig = std::invoke_result_t<Functor, Input...>;
         using ret_type = void;
         using err_type = std::remove_reference_t<decltype(std::declval<ret_type_orig>().error())>;
 

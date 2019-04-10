@@ -23,28 +23,28 @@
 namespace asy::concept
 {
     template <typename F>
-    using context_arg_first = detail::specialization_of<basic_context, detail::specialization_of_first_t<std::shared_ptr, detail::functor_first_t<F>>>;
+    using context_arg_first = tt::specialization_of<basic_context, tt::specialization_of_first_t<std::shared_ptr, tt::functor_first_t<F>>>;
 
     struct CtxContinuation
     {
-        template <typename T, typename Args>
+        template <typename T, typename... Args>
         auto impl(T&& t, Args&&...)
         -> require<
-                is_true<std::is_void_v<detail::functor_ret_t<T>>>,
+                is_true<std::is_void_v<tt::functor_ret_t<T>>>,
                 is_true<context_arg_first<T>::value>,
-                is_true<detail::is_appliable_v<T, detail::tuple_prepend_t<typename detail::functor_info<T>::arg1_type, Args>>>
+                is_true<std::is_invocable_v<T, tt::functor_first_t<T>, Args...>>
         >{}
     };
 }
 
 namespace asy
 {
-    template <typename Functor, typename Input>
-    struct continuation<Functor, Input, c::require<c::satisfy<c::CtxContinuation, Functor, Input>>> : std::true_type
+    template <typename Functor, typename... Input>
+    struct continuation<Functor(Input...), c::require<c::satisfy<c::CtxContinuation, Functor, Input...>>> : std::true_type
     {
-        using _shptr = typename detail::functor_info<Functor>::arg1_type;
-        using _ctx = typename detail::specialization_of<std::shared_ptr, _shptr>::first_arg;
-        using ret_type = typename detail::specialization_of<basic_context, _ctx>::first_arg;
+        using _shptr = tt::functor_first_t<Functor>;
+        using _ctx = tt::specialization_of_first_t<std::shared_ptr, _shptr>;
+        using ret_type = tt::specialization_of_first_t<basic_context, _ctx>;
         using ret_type_orig = void;
 
         template<typename Err, typename F, typename... Args>
