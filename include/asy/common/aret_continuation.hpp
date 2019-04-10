@@ -25,7 +25,7 @@ namespace asy::concept
 {
     struct ARetContinuation
     {
-        template <typename T, typename... Args> auto impl(T&& t, Args&&...)
+        template <typename T, typename... Args> auto operator()(T&& t, Args&&...)
         -> require<
                 is_true<std::is_invocable_v<T, Args...>>,
                 is_true<tt::specialization_of<asy::basic_op_handle, std::invoke_result_t<T, Args...>>::value>

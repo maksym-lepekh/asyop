@@ -25,7 +25,7 @@ namespace asy::concept
     struct SimpleContinuation
     {
         template <typename T, typename... Args>
-        auto impl(T&& t, Args&&...)
+        auto operator()(T&& t, Args&&...)
         -> require<
                 is_true<std::is_invocable_v<T, Args...>>
         >{}

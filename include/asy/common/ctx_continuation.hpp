@@ -28,7 +28,7 @@ namespace asy::concept
     struct CtxContinuation
     {
         template <typename T, typename... Args>
-        auto impl(T&& t, Args&&...)
+        auto operator()(T&& t, Args&&...)
         -> require<
                 is_true<std::is_void_v<tt::functor_ret_t<T>>>,
                 is_true<context_arg_first<T>::value>,

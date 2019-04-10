@@ -46,7 +46,7 @@ namespace asy::concept
     using require = typename detail::concept::require_t<Ts...>::type;
 
     template<typename Concept, typename... T>
-    using satisfy = require<decltype(std::declval<Concept>().impl(std::declval<T>()...))>;
+    using satisfy = require<decltype(std::declval<Concept>()(std::declval<T>()...))>;
 }
 
 namespace asy::detail::concept

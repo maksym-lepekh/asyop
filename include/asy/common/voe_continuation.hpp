@@ -25,7 +25,7 @@ namespace asy::concept
 {
     struct ValueOrError
     {
-        template <typename T> auto impl(T&& t)
+        template <typename T> auto operator()(T&& t)
         -> require<
                 is_true<std::is_convertible_v<decltype(t.has_value()), bool>>,
                 is_false<std::is_void_v<decltype(t.value())>>,
@@ -35,7 +35,7 @@ namespace asy::concept
 
     struct ValueOrNone
     {
-        template <typename T> auto impl(T&& t)
+        template <typename T> auto operator()(T&& t)
         -> require<
                 is_true<std::is_convertible_v<decltype(t.has_value()), bool>>,
                 is_false<std::is_void_v<decltype(t.value())>>,
@@ -45,7 +45,7 @@ namespace asy::concept
 
     struct NoneOrError
     {
-        template <typename T> auto impl(T&& t)
+        template <typename T> auto operator()(T&& t)
         -> require<
                 is_true<std::is_convertible_v<decltype(t.has_value()), bool>>,
                 is_false<std::is_void_v<decltype(t.error())>>,
@@ -55,7 +55,7 @@ namespace asy::concept
 
     struct VoEContinuation
     {
-        template <typename T, typename... Args> auto impl(T&& t, Args&&...)
+        template <typename T, typename... Args> auto operator()(T&& t, Args&&...)
         -> require<
                 is_true<std::is_invocable_v<T, Args...>>,
                 satisfy<ValueOrError, std::invoke_result_t<T, Args...>>
@@ -64,7 +64,7 @@ namespace asy::concept
 
     struct VoNContinuation
     {
-        template <typename T, typename... Args> auto impl(T&& t, Args&&...)
+        template <typename T, typename... Args> auto operator()(T&& t, Args&&...)
         -> require<
                 is_true<std::is_invocable_v<T, Args...>>,
                 satisfy<ValueOrNone, std::invoke_result_t<T, Args...>>
@@ -73,7 +73,7 @@ namespace asy::concept
 
     struct NoEContinuation
     {
-        template <typename T, typename... Args> auto impl(T&& t, Args&&...)
+        template <typename T, typename... Args> auto operator()(T&& t, Args&&...)
         -> require<
                 is_true<std::is_invocable_v<T, Args...>>,
                 satisfy<NoneOrError, std::invoke_result_t<T, Args...>>
