@@ -83,16 +83,16 @@ namespace asy::concept
 
 namespace asy
 {
-    template <typename Functor, typename... Input>
-    struct simple_continuation<Functor(Input...), c::require<c::satisfy<c::VoEContinuation, Functor, Input...>>>
+    template <typename F, typename... Args>
+    struct simple_continuation<F(Args...), c::require<c::satisfy<c::VoEContinuation, F, Args...>>>
             : std::true_type
     {
-        using ret_type_orig = std::invoke_result_t<Functor, Input...>;
+        using ret_type_orig = std::invoke_result_t<F, Args...>;
         using ret_type = std::remove_reference_t<decltype(std::declval<ret_type_orig>().value())>;
         using err_type = std::remove_reference_t<decltype(std::declval<ret_type_orig>().error())>;
 
-        template <typename Err, typename F, typename... Args>
-        static auto to_handle(F&& f, Args&&... args)
+        template <typename Err>
+        static auto to_handle(std::in_place_type_t<Err>, F&& f, Args&&... args)
         {
             return basic_op_handle<ret_type, Err>{
                  [](basic_context_ptr<ret_type, Err> ctx, F&& f, Args&&... args)
@@ -105,7 +105,7 @@ namespace asy
                  }, std::forward<F>(f), std::forward<Args>(args)...};
         }
 
-        template <typename T, typename Err, typename F, typename... Args>
+        template <typename T, typename Err>
         static auto deferred(asy::basic_context_ptr<T, Err> ctx, F&& f)
         {
             return [f = std::forward<F>(f), ctx](Args&&... args)
@@ -119,16 +119,16 @@ namespace asy
         }
     };
 
-    template <typename Functor, typename... Input>
-    struct simple_continuation<Functor(Input...), c::require<c::satisfy<c::VoNContinuation, Functor, Input...>>>
+    template <typename F, typename... Args>
+    struct simple_continuation<F(Args...), c::require<c::satisfy<c::VoNContinuation, F, Args...>>>
             : std::true_type
     {
-        using ret_type_orig = std::invoke_result_t<Functor, Input...>;
+        using ret_type_orig = std::invoke_result_t<F, Args...>;
         using ret_type = std::remove_reference_t<decltype(std::declval<ret_type_orig>().value())>;
         using err_type = void;
 
-        template <typename Err, typename F, typename... Args>
-        static auto to_handle(F&& f, Args&&... args)
+        template <typename Err>
+        static auto to_handle(std::in_place_type_t<Err>, F&& f, Args&&... args)
         {
             return basic_op_handle<ret_type, Err>{
                     [](basic_context_ptr<ret_type, Err> ctx, F&& f, Args&&... args)
@@ -141,7 +141,7 @@ namespace asy
                     }, std::forward<F>(f), std::forward<Args>(args)...};
         }
 
-        template <typename T, typename Err, typename F, typename... Args>
+        template <typename T, typename Err>
         static auto deferred(asy::basic_context_ptr<T, Err> ctx, F&& f)
         {
             return [f = std::forward<F>(f), ctx](Args&&... args)
@@ -155,16 +155,16 @@ namespace asy
         }
     };
 
-    template <typename Functor, typename... Input>
-    struct simple_continuation<Functor(Input...), c::require<c::satisfy<c::NoEContinuation, Functor, Input...>>>
+    template <typename F, typename... Args>
+    struct simple_continuation<F(Args...), c::require<c::satisfy<c::NoEContinuation, F, Args...>>>
             : std::true_type
     {
-        using ret_type_orig = std::invoke_result_t<Functor, Input...>;
+        using ret_type_orig = std::invoke_result_t<F, Args...>;
         using ret_type = void;
         using err_type = std::remove_reference_t<decltype(std::declval<ret_type_orig>().error())>;
 
-        template <typename Err, typename F, typename... Args>
-        static auto to_handle(F&& f, Args&&... args)
+        template <typename Err>
+        static auto to_handle(std::in_place_type_t<Err>, F&& f, Args&&... args)
         {
             return basic_op_handle<ret_type, Err>{
                     [](basic_context_ptr<ret_type, Err> ctx, F&& f, Args&&... args)
@@ -177,7 +177,7 @@ namespace asy
                     }, std::forward<F>(f), std::forward<Args>(args)...};
         }
 
-        template <typename T, typename Err, typename F, typename... Args>
+        template <typename T, typename Err>
         static auto deferred(asy::basic_context_ptr<T, Err> ctx, F&& f)
         {
             return [f = std::forward<F>(f), ctx](Args&&... args)

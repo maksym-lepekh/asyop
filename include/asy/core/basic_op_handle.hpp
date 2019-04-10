@@ -56,7 +56,7 @@ namespace asy
                         [this, &fn](basic_context_ptr<ret_t, Err> ctx)
                         {
                             m_ctx->set_continuation(
-                                    info::template deferred<ret_t, Err, Fn>(ctx, std::forward<Fn>(fn)),
+                                    info::deferred(ctx, std::forward<Fn>(fn)),
                                     default_skip_failcont<Err>(ctx));
                         });
             }
@@ -70,7 +70,7 @@ namespace asy
                         [this, &fn](basic_context_ptr<ret_t, Err> ctx)
                         {
                             m_ctx->set_continuation(
-                                    info::template deferred<ret_t, Err, Fn, T&&>(ctx, std::forward<Fn>(fn)),
+                                    info::deferred(ctx, std::forward<Fn>(fn)),
                                     default_skip_failcont<Err>(ctx));
                         });
             }
@@ -91,8 +91,8 @@ namespace asy
                         [this, &s, &f](basic_context_ptr<ret_t, Err> ctx)
                         {
                             m_ctx->set_continuation(
-                                    s_info::template deferred<ret_t, Err, SuccCb>(ctx, std::forward<SuccCb>(s)),
-                                    f_info::template deferred<ret_t, Err, FailCb, Err&&>(ctx, std::forward<FailCb>(f)));
+                                    s_info::deferred(ctx, std::forward<SuccCb>(s)),
+                                    f_info::deferred(ctx, std::forward<FailCb>(f)));
                         });
             }
             else
@@ -105,8 +105,8 @@ namespace asy
                         [this, &s, &f](basic_context_ptr<ret_t, Err> ctx)
                         {
                             m_ctx->set_continuation(
-                                    s_info::template deferred<ret_t, Err, SuccCb, T&&>(ctx, std::forward<SuccCb>(s)),
-                                    f_info::template deferred<ret_t, Err, FailCb, Err&&>(ctx, std::forward<FailCb>(f)));
+                                    s_info::deferred(ctx, std::forward<SuccCb>(s)),
+                                    f_info::deferred(ctx, std::forward<FailCb>(f)));
                         });
             }
         }
@@ -122,7 +122,7 @@ namespace asy
                     {
                         m_ctx->set_continuation(
                                 default_skip_cont<T>(ctx),
-                                info::template deferred<void, Err, Fn, Err&&>(ctx, std::forward<Fn>(fn)));
+                                info::deferred(ctx, std::forward<Fn>(fn)));
                     });
         }
 

@@ -39,33 +39,34 @@ namespace asy::concept
 
 namespace asy
 {
-    template <typename Functor, typename... Input>
-    struct continuation<Functor(Input...), c::require<c::satisfy<c::CtxContinuation, Functor, Input...>>> : std::true_type
+    template <typename F, typename... Args>
+    struct continuation<F(Args...), c::require<c::satisfy<c::CtxContinuation, F, Args...>>> : std::true_type
     {
-        using _shptr = tt::functor_first_t<Functor>;
+        using _shptr = tt::functor_first_t<F>;
         using _ctx = tt::specialization_of_first_t<std::shared_ptr, _shptr>;
         using ret_type = tt::specialization_of_first_t<basic_context, _ctx>;
         using ret_type_orig = void;
 
-        template<typename Err, typename F, typename... Args>
-        static auto to_handle(F&& f, Args&& ... args)
+        template<typename Err>
+        static auto to_handle(std::in_place_type_t<Err>, F&& f, Args&& ... args)
         {
             return asy::basic_op_handle<ret_type, Err>(std::forward<F>(f), std::forward<Args>(args)...);
         }
 
-        template<typename T, typename Err, typename F, typename... Args>
+        template<typename T, typename Err>
         static auto deferred(asy::basic_context_ptr<T, Err> ctx, F&& f)
         {
-            return [f = std::forward<F>(f), ctx](Args&& ... args) {
+            return [f = std::forward<F>(f), ctx](Args&& ... args) mutable
+            {
                 if constexpr (std::is_void_v<ret_type>)
                 {
-                    to_handle<Err>(f, std::forward<Args>(args)...).then(
+                    to_handle(std::in_place_type<Err>, std::forward<F>(f), std::forward<Args>(args)...).then(
                             [ctx](){ ctx->async_success(); },
                             [ctx](Err&& err){ ctx->async_failure(std::move(err)); });
                 }
                 else
                 {
-                    to_handle<Err>(f, std::forward<Args>(args)...).then(
+                    to_handle(std::in_place_type<Err>, std::forward<F>(f), std::forward<Args>(args)...).then(
                             [ctx](ret_type&& output){ ctx->async_success(std::move(output)); },
                             [ctx](Err&& err){ ctx->async_failure(std::move(err)); });
                 }

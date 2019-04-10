@@ -34,41 +34,35 @@ namespace asy::concept
 
 namespace asy
 {
-    template <typename Proto, typename Sfinae = void>
-    struct simple_continuation : std::true_type
+    template <typename F>
+    struct simple_continuation_impl;
+
+    template <typename F, typename... Args>
+    struct simple_continuation_impl<F(Args...)> : std::true_type
     {
-        template <typename F>
-        struct unpack_invoke_result_t;
+        using ret_type = std::invoke_result_t<F, Args...>;
 
-        template <typename F, typename... Args>
-        struct unpack_invoke_result_t<F(Args...)>
-        {
-            using type = std::invoke_result_t<F, Args...>;
-        };
-
-        using ret_type = typename unpack_invoke_result_t<Proto>::type;
-
-        template <typename Err, typename F, typename... Args>
-        static auto to_handle(F&& f, Args&&... args)
+        template <typename Err>
+        static auto to_handle(std::in_place_type_t<Err>, F&& f, Args&&... args)
         {
             return basic_op_handle<ret_type, Err>{
                 [](basic_context_ptr<ret_type, Err> ctx, F&& f, Args&&... args)
                 {
-                    invoke(ctx, f, std::forward<Args>(args)...);
+                    invoke(ctx, std::forward<F>(f), std::forward<Args>(args)...);
                 }, std::forward<F>(f), std::forward<Args>(args)...};
         }
 
-        template <typename T, typename Err, typename F, typename... Args>
+        template <typename T, typename Err>
         static auto deferred(asy::basic_context_ptr<T, Err> ctx, F&& f)
         {
-            return [f = std::forward<F>(f), ctx](Args&&... args)
+            return [f = std::forward<F>(f), ctx](Args&&... args) mutable
             {
-                invoke(ctx, f, std::forward<Args>(args)...);
+                invoke(ctx, std::forward<F>(f), std::forward<Args>(args)...);
             };
         }
 
     private:
-        template <typename T, typename Err, typename F, typename... Args>
+        template <typename T, typename Err>
         static auto invoke(asy::basic_context_ptr<T, Err> ctx, F&& f, Args&&... args)
         {
             if constexpr (std::is_void_v<ret_type>)
@@ -82,6 +76,9 @@ namespace asy
             }
         }
     };
+
+    template <typename Proto, typename Sfinae = void>
+    struct simple_continuation : simple_continuation_impl<Proto>{};
 
     template <typename Functor, typename... Input>
     struct continuation<Functor(Input...), c::require<c::satisfy<c::SimpleContinuation, Functor, Input...>>>

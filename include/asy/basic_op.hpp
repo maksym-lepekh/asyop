@@ -28,7 +28,7 @@ namespace asy
         }
         else if constexpr (asy::continuation<F(Args...)>::value)
         {
-            return asy::continuation<F(Args...)>::template to_handle<Err>(std::forward<F>(fn), std::forward<Args>(args)...);
+            return asy::continuation<F(Args...)>::to_handle(std::in_place_type<Err>, std::forward<F>(fn), std::forward<Args>(args)...);
         }
         else if constexpr (sizeof...(Args) == 0)
         {

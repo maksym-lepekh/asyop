@@ -35,20 +35,20 @@ namespace asy::concept
 
 namespace asy
 {
-    template <typename Functor, typename... Input>
-    struct simple_continuation<Functor(Input...), c::require<c::satisfy<c::ARetContinuation, Functor, Input...>>>
+    template <typename F, typename... Args>
+    struct simple_continuation<F(Args...), c::require<c::satisfy<c::ARetContinuation, F, Args...>>>
             : std::true_type
     {
-        using ret_type_orig = std::invoke_result_t<Functor, Input...>;
+        using ret_type_orig = std::invoke_result_t<F, Args...>;
         using ret_type = typename tt::specialization_of<asy::basic_op_handle, ret_type_orig>::first_arg;
 
-        template<typename Err, typename F, typename... Args>
-        static auto to_handle(F&& f, Args&& ... args)
+        template<typename Err>
+        static auto to_handle(std::in_place_type_t<Err>, F&& f, Args&& ... args)
         {
             return std::forward<F>(f)(std::forward<Args>(args)...);
         }
 
-        template<typename T, typename Err, typename F, typename... Args>
+        template<typename T, typename Err>
         static auto deferred(asy::basic_context_ptr<T, Err> ctx, F&& f)
         {
             return [f = std::forward<F>(f), ctx](Args&& ... args) {
