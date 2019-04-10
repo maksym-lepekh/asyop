@@ -16,52 +16,39 @@
 #include <type_traits>
 #include <asy/core/basic_op_handle.hpp>
 #include <asy/core/basic_context.hpp>
+#include <asy/core/support/concept.hpp>
 #include "type_traits.hpp"
 #include "simple_continuation.hpp"
 
-namespace asy::detail::aret_continuation
-{
-    template <typename F, typename Args>
-    constexpr auto check()
-    {
-        if constexpr (detail::is_appliable_v<F, Args>)
-        {
-            return detail::specialization_of<asy::basic_op_handle, detail::apply_result_t<F, Args>>::value;
-        }
-        else
-        {
-            return false;
-        }
-    }
-
-    template <typename F, typename Args>
-    struct impl: std::conditional_t<check<F, Args>(), std::true_type, std::false_type>{};
-}
 
 namespace asy::concept
 {
-    template <typename F, typename Args>
-    inline constexpr auto AretContinuation = detail::aret_continuation::impl<F, Args>::value;
-
-    template <typename F, typename Args>
-    using require_AretContinuation = std::enable_if_t<AretContinuation<F, Args>>;
+    struct ARetContinuation
+    {
+        template <typename T, typename... Args> auto operator()(T&& t, Args&&...)
+        -> require<
+                is_true<std::is_invocable_v<T, Args...>>,
+                is_true<tt::specialization_of<asy::basic_op_handle, std::invoke_result_t<T, Args...>>::value>
+        >{}
+    };
 }
 
 namespace asy
 {
-    template <typename Functor, typename Input>
-    struct simple_continuation<Functor, Input, concept::require_AretContinuation<Functor, Input>> : std::true_type
+    template <typename F, typename... Args>
+    struct simple_continuation<F(Args...), c::require<c::satisfy<c::ARetContinuation, F, Args...>>>
+            : std::true_type
     {
-        using ret_type_orig = detail::apply_result_t<Functor, Input>;
-        using ret_type = typename detail::specialization_of<asy::basic_op_handle, ret_type_orig>::first_arg;
+        using ret_type_orig = std::invoke_result_t<F, Args...>;
+        using ret_type = typename tt::specialization_of<asy::basic_op_handle, ret_type_orig>::first_arg;
 
-        template<typename Err, typename F, typename... Args>
-        static auto to_handle(F&& f, Args&& ... args)
+        template<typename Err>
+        static auto to_handle(std::in_place_type_t<Err>, F&& f, Args&& ... args)
         {
             return std::forward<F>(f)(std::forward<Args>(args)...);
         }
 
-        template<typename T, typename Err, typename F, typename... Args>
+        template<typename T, typename Err>
         static auto deferred(asy::basic_context_ptr<T, Err> ctx, F&& f)
         {
             return [f = std::forward<F>(f), ctx](Args&& ... args) {

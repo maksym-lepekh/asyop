@@ -61,7 +61,7 @@ namespace asy::thread
     template <typename F>
     auto fy(F&& f)
     {
-        if constexpr (asy::detail::specialization_of<std::future, std::decay_t<F>>::value)
+        if constexpr (asy::tt::specialization_of<std::future, std::decay_t<F>>::value)
         {
             return detail::fy_future(std::forward<F>(f));
         }

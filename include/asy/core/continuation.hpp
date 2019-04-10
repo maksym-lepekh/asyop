@@ -14,33 +14,37 @@
 #pragma once
 
 #include <type_traits>
+#include <utility>
 #include "basic_context.hpp"
 
 namespace asy
 {
-    template <typename Functor, typename Input, typename Sfinae = void>
+    template <typename F, typename Sfinae = void>
     struct continuation : std::false_type
     {
         /// Invoke the functor and return op handle
+        /// \note It is expected to be called as `c::template to_handle<Err>(f, args...)`
         ///
         /// \tparam Err Expected error type
         /// \param f Functor that matches supported signature
         /// \param args Functor call arguments (forwarded)
         /// \return asy::basic_op_handle of running computation
-        template <typename Err, typename F, typename... Args>
-        static auto to_handle(F&& f, Args&&... args)
+        template <typename Err, typename... Args>
+        static auto to_handle(std::in_place_type_t<Err>, F&& f, Args&&... args)
         {
             static_assert(!std::is_void_v<Sfinae>, "Invalid continuation type");
         }
 
 
         /// Create callable that invokes the functor and forwards result to given context
+        /// \note It is expected to be called as `c::deferred(ctx, f, args...)`, everything can be
+        ///  deduced.
         ///
         /// \param ctx Context of outer operation
         /// \param f Functor
         /// \param args Functor arguments
         /// \return Callable
-        template <typename T, typename Err, typename F, typename... Args>
+        template <typename T, typename Err, typename... Args>
         static auto deferred(asy::basic_context_ptr<T, Err> ctx, F&& f, Args&&...)
         {
             static_assert(!std::is_void_v<Sfinae>, "Invalid continuation type");

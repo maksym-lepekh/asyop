@@ -19,78 +19,54 @@
 #include "../core/basic_op_handle.hpp"
 #include "../core/basic_context.hpp"
 
-namespace asy::detail::ctx_continuation
-{
-    template <typename F, typename Args>
-    constexpr auto check()
-    {
-        using info = functor_info<F>;
-
-        if constexpr (!info::is_ambiguous)
-        {
-            if constexpr (info::arg_n == (std::tuple_size_v<Args> + 1))
-            {
-                using first_arg_t = typename info::arg1_type;
-                using is_shared_ptr = specialization_of<std::shared_ptr, first_arg_t>;
-
-                if constexpr (is_shared_ptr::value)
-                {
-                    if constexpr (specialization_of<basic_context, typename is_shared_ptr::first_arg>::value)
-                    {
-                        using ArgsWithCtx = decltype(std::tuple_cat(std::declval<std::tuple<first_arg_t>>(), std::declval<Args>()));
-                        constexpr bool is_call_with_context = detail::is_appliable_v<F, ArgsWithCtx>;
-
-                        return is_call_with_context && std::is_same_v<typename info::ret_type, void>;
-                    }
-                }
-            }
-        }
-
-        return false;
-    }
-
-    template <typename F, typename Args>
-    struct impl: std::conditional_t<check<F, Args>(), std::true_type, std::false_type>{};
-}
 
 namespace asy::concept
 {
-    template <typename F, typename Args>
-    inline constexpr auto CtxContinuation = detail::ctx_continuation::impl<F, Args>::value;
+    template <typename F>
+    using context_arg_first = tt::specialization_of<basic_context, tt::specialization_of_first_t<std::shared_ptr, tt::functor_first_t<F>>>;
 
-    template <typename F, typename Args>
-    using require_CtxContinuation = std::enable_if_t<CtxContinuation<F, Args>>;
+    struct CtxContinuation
+    {
+        template <typename T, typename... Args>
+        auto operator()(T&& t, Args&&...)
+        -> require<
+                is_true<std::is_void_v<tt::functor_ret_t<T>>>,
+                is_true<context_arg_first<T>::value>,
+                is_true<std::is_invocable_v<T, tt::functor_first_t<T>, Args...>>
+        >{}
+    };
 }
 
 namespace asy
 {
-    template <typename Functor, typename Input>
-    struct continuation<Functor, Input, concept::require_CtxContinuation<Functor, Input>> : std::true_type
+    template <typename F, typename... Args>
+    struct continuation<F(Args...), c::require<c::satisfy<c::CtxContinuation, F, Args...>>> : std::true_type
     {
-        using _shptr = typename detail::functor_info<Functor>::arg1_type;
-        using _ctx = typename detail::specialization_of<std::shared_ptr, _shptr>::first_arg;
-        using ret_type = typename detail::specialization_of<basic_context, _ctx>::first_arg;
+        using _shptr = tt::functor_first_t<F>;
+        using _ctx = tt::specialization_of_first_t<std::shared_ptr, _shptr>;
+        using ret_type = tt::specialization_of_first_t<basic_context, _ctx>;
         using ret_type_orig = void;
 
-        template<typename Err, typename F, typename... Args>
-        static auto to_handle(F&& f, Args&& ... args)
+        template<typename Err>
+        static auto to_handle(std::in_place_type_t<Err>, F&& f, Args&& ... args)
         {
             return asy::basic_op_handle<ret_type, Err>(std::forward<F>(f), std::forward<Args>(args)...);
         }
 
-        template<typename T, typename Err, typename F, typename... Args>
+        template<typename T, typename Err>
         static auto deferred(asy::basic_context_ptr<T, Err> ctx, F&& f)
         {
-            return [f = std::forward<F>(f), ctx](Args&& ... args) {
+            return [f = std::forward<F>(f), ctx](Args&& ... args) mutable
+            {
                 if constexpr (std::is_void_v<ret_type>)
                 {
-                    to_handle<Err>(f, std::forward<Args>(args)...).then(
+                    to_handle(std::in_place_type<Err>, std::forward<F>(f), std::forward<Args>(args)...).then(
                             [ctx](){ ctx->async_success(); },
                             [ctx](Err&& err){ ctx->async_failure(std::move(err)); });
                 }
                 else
                 {
-                    to_handle<Err>(f, std::forward<Args>(args)...).then(
+                    to_handle(std::in_place_type<Err>, std::forward<F>(f), std::forward<Args>(args)...).then(
                             [ctx](ret_type&& output){ ctx->async_success(std::move(output)); },
                             [ctx](Err&& err){ ctx->async_failure(std::move(err)); });
                 }

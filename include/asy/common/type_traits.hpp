@@ -20,15 +20,6 @@
 
 namespace asy::detail
 {
-    template <template <typename...> typename, typename...>
-    struct specialization_of : std::false_type {};
-
-    template <template <typename...> typename Templ, typename... OtherArgs, typename TemplArg>
-    struct specialization_of<Templ, Templ<TemplArg, OtherArgs...>> : std::true_type {
-       using first_arg = TemplArg;
-    };
-
-
     template <typename F>
     struct functor_info_fn
     {
@@ -93,25 +84,29 @@ namespace asy::detail
 
     template <typename F>
     struct functor_info_sel<F, true>: public functor_info_mem<decltype(&std::remove_reference_t<F>::operator())>{};
+}
+
+namespace asy::tt
+{
+    template <typename F>
+    struct functor:
+            public asy::detail::functor_info_sel<F, asy::detail::has_call_op<std::remove_reference_t<F>>::value>{};
 
     template <typename F>
-    struct functor_info: public functor_info_sel<F, has_call_op<std::remove_reference_t<F>>::value>{};
+    using functor_ret_t = typename functor<F>::ret_type;
 
-    template <typename F, typename Arg>
-    struct is_appliable: std::false_type{};
+    template <typename F>
+    using functor_first_t = typename functor<F>::arg1_type;
 
-    template <typename F, typename... Args>
-    struct is_appliable<F, std::tuple<Args...>>: std::is_invocable<F, Args...>{};
 
-    template <typename F, typename ArgsTuple>
-    inline constexpr auto is_appliable_v = is_appliable<F, ArgsTuple>::value;
+    template <template <typename...> typename, typename...>
+    struct specialization_of : std::false_type {};
 
-    template <typename F, typename Arg>
-    struct apply_result: std::false_type{};
+    template <template <typename...> typename Templ, typename... OtherArgs, typename TemplArg>
+    struct specialization_of<Templ, Templ<TemplArg, OtherArgs...>> : std::true_type {
+        using first_arg = TemplArg;
+    };
 
-    template <typename F, typename... Args>
-    struct apply_result<F, std::tuple<Args...>>: std::invoke_result<F, Args...>{};
-
-    template <typename F, typename ArgsTuple>
-    using apply_result_t = typename apply_result<F, ArgsTuple>::type;
+    template <template <typename...> typename Templ, typename... OtherArgs>
+    using specialization_of_first_t = typename specialization_of<Templ, OtherArgs...>::first_arg;
 }

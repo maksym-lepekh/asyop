@@ -12,9 +12,11 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 #include <catch2/catch.hpp>
-#include <asy/common/value_or_error.hpp>
+#include <asy/common/voe_continuation.hpp>
 #include <string>
 #include "voe.hpp"
+
+using namespace asy;
 
 TEST_CASE("ValueOrError", "[deduce]")
 {
@@ -27,10 +29,9 @@ TEST_CASE("ValueOrError", "[deduce]")
             int error() { return {}; }
         };
 
-        using info = asy::detail::ValueOrError<test>;
-        STATIC_REQUIRE(info::value);
-        STATIC_REQUIRE(std::is_same_v<info::success_type, std::string>);
-        STATIC_REQUIRE(std::is_same_v<info::failure_type, int>);
+        STATIC_REQUIRE(concept::satisfies<concept::ValueOrError, test>);
+        STATIC_REQUIRE_FALSE(concept::satisfies<concept::ValueOrNone, test>);
+        STATIC_REQUIRE_FALSE(concept::satisfies<concept::NoneOrError, test>);
     }
 
     SECTION("Bad has_value type")
@@ -42,7 +43,9 @@ TEST_CASE("ValueOrError", "[deduce]")
             int error() { return {}; }
         };
 
-        STATIC_REQUIRE_FALSE(asy::detail::is_ValueOrError<test>);
+        STATIC_REQUIRE_FALSE(concept::satisfies<concept::ValueOrError, test>);
+        STATIC_REQUIRE_FALSE(concept::satisfies<concept::ValueOrNone, test>);
+        STATIC_REQUIRE_FALSE(concept::satisfies<concept::NoneOrError, test>);
     }
 
     SECTION("Void value type")
@@ -54,8 +57,9 @@ TEST_CASE("ValueOrError", "[deduce]")
             int error() { return {}; }
         };
 
-        STATIC_REQUIRE(asy::detail::is_ValueOrError<test>);
-        STATIC_REQUIRE(asy::detail::ValueOrError<test>::voe_type == asy::detail::voe_t::noe);
+        STATIC_REQUIRE_FALSE(concept::satisfies<concept::ValueOrError, test>);
+        STATIC_REQUIRE_FALSE(concept::satisfies<concept::ValueOrNone, test>);
+        STATIC_REQUIRE(concept::satisfies<concept::NoneOrError, test>);
     }
 
     SECTION("Bad error type")
@@ -67,8 +71,9 @@ TEST_CASE("ValueOrError", "[deduce]")
             void error() { }
         };
 
-        STATIC_REQUIRE(asy::detail::is_ValueOrError<test>);
-        STATIC_REQUIRE(asy::detail::ValueOrError<test>::voe_type == asy::detail::voe_t::von);
+        STATIC_REQUIRE_FALSE(concept::satisfies<concept::ValueOrError, test>);
+        STATIC_REQUIRE(concept::satisfies<concept::ValueOrNone, test>);
+        STATIC_REQUIRE_FALSE(concept::satisfies<concept::NoneOrError, test>);
     }
 
     SECTION("Bad access")
@@ -81,7 +86,9 @@ TEST_CASE("ValueOrError", "[deduce]")
             int error() { return {}; }
         };
 
-        STATIC_REQUIRE_FALSE(asy::detail::is_ValueOrError<test>);
+        STATIC_REQUIRE_FALSE(concept::satisfies<concept::ValueOrError, test>);
+        STATIC_REQUIRE_FALSE(concept::satisfies<concept::ValueOrNone, test>);
+        STATIC_REQUIRE_FALSE(concept::satisfies<concept::NoneOrError, test>);
     }
 
     SECTION("Missing methods")
@@ -92,36 +99,35 @@ TEST_CASE("ValueOrError", "[deduce]")
             std::string get_value() { return {}; }
         };
 
-        STATIC_REQUIRE_FALSE(asy::detail::is_ValueOrError<test>);
+        STATIC_REQUIRE_FALSE(concept::satisfies<concept::ValueOrError, test>);
+        STATIC_REQUIRE_FALSE(concept::satisfies<concept::ValueOrNone, test>);
+        STATIC_REQUIRE_FALSE(concept::satisfies<concept::NoneOrError, test>);
     }
 }
 
-TEST_CASE("Testing VoE, VoN, NoE types", "[deduce]")
+TEST_CASE("VoE, VoN, NoE types", "[deduce]")
 {
     SECTION("VoE")
     {
-        using info = asy::detail::ValueOrError<voe<std::string>>;
-        STATIC_REQUIRE(info::value);
-        STATIC_REQUIRE(info::voe_type == asy::detail::voe_t::voe);
-        STATIC_REQUIRE(std::is_same_v<info::success_type, std::string>);
-        STATIC_REQUIRE(std::is_same_v<info::failure_type, std::error_code>);
+        using my_t = voe<std::string>;
+        STATIC_REQUIRE(concept::satisfies<concept::ValueOrError, my_t>);
+        STATIC_REQUIRE_FALSE(concept::satisfies<concept::ValueOrNone, my_t>);
+        STATIC_REQUIRE_FALSE(concept::satisfies<concept::NoneOrError, my_t>);
     }
 
     SECTION("VoN")
     {
-        using info = asy::detail::ValueOrError<von<std::string>>;
-        STATIC_REQUIRE(info::value);
-        STATIC_REQUIRE(info::voe_type == asy::detail::voe_t::von);
-        STATIC_REQUIRE(std::is_same_v<info::success_type, std::string>);
-        STATIC_REQUIRE(std::is_same_v<info::failure_type, void>);
+        using my_t = von<std::string>;
+        STATIC_REQUIRE_FALSE(concept::satisfies<concept::ValueOrError, my_t>);
+        STATIC_REQUIRE(concept::satisfies<concept::ValueOrNone, my_t>);
+        STATIC_REQUIRE_FALSE(concept::satisfies<concept::NoneOrError, my_t>);
     }
 
     SECTION("NoE")
     {
-        using info = asy::detail::ValueOrError<noe>;
-        STATIC_REQUIRE(info::value);
-        STATIC_REQUIRE(info::voe_type == asy::detail::voe_t::noe);
-        STATIC_REQUIRE(std::is_same_v<info::success_type, void>);
-        STATIC_REQUIRE(std::is_same_v<info::failure_type, std::error_code>);
+        using my_t = noe;
+        STATIC_REQUIRE_FALSE(concept::satisfies<concept::ValueOrError, my_t>);
+        STATIC_REQUIRE_FALSE(concept::satisfies<concept::ValueOrNone, my_t>);
+        STATIC_REQUIRE(concept::satisfies<concept::NoneOrError, my_t>);
     }
 }
