@@ -155,3 +155,39 @@ TEST_CASE("timed_op", "[asio]")
         io.run();
     }
 }
+
+TEST_CASE("adapt", "[asio]")
+{
+    auto io = asio::io_service{};
+    auto fail_timer = asio::steady_timer{io, 50ms};
+
+    fail_timer.async_wait([](const asio::error_code& err){
+        if (!err) FAIL("Timeout");
+    });
+
+    asy::this_thread::set_event_loop(io);
+
+    SECTION("Timer success")
+    {
+        auto timer = asio::steady_timer{io, 15ms};
+
+        timer.async_wait(asy::adapt).then([&](){ fail_timer.cancel(); });
+
+        io.run();
+    }
+
+    SECTION("Timer cancelled")
+    {
+        auto timer = asio::steady_timer{io, 15ms};
+
+        timer.async_wait(asy::adapt)
+        .on_failure([&](asio::error_code e)
+        {
+            CHECK(e == make_error_code(asio::error::operation_aborted));
+            fail_timer.cancel();
+        });
+
+        timer.cancel();
+        io.run();
+    }
+}
