@@ -159,7 +159,7 @@ TEST_CASE("timed_op", "[asio]")
 TEST_CASE("adapt", "[asio]")
 {
     auto io = asio::io_service{};
-    auto fail_timer = asio::steady_timer{io, 50ms};
+    auto fail_timer = asio::steady_timer{io, 200ms};
 
     fail_timer.async_wait([](const asio::error_code& err){
         if (!err) FAIL("Timeout");
