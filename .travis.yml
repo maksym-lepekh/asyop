@@ -13,16 +13,19 @@ matrix:
             - gcc-7
             - g++-7
             - cmake
-            - libasio-dev
             - lcov
       env:
         - COMPILER="CC=gcc-7 && CXX=g++-7"
         - BUILD_TYPE=Coverage
       install:
         - eval $COMPILER
+        - sudo apt-get remove python-enum34
+        - sudo pip install --upgrade pip
+        - sudo pip install conan
+        - conan user
       after_success:
         - lcov --directory . --capture --output-file coverage.info
-        - lcov --remove coverage.info '/usr/*' '*/tests/*' --output-file coverage.info
+        - lcov --remove coverage.info '/usr/*' '*/tests/*' '*/.conan/*' --output-file coverage.info
         - lcov --list coverage.info
         - bash <(curl -s https://codecov.io/bash) -f coverage.info;
 
@@ -31,18 +34,13 @@ matrix:
       env:
         - BUILD_TYPE=Debug
       install:
-        - brew install asio
-
-before_script:
-  # Install Catch2
-  - git clone --branch v2.5.0 https://github.com/catchorg/Catch2.git
-  - mkdir Catch2_build && cd Catch2_build
-  - cmake -DBUILD_TESTING=OFF ../Catch2/
-  - sudo cmake --build . --target install -- -j $(nproc)
-  - cd ..
+        - brew install conan
+        - export -n CC && export -n CXX
+        - conan user
 
 script:
   - mkdir out && cd out
-  - cmake -DCMAKE_BUILD_TYPE=$BUILD_TYPE ..
+  - conan install ..
+  - cmake -DCMAKE_BUILD_TYPE=$BUILD_TYPE -DCMAKE_PROJECT_asyop_INCLUDE=out/conan_paths.cmake ..
   - cmake --build . -- -j $(nproc)
   - ctest --output-on-failure

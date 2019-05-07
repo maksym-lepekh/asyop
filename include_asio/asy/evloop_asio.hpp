@@ -40,6 +40,74 @@ namespace asy::detail::asio
 
     template <typename... Args>
     using get_ret_t = typename get_ret_impl<sizeof...(Args), Args...>::type;
+
+    struct adapt_t{};
+
+    template <typename T, typename Err>
+    struct comp_handler_base
+    {
+        using ret_t = asy::basic_op_handle<T, Err>;
+
+        explicit comp_handler_base(const adapt_t&) {}
+
+        void operator()(asy::basic_context_ptr<T, Err> ctx)
+        {
+            m_ctx = ctx;
+        }
+
+        asy::basic_context_ptr<T, Err> m_ctx;
+    };
+
+    template <typename Sign>
+    struct comp_handler;
+
+    template <typename Ret, typename Err>
+    struct comp_handler<Ret(Err)> : public comp_handler_base<void, Err>
+    {
+        using base_t = comp_handler_base<void, Err>;
+        using base_t::base_t;
+        using base_t::operator();
+
+        void operator()(Err ec)
+        {
+            if (ec)
+                base_t::m_ctx->async_failure(std::move(ec));
+            else
+                base_t::m_ctx->async_success();
+        }
+    };
+
+    template <typename Ret, typename Err, typename Arg>
+    struct comp_handler<Ret(Err, Arg)> : comp_handler_base<Arg, Err>
+    {
+        using base_t = comp_handler_base<Arg, Err>;
+        using base_t::base_t;
+        using base_t::operator();
+
+        void operator()(Err ec, Arg arg)
+        {
+            if (ec)
+                base_t::m_ctx->async_failure(std::move(ec));
+            else
+                base_t::m_ctx->async_success(std::move(arg));
+        }
+    };
+
+    template <typename Ret, typename Err, typename Arg, typename Arg2, typename... Args>
+    struct comp_handler<Ret(Err, Arg, Arg2, Args...)> : comp_handler_base<std::tuple<Arg, Arg2, Args...>, Err>
+    {
+        using base_t = comp_handler_base<std::tuple<Arg, Arg2, Args...>, Err>;
+        using base_t::base_t;
+        using base_t::operator();
+
+        void operator()(Err ec, Arg arg, Arg2 arg2, Args... args)
+        {
+            if (ec)
+                base_t::m_ctx->async_failure(std::move(ec));
+            else
+                base_t::m_ctx->async_success(std::make_tuple(std::move(arg), std::move(arg2), std::move(args)...));
+        }
+    };
 }
 
 namespace asy { inline namespace asio
@@ -105,4 +173,22 @@ namespace asy { inline namespace asio
             }
         });
     }
+
+    constexpr detail::asio::adapt_t adapt;
 }}
+
+namespace asio
+{
+    template<typename Signature>
+    struct async_result<asy::detail::asio::adapt_t, Signature>
+    {
+        using completion_handler_type = asy::detail::asio::comp_handler<Signature>;
+        using return_type = typename completion_handler_type::ret_t;
+
+        explicit async_result(completion_handler_type& h) : m_handle(h) { }
+        return_type get() { return m_handle; }
+
+    private:
+        return_type m_handle;
+    };
+}
