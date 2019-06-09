@@ -1,1 +1,7 @@
-theme: jekyll-theme-dinky
+title: asy::op
+remote_theme: pmarsceill/just-the-docs
+search_enabled: true
+
+aux_links:
+  "Sources on GitHub":
+    - "//github.com/maksym-lepekh/asyop"
