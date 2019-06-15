@@ -43,6 +43,11 @@ namespace asy
             m_ctx->cancel();
         }
 
+        void abort()
+        {
+            m_ctx->abort();
+        }
+
         template <typename Fn>
         auto then(Fn&& fn)
         {

@@ -97,3 +97,7 @@ fabric.properties
 
 # Markdown plugin
 .idea/markdown-navigator*
+
+### Other
+.vscode
+.ccls-cache

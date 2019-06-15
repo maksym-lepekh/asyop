@@ -331,4 +331,27 @@ TEST_CASE("asy::op then", "[asio]")
         CHECK(finally_called);
         CHECK_FALSE(second_failure);
     }
+
+    SECTION("Abort")
+    {
+        auto test_timer = asio::steady_timer{io, 40ms};
+
+        auto handle = asy::op([&](asy::context<int> ctx){
+            test_timer.async_wait([ctx](const asio::error_code& err)
+                                  {
+                                      CHECK(err != make_error_code(asio::error::operation_aborted));
+                                      if (!err) ctx->async_success(42);
+                                  });
+        }).then([](int&&){ FAIL("Wrong path"); }, [](auto&& err){
+            FAIL("Wrong path");
+        }).on_failure([&](auto&& err){
+            FAIL("Wrong path");
+        }).then([&](){
+            FAIL("Wrong path");
+        });
+
+        handle.abort();
+        timer.cancel();
+        io.run();
+    }
 }

@@ -53,6 +53,7 @@ namespace asy::detail
     struct context_base
     {
         virtual void cancel() = 0;
+        virtual void abort() = 0;
         virtual bool is_done() = 0;
     };
 }
@@ -150,6 +151,19 @@ namespace asy
             {
                 m_pending = std::move(val);
             }
+        }
+
+        void abort() override
+        {
+            auto guard = synchronize();
+
+            if (m_parent && !m_parent->is_done())
+            {
+                m_parent->abort();
+            }
+
+            m_pending = detail::done_t{};
+            m_parent.reset();
         }
 
         void set_continuation(success_cb_t success_cb, failure_cb_t failure_cb)
