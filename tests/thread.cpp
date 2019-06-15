@@ -25,7 +25,7 @@ using namespace std::literals;
 TEST_CASE("Threadify", "[asio]")
 {
     auto io = asio::io_service{};
-    auto timer = asio::steady_timer{io, 50ms};
+    auto timer = asio::steady_timer{io, 200ms};
 
     timer.async_wait([](const asio::error_code& err) {
         if (!err) FAIL("Timeout");
@@ -59,6 +59,28 @@ TEST_CASE("Threadify", "[asio]")
         .then([&](int&& input) {
             CHECK(input == 42);
             timer.cancel();
+        });
+
+        io.run();
+    }
+
+    SECTION("Cancel thread")
+    {
+        auto main_id = std::this_thread::get_id();
+
+        auto handle = asy::thread::fy([main_id](){
+            CHECK(main_id != std::this_thread::get_id());
+            std::this_thread::sleep_for(50ms);
+            FAIL("Wrong path");
+            return 42;
+        })
+        .then([&](int&& input) { FAIL("Wrong path"); }, [&](auto err){
+            CHECK( err == std::make_error_code(std::errc::operation_canceled) );
+            timer.cancel();
+        });
+
+        io.post([&](){
+            handle.cancel();
         });
 
         io.run();
