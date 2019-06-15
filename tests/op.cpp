@@ -217,7 +217,7 @@ struct move_test_t
 TEST_CASE("No copy", "[asio]")
 {
     auto io = asio::io_service{};
-    auto timer = asio::steady_timer{io, 50ms};
+    auto timer = asio::steady_timer{io, 200ms};
 
     timer.async_wait([](const asio::error_code& err){
         if (!err) FAIL("Timeout");

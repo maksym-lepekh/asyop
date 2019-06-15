@@ -24,7 +24,7 @@ using namespace std::literals;
 TEST_CASE("asy::op then", "[asio]")
 {
     auto io = asio::io_service{};
-    auto timer = asio::steady_timer{io, 50ms};
+    auto timer = asio::steady_timer{io, 200ms};
 
     timer.async_wait([](const asio::error_code& err){
         if (!err) FAIL("Timeout");
@@ -312,10 +312,10 @@ TEST_CASE("asy::op then", "[asio]")
 
         auto handle = asy::op([&](asy::context<int> ctx){
             test_timer.async_wait([ctx](const asio::error_code& err)
-                                  {
-                                      CHECK(err == make_error_code(asio::error::operation_aborted));
-                                      if (!err) ctx->async_success(42);
-                                  });
+            {
+                CHECK(err == make_error_code(asio::error::operation_aborted));
+                if (!err) ctx->async_success(42);
+            });
         }).then([](int&&){ FAIL("Wrong path"); }, [&](auto&& err){
             CHECK( err == std::make_error_code(std::errc::operation_canceled) );
             test_timer.cancel();
@@ -330,5 +330,91 @@ TEST_CASE("asy::op then", "[asio]")
         io.run();
         CHECK(finally_called);
         CHECK_FALSE(second_failure);
+    }
+
+    SECTION("Cancel, pending error")
+    {
+        auto test_timer = asio::steady_timer{io, 50ms};
+
+        auto handle = asy::op([&](asy::context<int> ctx){
+            test_timer.async_wait([ctx](const asio::error_code& err)
+            {
+                CHECK(err == make_error_code(asio::error::operation_aborted));
+                if (!err) ctx->async_success(42);
+            });
+        });
+
+        io.post([&]()
+        {
+            handle.cancel();
+            handle.then([](auto){ FAIL("Wrong path"); }, [&](auto err){
+                CHECK( err == std::make_error_code(std::errc::operation_canceled) );
+                test_timer.cancel();
+                timer.cancel();
+            });
+        });
+
+        io.run();
+    }
+
+    SECTION("Abort")
+    {
+        auto test_timer = asio::steady_timer{io, 40ms};
+
+        auto handle = asy::op([&](asy::context<int> ctx){
+            test_timer.async_wait([ctx](const asio::error_code& err)
+            {
+                CHECK(err != make_error_code(asio::error::operation_aborted));
+                if (!err) ctx->async_success(42);
+            });
+        }).then([](int&&){ FAIL("Wrong path"); }, [](auto&& err){
+            FAIL("Wrong path");
+        }).on_failure([&](auto&& err){
+            FAIL("Wrong path");
+        }).then([&](){
+            FAIL("Wrong path");
+        });
+
+        handle.abort();
+        timer.cancel();
+        io.run();
+    }
+
+    SECTION("Continuation after abort")
+    {
+        auto test_timer = asio::steady_timer{io, 50ms};
+
+        auto handle = asy::op([&](asy::context<int> ctx){
+            test_timer.async_wait([ctx](const asio::error_code& err)
+            {
+                CHECK(err == make_error_code(asio::error::operation_aborted));
+                if (!err) ctx->async_success(42);
+            });
+        });
+
+        io.post([&]()
+        {
+            handle.abort();
+            handle.then([](auto){ FAIL("Wrong path"); }, [&](auto err){ FAIL("Wrong path"); });
+
+            test_timer.cancel();
+            timer.cancel();
+        });
+
+        io.run();
+    }
+
+    SECTION("Double set continuation")
+    {
+        auto handle = asy::op<int>(42);
+
+        handle.then([&](int&& input){
+            CHECK( input == 42 );
+            timer.cancel();
+        });
+
+        handle.then([](auto){ FAIL("Wrong path"); }, [&](auto err){ FAIL("Wrong path"); });
+
+        io.run();
     }
 }
