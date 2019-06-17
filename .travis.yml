@@ -40,7 +40,7 @@ matrix:
 
 script:
   - mkdir out && cd out
-  - conan install ..
-  - cmake -DCMAKE_BUILD_TYPE=$BUILD_TYPE -DCMAKE_PROJECT_asyop_INCLUDE=out/conan_paths.cmake ..
+  - conan install .. -o build_tests=True
+  - cmake -DCMAKE_BUILD_TYPE=$BUILD_TYPE ..
   - cmake --build . -- -j $(nproc)
-  - ctest --output-on-failure
+  - cd tests && ctest --output-on-failure
