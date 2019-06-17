@@ -71,7 +71,6 @@ TEST_CASE("Threadify", "[asio]")
         auto handle = asy::thread::fy([main_id](){
             CHECK(main_id != std::this_thread::get_id());
             std::this_thread::sleep_for(50ms);
-            FAIL("Wrong path");
             return 42;
         })
         .then([&](int&& input) { FAIL("Wrong path"); }, [&](auto err){

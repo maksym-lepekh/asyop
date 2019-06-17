@@ -27,32 +27,24 @@ namespace asy::thread::detail
     {
         using ret_t = std::invoke_result_t<F>;
 
-        auto thr = std::make_shared<std::thread>();
         auto origin_id = std::this_thread::get_id();
 
-        auto h = asy::op([fn = std::forward<F>(f), &thr, origin_id](asy::context<ret_t> ctx) mutable
+        return asy::op([fn = std::forward<F>(f), origin_id](asy::context<ret_t> ctx) mutable
         {
-            *thr = std::thread([fn = std::forward<F>(fn), ctx, origin_id]()
+            std::thread([fn = std::forward<F>(fn), ctx, origin_id]() mutable
             {
                 asy::executor::get().schedule_execution([ctx, ret = fn()]() mutable
                 {
                     ctx->async_success(std::move(ret));
                 }, origin_id);
-            });
-            thr->detach();
-        });
-
-        return add_cancel(h, [thr]
-        {
-            if (thr->joinable()) pthread_cancel(thr->native_handle());
+            }).detach();
         });
     }
 
     template <typename T>
     auto fy_future(std::future<T>&& fut)
     {
-        auto sh_fut = std::make_shared<std::future<T>>(std::move(fut));
-        return fy_func([sh_fut]{ return std::move(sh_fut->get()); });
+        return fy_func([fut = std::move(fut)]() mutable { return fut.get(); });
     }
 }
 
