@@ -11,7 +11,7 @@ The most easy way to use the library is to link it with `target_link_libraries(.
 One of the option is to download the library sources from github repo and somehow add it to project root (git submodule, ExternalProject_add, etc.).
 In this case, the library can be added into client's project through CMake command: `add_subdirectory(${path_to_asyop}/lib)`. After that, client's project will be populated with a new target: `asyop::asyop`. The `CMakeLists.txt` file of the library is designed to detect the use of `add_subdirectory()` so it avoid polluting the client's project with unneccessary tests and other stuff.
 
-If `find_package()` can successfully find Asio library, the new target will be added 
+If `find_package()` can successfully find Asio library, the new target will be added into project: `asyop::asio`. It contains the reference implementation of Asio support.
 
 ## Package manager dependency
 The asy::op library is available in Conan. While the library is in development stage, it is published in the separate repository, so in order to resolve the dependency, the user should run the following command in its machine:
@@ -24,8 +24,6 @@ Please note, when used with conan, asy::op has a transitive dependency of Asio l
 
 After all Conan depencencies are installed, the user is expected to use `find_package(asyop)` to add the library into project.
 
-## Dependencies
-TODO
 <!--stackedit_data:
-eyJoaXN0b3J5IjpbLTI4MjkxMDM5MiwtNDQ1MDYzNjI1XX0=
+eyJoaXN0b3J5IjpbLTEwMDcyMjY5ODgsLTQ0NTA2MzYyNV19
 -->
