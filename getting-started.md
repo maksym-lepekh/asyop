@@ -18,10 +18,10 @@ conan remote add <REMOTE> https://api.bintray.com/conan/maxl/cpp
 ```
 The library itself is currently named `asyop/<version>@maxl/testing`, use that string in your Conan file in the `requires` section.
 
-When used with conan, asy::op has a 
+Please note, when used with conan, asy::op has a transitive dependency of Asio library for `asyop::asio` target. To disable that, the package has the following option: ``
 
 ## Dependencies
 TODO
 <!--stackedit_data:
-eyJoaXN0b3J5IjpbMTg0MjYyMzI0MSwtNDQ1MDYzNjI1XX0=
+eyJoaXN0b3J5IjpbMjAxNzI2MDE3NSwtNDQ1MDYzNjI1XX0=
 -->
