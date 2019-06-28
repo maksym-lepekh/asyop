@@ -13,7 +13,7 @@ Library's core describes trio of the library foundation: `op_handle` - public pa
 ### Operation handle
 An asynchronous operation is represented as an object of type `op_handle`. This handle corresponds to an operation that is already running, has pending results or fully completed. By design, there can be no be a valid handle that designates the operation that is not started yet. This fact reduces the implementation complexity and a range of possible errors and race conditions.
 
-Operation handle has "weak pointer" semantics regarding to operation itself. It does not affect operation lifetime, thus can be safely destroyed when not needed. There is a limited set of available public methods which include: "cancel", "set continuation" and "abort" (**TODO**).
+Operation handle has "weak pointer" semantics regarding to operation itself. It does not affect operation lifetime, thus can be safely destroyed when not needed. There is a limited set of available public methods which include: "cancel", "set continuation" and "abort".
 
 #### Setting the continuation
 There are several methods that can be used to specify the continuation for the operation. They are: `.then(SuccessCb&&)`, `.on_failure(FailureCB&&)` and `.then(SuccessCb&&, FailureCb&&)`, use them to specify what to do if operation succeded or fails. These methods are templates and accept a wide range of possible functor types. All possible function signatures will be described later in this document (see Continuation signatures and Customization points - Custom callable signature). For now, it is worth mentioning that continuations are asynchronous operations too. 
@@ -33,7 +33,7 @@ Method `.cancel()` can only have effect if the corresponding operation is not fi
 If the operation has a parent that is not finished yet, the parent will be cancelled instead. Thus, failure path will be executed earlier. This process is recursive and ends when already finished parent was found. That means only last operation handle is needed to cancel a whole continuation chain as early as possible.
 
 #### Operation abortion
-TBD
+Abort can be used to prematurely discard the operation result and 
 
 ### Operation context
 Operation context `basic_context<T, Err>` is a special type that holds current state of the asynchronous operation. It is also used as a container for pending continuations or operation result.
@@ -58,3 +58,6 @@ The asy::op library contains reference implementation of Asio `io_service` suppo
 Anyway, the executor is implemented as a singleton and has following public methods: `schedule_execution(F, TID)`, `should_sync(TID)` and `set_impl(TID, F, bool should_sync)`.  The first one is used internally by `basic_context<>` to run the continuation on the preferred thread. Most cases it'll be a current thread. The second one, `should_sync()` is also used by `basic_context<>` to check if the mutexes should be used when calling `.cance()`, `async_return()`, etc. The executor returns the boolean depending on the current setup of event loops or thread pools and their preferences. The third method `set_impl()` is used register certain execution implementation (thread, thread pool, event loop) for the specified thread. This is the main point of connection between asy::op and other libraries. This method has a boolean arg to notifiy the executor that the code is running in a multithreaded environment and thread safety mechanisms should be employed.
 
 The asy::op supports running several event loops and thread pools each on its own thread. The async operation chains can be isolated within the same event loop or can be balanced between threads, but this is fully up to user's choice. The actual balancer is implemented by client's code and is set via `set_impl()` method for each thread separately. Continuations are called with the preferred thread that equals parent's execution thread. The balancer of the preferred thread can reschedule the continuation on the other one. Please note that asy::op does not implelent balancing, it only provides the compatible interface ;)
+<!--stackedit_data:
+eyJoaXN0b3J5IjpbMTI0MzM2NzYwOF19
+-->
