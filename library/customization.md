@@ -1,4 +1,3 @@
-
 ---
 layout: default
 title: Customization points
@@ -22,5 +21,5 @@ The user also has a possibility to describe custom callable type in the same man
 ### Custom return type
 The paragraph above describes the case when callable type differs from out-of-the-box support provided by asy::op library. The other option is to use a usual functor that returns some user-defined type of object. In that case, the user should create a specialization for `struct asy::simple_continuation<>` from asy/common/simple_continuation.hpp. The same rules apply as before: specialize a template for a concrete type or play with concepts and SFINAE.
 <!--stackedit_data:
-eyJoaXN0b3J5IjpbMTg0MDk1NzA1Ml19
+eyJoaXN0b3J5IjpbLTI0NjgyOTMwXX0=
 -->
