@@ -16,12 +16,14 @@ The asy::op library is available in Conan. While the library is in development s
 ```bash
 conan remote add <REMOTE> https://api.bintray.com/conan/maxl/cpp
 ```
-The library itself is currently named `asyop/<version>@maxl/testing`, use that string in your Conan file in the `requires` section.
+The library itself is currently named `asyop/<version>@maxl/testing`, use that string in your Conan file in the `requires` section. 
 
-Please note, when used with conan, asy::op has a transitive dependency of Asio library for `asyop::asio` target. To disable that, the package has the following option: ``
+Please note, when used with conan, asy::op has a transitive dependency of Asio library for `asyop::asio` target. To disable that, the package has the following option: `asio_support:False`.
+
+After all Conan depencencies are installed, the user is expected to use `find_package(as)`
 
 ## Dependencies
 TODO
 <!--stackedit_data:
-eyJoaXN0b3J5IjpbMjAxNzI2MDE3NSwtNDQ1MDYzNjI1XX0=
+eyJoaXN0b3J5IjpbMTQ4ODE2OTcwOSwtNDQ1MDYzNjI1XX0=
 -->
