@@ -12,10 +12,13 @@ One of the option is to download the library sources from github repo and someho
 In this case, the library can be added into client's project through CMake command: `add_subdirectory(${path_to_asyop}/lib)`. After that, client's project will be populated with a new target: `asyop::asyop`. The `CMakeLists.txt` file of the library is designed to detect the use of `add_subdirectory()` so it avoid polluting the client's project with unneccessary tests and other stuff.
 
 ## Package manager dependency
-The asy::op library is available in Conan. While the library is in development stage, it is published in the separate repository, so in order to resolve the depe
+The asy::op library is available in Conan. While the library is in development stage, it is published in the separate repository, so in order to resolve the dependency, the user should run the following command in its machine:
+```bash
+
+```
 
 ## Dependencies
 TODO
 <!--stackedit_data:
-eyJoaXN0b3J5IjpbMTA1OTI1MTExNV19
+eyJoaXN0b3J5IjpbLTQ0NTA2MzYyNV19
 -->
