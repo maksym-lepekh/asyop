@@ -14,11 +14,12 @@ In this case, the library can be added into client's project through CMake comma
 ## Package manager dependency
 The asy::op library is available in Conan. While the library is in development stage, it is published in the separate repository, so in order to resolve the dependency, the user should run the following command in its machine:
 ```bash
-
+conan remote add <REMOTE> https://api.bintray.com/conan/maxl/cpp
 ```
+The library itself is currently named `asyop/<version>@maxl/testing`, use that string in yo
 
 ## Dependencies
 TODO
 <!--stackedit_data:
-eyJoaXN0b3J5IjpbLTQ0NTA2MzYyNV19
+eyJoaXN0b3J5IjpbLTk5NzY5OTAzNSwtNDQ1MDYzNjI1XX0=
 -->
