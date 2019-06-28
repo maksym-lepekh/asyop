@@ -9,12 +9,12 @@ The most easy way to use the library is to link it with `target_link_libraries(.
 
 ## CMake subdirectory
 One of the option is to download the library sources from github repo and somehow add it to project root (git submodule, ExternalProject_add, etc.).
-In this case, The library can be added into client's project throu
+In this case, the library can be added into client's project through CMake command: `add_subdirectory(${path_to_asyop}/lib)`. After that, client's project will be populated with a
 
 ## Package manager dependency
 
 ## Dependencies
 TODO
 <!--stackedit_data:
-eyJoaXN0b3J5IjpbMTczMzMzOTgyM119
+eyJoaXN0b3J5IjpbLTE4NTExNjQxNjVdfQ==
 -->
