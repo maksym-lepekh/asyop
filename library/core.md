@@ -1,4 +1,3 @@
-
 ---
 layout: default
 title: Core
@@ -62,5 +61,5 @@ Anyway, the executor is implemented as a singleton and has following public meth
 
 The asy::op supports running several event loops and thread pools each on its own thread. The async operation chains can be isolated within the same event loop or can be balanced between threads, but this is fully up to the user's choice. The actual balancer is implemented by the client's code and is set via `set_impl()` method for each thread separately. Continuations are called with the preferred thread that equals parent's execution thread. The balancer of the preferred thread can reschedule the continuation on the other one. Please note that asy::op does not implement balancing, it only provides the compatible interface ;)
 <!--stackedit_data:
-eyJoaXN0b3J5IjpbLTE0OTU4OTk4MzUsLTkxNTU1MTY0M119
+eyJoaXN0b3J5IjpbMTI5MTQ2NzU3MSwtOTE1NTUxNjQzXX0=
 -->
