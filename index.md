@@ -1,4 +1,3 @@
-
 ---
 layout: home
 title: Introduction
@@ -21,5 +20,5 @@ The library is designed with the following goals in mind:
 
 This piece of code should utilize modern CI usages, such as multi-os, multi-toolchain checks, code coverage reports, static analysis (TODO) and sanitizer (TODO) cheks.
 <!--stackedit_data:
-eyJoaXN0b3J5IjpbMTk4OTE2ODY1MF19
+eyJoaXN0b3J5IjpbNDM1Nzc1OTJdfQ==
 -->
