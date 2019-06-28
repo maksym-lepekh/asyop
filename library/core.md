@@ -33,7 +33,9 @@ Method `.cancel()` can only have effect if the corresponding operation is not fi
 If the operation has a parent that is not finished yet, the parent will be cancelled instead. Thus, failure path will be executed earlier. This process is recursive and ends when already finished parent was found. That means only last operation handle is needed to cancel a whole continuation chain as early as possible.
 
 #### Operation abortion
-Abort can be used to prematurely discard the operation result and 
+Abort can be used to prematurely discard the operation result and prevent invocation of all continuations.
+
+Method `.abort()` can only have effect if the corresponding operation is not finished yet or it is finished, but there were no continuations invoked.
 
 ### Operation context
 Operation context `basic_context<T, Err>` is a special type that holds current state of the asynchronous operation. It is also used as a container for pending continuations or operation result.
@@ -59,5 +61,5 @@ Anyway, the executor is implemented as a singleton and has following public meth
 
 The asy::op supports running several event loops and thread pools each on its own thread. The async operation chains can be isolated within the same event loop or can be balanced between threads, but this is fully up to user's choice. The actual balancer is implemented by client's code and is set via `set_impl()` method for each thread separately. Continuations are called with the preferred thread that equals parent's execution thread. The balancer of the preferred thread can reschedule the continuation on the other one. Please note that asy::op does not implelent balancing, it only provides the compatible interface ;)
 <!--stackedit_data:
-eyJoaXN0b3J5IjpbMTI0MzM2NzYwOF19
+eyJoaXN0b3J5IjpbLTkxNTU1MTY0M119
 -->
