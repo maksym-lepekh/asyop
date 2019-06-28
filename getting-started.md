@@ -16,10 +16,12 @@ The asy::op library is available in Conan. While the library is in development s
 ```bash
 conan remote add <REMOTE> https://api.bintray.com/conan/maxl/cpp
 ```
-The library itself is currently named `asyop/<version>@maxl/testing`, use that string in yo
+The library itself is currently named `asyop/<version>@maxl/testing`, use that string in your Conan file in the `requires` section.
+
+When used with conan, asy::op has a 
 
 ## Dependencies
 TODO
 <!--stackedit_data:
-eyJoaXN0b3J5IjpbLTk5NzY5OTAzNSwtNDQ1MDYzNjI1XX0=
+eyJoaXN0b3J5IjpbMTg0MjYyMzI0MSwtNDQ1MDYzNjI1XX0=
 -->
