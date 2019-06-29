@@ -70,6 +70,34 @@ matrix:
         - cmake --build . --config Release
         - cd tests && ctest --output-on-failure
 
+    - os: linux
+      name: linux-llvm7-analyze
+      addons:
+        apt:
+          sources:
+            - ubuntu-toolchain-r-test
+            - llvm-toolchain-xenial-7
+          packages:
+            - libstdc++-7-dev
+            - clang-7
+            - clang-tools-7
+            - cmake
+      env:
+        - COMPILER="CC=clang-7 && CXX=clang++-7"
+        - BUILD_TYPE=Release
+      install:
+        - eval $COMPILER
+        - sudo apt-get remove python-enum34
+        - sudo pip install --upgrade pip
+        - sudo pip install conan
+        - conan user
+      script:
+        - mkdir out && cd out
+        - conan install .. -o build_tests=True
+        - cmake -DCMAKE_BUILD_TYPE=$BUILD_TYPE -DCMAKE_EXPORT_COMPILE_COMMANDS=ON ..
+        - cd ..
+        - clang-check-7 -analyze -p out/compile_commands.json tests/*.cpp lib/src/*.cpp lib/src_asio/*.cpp
+
   allow_failures:
     - os: windows
 
