@@ -10,7 +10,7 @@ Asy::op is thread-aware and will link with `Threads::Thereads` when used in CMak
 
 ## Threadify
 The asy::op library provides a helper (`asy::fy()`) to quickly convert a blocking call into an asynchronous operation. The implementation is very efficient because a separate thread is created for each `asy::fy` call.
-The function supports two types of input arguments. The first
+The function supports two types of input arguments. The first one: functor that calls blocking 
 <!--stackedit_data:
-eyJoaXN0b3J5IjpbMjU2NzYwMzMyXX0=
+eyJoaXN0b3J5IjpbLTkwNDE2NzM4MF19
 -->
