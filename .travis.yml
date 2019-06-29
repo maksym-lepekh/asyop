@@ -57,6 +57,22 @@ matrix:
         - sudo pip install conan
         - conan user
 
+    - os: windows
+      name: win-msvc-release
+
+      install:
+        - choco install conan
+        - export PATH=$PATH:"/C/Program Files/Conan/conan"
+      script:
+        - mkdir out && cd out
+        - conan install .. -o build_tests=True
+        - cmake -DCMAKE_WINDOWS_EXPORT_ALL_SYMBOLS=ON ..
+        - cmake --build . --config Release
+        - cd tests && ctest --output-on-failure
+
+  allow_failures:
+    - os: windows
+
 script:
   - mkdir out && cd out
   - conan install .. -o build_tests=True

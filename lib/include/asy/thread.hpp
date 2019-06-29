@@ -18,7 +18,6 @@
 #include <thread>
 #include <future>
 #include <memory>
-#include <pthread.h>
 
 namespace asy::thread::detail
 {
