@@ -6,7 +6,7 @@ parent: Library description
 ---
 
 # Thread support
-Asy::op is thread-aware and will link with `Threads::Thereads` when used in CMake. Otherwise, it must be linked with `pthread` or similar. For now thread support is limited to a thread -> async operation convertions. Hopefuly, it will be extended in future :)
+Asy::op is thread-aware and will link with `Threads::Thereads` when used in CMake. Otherwise, it must be linked with `pthread` or similar. For now thread support is limited to a thread -> async operation convertions. Hopefuly, it will be extended in future :) Thread support is available in `asy/thread.hpp` header.
 
 ## Asyfy
 The asy::op library provides a helper (`asy::fy()`) to quickly convert a blocking call into an asynchronous operation. The implementation isn't very efficient because a separate thread is created for each `asy::fy` call.
@@ -14,7 +14,7 @@ The function supports two types of input arguments.
 
 The first one: functor that calls blocking functions. It is invoked in a separate thread and the return type is used as na output type of the operation handle.
 
-The second one: an instance of the `std::future<Output>`. The 
+The second one: an instance of the `std::future<Output>`. The implementation will call `.get()` in a separate thread and will forward the output into async operation continuation.
 <!--stackedit_data:
-eyJoaXN0b3J5IjpbODI3MTk1MDMxXX0=
+eyJoaXN0b3J5IjpbLTE5MDMyNTg3MjNdfQ==
 -->
