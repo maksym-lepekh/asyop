@@ -6,10 +6,10 @@ parent: Library description
 ---
 
 # Thread support
-The asy::op library provides a helper 
+
 
 ## Threadify
-
+The asy::op library provides a helper to quickly convert a blocking call into an asynchronous operation. The implementation is 
 <!--stackedit_data:
-eyJoaXN0b3J5IjpbMTcxNjI4MTg4NF19
+eyJoaXN0b3J5IjpbNzM3NjUzMDg3XX0=
 -->
