@@ -16,7 +16,7 @@ Asynchronous operation is represented as an object of type `op_handle`. This han
 Operation handle has "weak pointer" semantics regarding operation itself. It does not affect operation lifetime, thus it can be safely destroyed when not needed. There is a limited set of available public methods which include: "cancel", "set continuation" and "abort".
 
 #### Setting the continuation
-There are several methods that can be used to specify the continuation of the operation. They are: `.then(SuccessCb&&)`, `.on_failure(FailureCB&&)` and `.then(SuccessCb&&, FailureCb&&)`, use them to specify what to do if the operation succeeded or fails. These methods are templates and accept a wide range of possible functor types. All possible function signatures will be described later in this document (see [Continuation signatures]() and Customization points - Custom callable signature). For now, it is worth mentioning that continuations are asynchronous operations too. 
+There are several methods that can be used to specify the continuation of the operation. They are: `.then(SuccessCb&&)`, `.on_failure(FailureCB&&)` and `.then(SuccessCb&&, FailureCb&&)`, use them to specify what to do if the operation succeeded or fails. These methods are templates and accept a wide range of possible functor types. All possible function signatures will be described later in this document (see [Continuation signatures](core.md#continuation-concept) and [Customization points - Custom callable signature](customization.md#custom-callable-signature)). For now, it is worth mentioning that continuations are asynchronous operations too. 
 
 The calls  `A.then(B)` and `A.on_failure(B)` return objects of type `op_handle` representing the ongoing operation that consists of two steps: "wait until A is finished" and "call B". The difference between them is that B is called only if the execution goes in the right path:
 * `A.then(B)`: B is called only if A succeeds
@@ -61,6 +61,6 @@ Anyway, the executor is implemented as a singleton and has following public meth
 
 The asy::op supports running several event loops and thread pools each on its own thread. The async operation chains can be isolated within the same event loop or can be balanced between threads, but this is fully up to the user's choice. The actual balancer is implemented by the client's code and is set via `set_impl()` method for each thread separately. Continuations are called with the preferred thread that equals parent's execution thread. The balancer of the preferred thread can reschedule the continuation on the other one. Please note that asy::op does not implement balancing, it only provides the compatible interface ;)
 <!--stackedit_data:
-eyJoaXN0b3J5IjpbMTI1Mjg5ODMyNiwxMjkxNDY3NTcxLC05MT
-U1NTE2NDNdfQ==
+eyJoaXN0b3J5IjpbMjY5NTUzNzYyLDEyOTE0Njc1NzEsLTkxNT
+U1MTY0M119
 -->
