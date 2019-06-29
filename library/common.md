@@ -26,7 +26,7 @@ Asy::op library implements several continuation types out-of-the-box, this secti
 Following description will use `B = A.then(F)` example, where `A` is a `basic_op_handle<Input, IErr>`, `B` is a `basic_op_handle<Output, OErr>`.
 
 #### Async continuation
-This continuation specialization is used when the callable satisfies `AsyncContinuation` concept. Concepts expects the functor to be compatible with `void foo(basic_context_ptr<Output, OErr>, Input&&)` for success path and `void foo(basic_context_ptr<Output, OErr>, IErr&&)` for failure path. The functor should return the result via its first argument. 
+This continuation specialization is used when the callable satisfies `AsyncContinuation` concept. Concept expects the functor to be compatible with `void foo(basic_context_ptr<Output, OErr>, Input&&)` for success path and `void foo(basic_context_ptr<Output, OErr>, IErr&&)` for failure path. The functor should return the result via its first argument. 
 
 This concept has one caveat: due to limitations of the type deduction in C++, it is not possible to use a callable with templated or overloaded `operator()`.
 
@@ -61,5 +61,5 @@ This function runs a set of sync operations that are passed in the argument list
 #### When success
 This function is similar to "when all" but requires that all operations were successful. If any of the operations fails - others are discarded and canceled, the error object is forwarded to "when success" result. The output type if `basic_when_all()` is `std::tuple<Op1_output, Op2_Output, ...>`. The cancellation of "when success" will cancel all its running operations.
 <!--stackedit_data:
-eyJoaXN0b3J5IjpbLTEzNTc4NDM0MDldfQ==
+eyJoaXN0b3J5IjpbLTg3Mzk1ODQ2MCwtMTM1Nzg0MzQwOV19
 -->
