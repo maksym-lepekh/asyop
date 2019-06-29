@@ -19,10 +19,10 @@ Continuation is also an operation, thus it can has own continuation. That  gives
 Such chains support splits and joins to describe parallel computation. Data processing can be depicted as a graph where nodes represent each operation.
 
 ## Error handling
-When error occure
+When error occures, it passed as a result of asynchronous operation. Then, the corresponding error-handling continuation is invoked. It is not available, it is forwarded to the next continuation pair unti
 
 ## Cancellation
 TODO
 <!--stackedit_data:
-eyJoaXN0b3J5IjpbMTMxODMyMzg4XX0=
+eyJoaXN0b3J5IjpbLTIwMzA3NzY2MTZdfQ==
 -->
