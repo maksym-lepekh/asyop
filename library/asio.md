@@ -32,7 +32,8 @@ The second method utilizes ASIO's support to customize return type of the async 
 `asyop::asio` provides a `sleep()` function that takes a `chrono::duration` as an arguments and uses default `io_service` for the current thread.
 
 ## Operation with timeout
-ASIO integration declares an easy way to convert any async operation into the operation with timeout. Internally it is a combination for `when_any()` with user-specified operation and `asy::asio::sleep`. The first finished operation cancels the other one. The output type is the same as in user-specified operation. The user's operation is converted into `asy::op_handle` using `asy::op()` and must have coma
+ASIO integration declares an easy way to convert any async operation into the operation with timeout. Internally it is a combination for `when_any()` with user-specified operation and `asy::asio::sleep`. The first finished operation cancels the other one. The output type is the same as in user-specified operation. The user's operation is converted into `asy::op_handle` using `asy::op()` and must have compatible with `asio::error_code` error type.
 <!--stackedit_data:
-eyJoaXN0b3J5IjpbMTQwNTg3MTU2NywtMjA5NTQwMTMxM119
+eyJoaXN0b3J5IjpbLTExMzI0OTQ3NTEsLTIwOTU0MDEzMTNdfQ
+==
 -->
