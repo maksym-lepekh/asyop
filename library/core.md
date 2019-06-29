@@ -6,7 +6,7 @@ parent: Library description
 ---
 
 ## Core
-The core part of the library describes fundamental types and facilities that a bare minimum for implementation of the asynchronous operations and continuations. It has a minimal dependency, does not have any concrete type for error object or event loop preference, so it can be used within any project without any collisions.
+The core part of the library describes fundamental types and facilities that are a bare minimum for implementation of the asynchronous operations and continuations. It has a minimal dependency, does not have any concrete type for error object or event loop preference, so it can be used within any project without any collisions.
 
 Library's core describes the trio of the library foundation: `op_handle` - public part of the async operation, `context` - private part of the async operation and `executor` - global entity, that is capable of running client's functors.
 
@@ -61,5 +61,6 @@ Anyway, the executor is implemented as a singleton and has following public meth
 
 The asy::op supports running several event loops and thread pools each on its own thread. The async operation chains can be isolated within the same event loop or can be balanced between threads, but this is fully up to the user's choice. The actual balancer is implemented by the client's code and is set via `set_impl()` method for each thread separately. Continuations are called with the preferred thread that equals parent's execution thread. The balancer of the preferred thread can reschedule the continuation on the other one. Please note that asy::op does not implement balancing, it only provides the compatible interface ;)
 <!--stackedit_data:
-eyJoaXN0b3J5IjpbMTI5MTQ2NzU3MSwtOTE1NTUxNjQzXX0=
+eyJoaXN0b3J5IjpbMTc1NTEwODcxMSwxMjkxNDY3NTcxLC05MT
+U1NTE2NDNdfQ==
 -->
