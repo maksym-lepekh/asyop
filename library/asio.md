@@ -7,7 +7,7 @@ parent: Library description
 # ASIO integration
 The asy::op project provides a reference implementation of integration with ASIO in a form of separate `asyop::asio` library. As it was stated in the Getting started section, it is conditionally available when `add_subdirectory()` and always available using `find_package()`.
 
-The `asyop::asio` library is not intrusive and designed to provide quick start helpers for asy::op users.
+The `asyop::asio` library is not intrusive and designed to provide quick start helpers for asy::op users. Include `asy/evloop_asio.hpp` to access the library functions.
 
 ## Setup the executor
 The asy::op core library requires to setup executor in order to run the async operations. For this purpose, `asyop::asio` provides two global functions: `asy::this_thread::set_event_loop(io_service&)` and `asy::this_thread::get_event_loop`. These functions do all the work and expect a single-thread execution environment: program uses single event loop thread and doesn't need synchronization.
@@ -34,6 +34,6 @@ The second method utilizes ASIO's support to customize the return type of the as
 ## Operation with timeout
 ASIO integration declares an easy way to convert any async operation into the operation with a timeout. Internally it is a combination for `when_any()` with user-specified operation and `asy::asio::sleep`. The first finished operation cancels the other one. The output type is the same as in user-specified operation. The user's operation is converted into `asy::op_handle` using `asy::op()` and must have compatible with `asio::error_code` error type.
 <!--stackedit_data:
-eyJoaXN0b3J5IjpbLTEwNzI5NjM3NzgsLTExMzI0OTQ3NTEsLT
-IwOTU0MDEzMTNdfQ==
+eyJoaXN0b3J5IjpbLTE5ODU3OTc3MzAsLTEwNzI5NjM3NzgsLT
+ExMzI0OTQ3NTEsLTIwOTU0MDEzMTNdfQ==
 -->
