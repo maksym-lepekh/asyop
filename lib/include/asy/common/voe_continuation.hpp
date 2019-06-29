@@ -23,6 +23,7 @@
 
 namespace asy::concept
 {
+    /// "Value or error" concept
     struct ValueOrError
     {
         template <typename T> auto operator()(T&& t)
@@ -33,6 +34,7 @@ namespace asy::concept
         >{}
     };
 
+    /// "Value or none" concept
     struct ValueOrNone
     {
         template <typename T> auto operator()(T&& t)
@@ -43,6 +45,7 @@ namespace asy::concept
         >{}
     };
 
+    /// "None or error" concept
     struct NoneOrError
     {
         template <typename T> auto operator()(T&& t)
@@ -53,6 +56,7 @@ namespace asy::concept
         >{}
     };
 
+    /// "Value or error" continuation concept
     struct VoEContinuation
     {
         template <typename T, typename... Args> auto operator()(T&& t, Args&&...)
@@ -62,6 +66,7 @@ namespace asy::concept
         >{}
     };
 
+    /// "Value or none" continuation concept
     struct VoNContinuation
     {
         template <typename T, typename... Args> auto operator()(T&& t, Args&&...)
@@ -71,6 +76,7 @@ namespace asy::concept
         >{}
     };
 
+    /// "None or error" continuation concept
     struct NoEContinuation
     {
         template <typename T, typename... Args> auto operator()(T&& t, Args&&...)
@@ -83,6 +89,8 @@ namespace asy::concept
 
 namespace asy
 {
+    /// Default support for ValueOrError continuation.
+    /// \see struct asy::continuation
     template <typename F, typename... Args>
     struct simple_continuation<F(Args...), c::require<c::satisfy<c::VoEContinuation, F, Args...>>>
             : std::true_type
@@ -119,6 +127,8 @@ namespace asy
         }
     };
 
+    /// Default support for ValueOrNone continuation.
+    /// \see struct asy::continuation
     template <typename F, typename... Args>
     struct simple_continuation<F(Args...), c::require<c::satisfy<c::VoNContinuation, F, Args...>>>
             : std::true_type
@@ -155,6 +165,8 @@ namespace asy
         }
     };
 
+    /// Default support for NoneOrError continuation.
+    /// \see struct asy::continuation
     template <typename F, typename... Args>
     struct simple_continuation<F(Args...), c::require<c::satisfy<c::NoEContinuation, F, Args...>>>
             : std::true_type

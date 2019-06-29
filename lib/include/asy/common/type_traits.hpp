@@ -88,25 +88,31 @@ namespace asy::detail
 
 namespace asy::tt
 {
+    /// Helper that provides certain information that is deduced from the functor type
     template <typename F>
     struct functor:
             public asy::detail::functor_info_sel<F, asy::detail::has_call_op<std::remove_reference_t<F>>::value>{};
 
+    /// Deduced return type of the functor
     template <typename F>
     using functor_ret_t = typename functor<F>::ret_type;
 
+    /// Deduced first arg of the functor
     template <typename F>
     using functor_first_t = typename functor<F>::arg1_type;
 
-
+    /// A helper that represents a true type if the second arg is a specialization of the first one
     template <template <typename...> typename, typename...>
     struct specialization_of : std::false_type {};
 
+    /// A helper that represents a true type if the second arg is a specialization of the first one
+    /// Provides a type alias for the first template argument of the specialization
     template <template <typename...> typename Templ, typename... OtherArgs, typename TemplArg>
     struct specialization_of<Templ, Templ<TemplArg, OtherArgs...>> : std::true_type {
         using first_arg = TemplArg;
     };
 
+    /// First template argument of the tempalte specialization
     template <template <typename...> typename Templ, typename... OtherArgs>
     using specialization_of_first_t = typename specialization_of<Templ, OtherArgs...>::first_arg;
 }

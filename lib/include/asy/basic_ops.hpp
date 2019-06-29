@@ -46,7 +46,11 @@ namespace asy::detail
 
 namespace asy
 {
-
+    /// Add a continuation that invokes a functor if the operation is cancelled
+    ///
+    /// \param handle Parent operation handle
+    /// \param fn Functor that is invoked on cancellation
+    /// \return New operation handle
     template <typename T, typename Err, typename Fn>
     auto add_cancel(asy::basic_op_handle<T, Err>& handle, Fn&& fn)
     {
@@ -61,6 +65,12 @@ namespace asy
         });
     }
 
+    /// Create an operation that represents parallel execution of asynchronous operations.
+    /// The operation return type is a tuple of each operation result (success or failure)
+    ///
+    /// \tparam Err Error type of the resulting operation. Must be compatible with each sub-operation
+    /// \param fs List of parallel operations
+    /// \return New operation handle
     template <typename Err, typename... Fs>
     auto basic_when_all(Fs&&...fs)
     {
@@ -103,6 +113,13 @@ namespace asy
         });
     }
 
+    /// Create an operation that represents parallel execution of asynchronous operations.
+    /// The operation return type is a tuple of each operation's success type. A failure of any sub-operation
+    /// results in a failure of the whole operation.
+    ///
+    /// \tparam Err Error type of the resulting operation. Must be compatible with each sub-operation
+    /// \param fs List of parallel operations
+    /// \return New operation handle
     template <typename Err, typename... Fs>
     auto basic_when_success(Fs&&...fs)
     {
@@ -145,6 +162,14 @@ namespace asy
         });
     }
 
+    /// Create a "race" between parallel operations. The result of the race is a success value of the first
+    /// finished operation, the return type is a variant between result type of each sub-operation. A failure of
+    /// any sub-operation results in a failure of the whole operation.
+    ///
+    /// \tparam Err
+    /// \tparam Fs
+    /// \param fs
+    /// \return
     template <typename Err, typename... Fs>
     auto basic_when_any(Fs&&...fs)
     {

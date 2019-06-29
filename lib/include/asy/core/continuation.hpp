@@ -19,6 +19,7 @@
 
 namespace asy
 {
+    /// Traits-like helper that defines a common usage interface for different continuatinos
     template <typename F, typename Sfinae = void>
     struct continuation : std::false_type
     {
@@ -51,6 +52,11 @@ namespace asy
         }
     };
 
+    /// Generate a continuation that forwards successful result of previous operation
+    ///
+    /// \tparam Input Return type of the previous operation
+    /// \param ctx Context of the generated continuation
+    /// \return Continuation
     template <typename Input, typename Ctx>
     static auto default_skip_cont(Ctx ctx)
     {
@@ -64,6 +70,11 @@ namespace asy
         }
     }
 
+    /// Generate a continuation that forwards failure of previous operation
+    ///
+    /// \tparam Input Return type of the previous operation
+    /// \param ctx Context of the generated continuation
+    /// \return Continuation
     template <typename Input, typename Ctx>
     static auto default_skip_failcont(Ctx ctx)
     {

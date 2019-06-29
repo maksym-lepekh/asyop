@@ -23,6 +23,7 @@
 
 namespace asy::concept
 {
+    /// "Async return" continuation concept
     struct ARetContinuation
     {
         template <typename T, typename... Args> auto operator()(T&& t, Args&&...)
@@ -35,6 +36,8 @@ namespace asy::concept
 
 namespace asy
 {
+    /// Default support for "async return" continuation.
+    /// \see struct asy::continuation
     template <typename F, typename... Args>
     struct simple_continuation<F(Args...), c::require<c::satisfy<c::ARetContinuation, F, Args...>>>
             : std::true_type

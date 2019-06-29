@@ -20,6 +20,9 @@ target_include_directories(asyop PUBLIC
     $<INSTALL_INTERFACE:include>)
 target_link_libraries(asyop PUBLIC Threads::Threads)
 target_compile_features(asyop PUBLIC cxx_std_17)
+set_target_properties(asyop PROPERTIES
+    VERSION ${CMAKE_PROJECT_VERSION}
+    SOVERSION ${CMAKE_PROJECT_VERSION_MAJOR})
 
 
 # ASIO integration
@@ -30,6 +33,9 @@ if (ASIO_FOUND)
         $<INSTALL_INTERFACE:include_asio>)
     target_link_libraries(asyop-asio PUBLIC asyop ASIO::ASIO)
     set_target_properties(asyop-asio PROPERTIES EXPORT_NAME asio)
+    set_target_properties(asyop-asio PROPERTIES
+        VERSION ${CMAKE_PROJECT_VERSION}
+        SOVERSION ${CMAKE_PROJECT_VERSION_MAJOR})
 endif()
 
 

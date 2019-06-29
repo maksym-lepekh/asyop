@@ -20,7 +20,12 @@
 
 namespace asy::this_thread { inline namespace v1
 {
+    /// Get associated io_service for the current thread
+    ///
+    /// \return Reference to io_service
     asio::io_service& get_event_loop();
+
+    /// Set a default io_service for the current thread
     void set_event_loop(asio::io_service& s);
 }}
 
@@ -112,6 +117,25 @@ namespace asy::detail::asio
 
 namespace asy { inline namespace asio
 {
+    /// Convert asio async call to asy::op handle using auto-generated completion handler
+    ///
+    /// This adaptation method requires the client to specify expected handler arguments (without first error code),
+    /// then the client must provide a functor which first argument is a proper completion type (it is recommended
+    /// to make the operator() a template). Inside the functor, the client should call the asio async method and
+    /// forward the completion handler.
+    ///
+    /// Example:
+    /// \code
+    /// auto op_handle = asy::asio::fy&lt;std::string&gt;([&](auto completion_handler){
+    ///    socket.async_read(std::move(completion_handler));
+    /// });
+    ///
+    /// // decltype(op_handle) -> asy::basic_op_handle&lt;std::string, asio::error_code&gt;
+    /// \endcode
+    ///
+    /// \tparam HandlerArgs List of expected types of the async operation. May be empty
+    /// \param call Functor that calls async method
+    /// \return Operation handle
     template <typename Call, typename... HandlerArgs>
     auto fy(Call&& call)
     {
@@ -139,6 +163,10 @@ namespace asy { inline namespace asio
                 }, std::forward<Call>(call));
     }
 
+    /// Sleep using asio::steady_timer and current thread's asio::io_service
+    ///
+    /// \param dur Duration of sleep
+    /// \return Operation handle
     template <typename Rep, typename Per>
     auto sleep(std::chrono::duration<Rep, Per> dur)
     {
@@ -148,6 +176,15 @@ namespace asy { inline namespace asio
         return add_cancel(h, [timer]{ timer->cancel(); });
     }
 
+    /// Start asynchronous operation with timeout
+    ///
+    /// This compound operation describes a race (same as when_any()) between user specified operation and
+    /// a timer of specified duration. The first finished operation cancels the other one.
+    ///
+    /// \param dur Duration until timeout
+    /// \param f Functor that describes an operation (it will be converted to an operation handle using asy::op())
+    /// \param args Optional arguments for the functor
+    /// \return Operation handle
     template <typename Rep, typename Per, typename F, typename... Args>
     auto timed_op(std::chrono::duration<Rep, Per> dur, F&& f, Args&&... args)
     {
@@ -174,6 +211,10 @@ namespace asy { inline namespace asio
         });
     }
 
+    /// Special tag that is used to convert asio asynchronous operation to asy::op handle using
+    /// asio's async_result&lt;Signature&gt; mechanism
+    ///
+    /// When passed instead of completion handle, the asio's async method will return asy::op_handle
     constexpr detail::asio::adapt_t adapt;
 }}
 

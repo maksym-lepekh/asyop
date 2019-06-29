@@ -22,6 +22,7 @@
 
 namespace asy::concept
 {
+    /// "Simple" continuation concept
     struct SimpleContinuation
     {
         template <typename T, typename... Args>
@@ -80,6 +81,8 @@ namespace asy
     template <typename Proto, typename Sfinae = void>
     struct simple_continuation : simple_continuation_impl<Proto>{};
 
+    /// Default support for simple continuation.
+    /// \see struct asy::continuation
     template <typename Functor, typename... Input>
     struct continuation<Functor(Input...), c::require<c::satisfy<c::SimpleContinuation, Functor, Input...>>>
             : simple_continuation<Functor(Input...)>{};

@@ -36,15 +36,19 @@ namespace asy::detail::concept
 
 namespace asy::concept
 {
+    /// Require a True constant
     template <bool B>
     using is_true = typename detail::concept::boolean<B>::is_true_t;
 
+    /// Require a False constant
     template <bool B>
     using is_false = typename detail::concept::boolean<B>::is_false_t;
 
+    /// Requirement container
     template <typename... Ts>
     using require = typename detail::concept::require_t<Ts...>::type;
 
+    /// Require a satisfaction of other concept
     template<typename Concept, typename... T>
     using satisfy = require<decltype(std::declval<Concept>()(std::declval<T>()...))>;
 }
@@ -60,6 +64,7 @@ namespace asy::detail::concept
 
 namespace asy::concept
 {
+    /// Boolean constant that represents a satisfaction of the specified concept
     template<typename Concept, typename... T>
     constexpr auto satisfies = detail::concept::as_constant<Concept(T...)>::value;
 }

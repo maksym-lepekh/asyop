@@ -38,36 +38,43 @@ namespace asy
         };
     }
 
+    /// Default (std::error_code) specialisation of `op_handle`
     template <typename T>
     using op_handle = basic_op_handle<T, std::error_code>;
 
+    /// Default (std::error_code) specialisation of `context_ptr`
     template <typename T>
     using context = basic_context_ptr<T, std::error_code>;
 
+    /// Default (std::error_code) specialisation of `op()`
     template <typename F, typename... Args>
     decltype(auto) op(F&& fn, Args&&... args)
     {
         return basic_op<std::error_code>(std::forward<F>(fn), std::forward<Args>(args)...);
     }
 
+    /// Default (std::error_code) specialisation of `op()`
     template <typename Ret>
     decltype(auto) op()
     {
         return basic_op<Ret, std::error_code>();
     }
 
+    /// Default (std::error_code) specialisation of `when_all()`
     template <typename... Fs>
     decltype(auto) when_all(Fs&&...fs)
     {
         return basic_when_all<std::error_code>(std::forward<Fs>(fs)...);
     }
 
+    /// Default (std::error_code) specialisation of `when_success()`
     template <typename... Fs>
     decltype(auto) when_success(Fs&&...fs)
     {
         return basic_when_success<std::error_code>(std::forward<Fs>(fs)...);
     }
 
+    /// Default (std::error_code) specialisation of `when_any()`
     template <typename... Fs>
     decltype(auto) when_any(Fs&&...fs)
     {

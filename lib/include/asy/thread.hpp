@@ -50,6 +50,11 @@ namespace asy::thread::detail
 
 namespace asy::thread
 {
+    /// Convert a blocking operation into an asynchronous operation. A new thread is started for invocation.
+    /// Also supports extraction of the result from the `std::future`
+    ///
+    /// \param f A functor that represents a computation, or a future object
+    /// \return Operation handle
     template <typename F>
     auto fy(F&& f)
     {

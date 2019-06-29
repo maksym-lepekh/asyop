@@ -60,6 +60,8 @@ namespace asy::detail
 
 namespace asy
 {
+    /// An operation context that holds current state of the execution and pending continuation or result, if available
+    /// \note Not all methods are intended to be called by client code.
     template <typename Val, typename Err>
     class basic_context: public detail::context_base
     {
@@ -70,10 +72,17 @@ namespace asy
         using failure_cb_t = std::function<void(Err&&)>;
         using cb_pair_t = std::tuple<success_cb_t, failure_cb_t>;
 
+        /// Constructor
         basic_context() = default;
 
+        /// Constructor, with parent
+        ///
+        /// \param parent Pointer to the context of the parent operation
         explicit basic_context(std::shared_ptr<detail::context_base> parent): m_parent(std::move(parent)) {}
 
+        /// Declare a success of the operation
+        ///
+        /// \param val A value that is interpreted as a result of the operation
         void async_success(success_t&& val = {})
         {
             auto guard = synchronize();
@@ -97,6 +106,9 @@ namespace asy
             }
         }
 
+        /// Declare a failure of the operation
+        ///
+        /// \param val A value that is interpreted as a result of the operation
         void async_failure(failure_t&& val = {})
         {
             auto guard = synchronize();
@@ -116,16 +128,25 @@ namespace asy
             }
         }
 
+        /// Declare a completion of the operation. Success overload.
+        /// Success/failure is deduced from the argument type
+        ///
+        /// \param val A value that is interpreted as a result of the operation
         void async_return(success_t&& val = {})
         {
             async_success(std::move(val));
         }
 
+        /// Declare a completion of the operation. Failure overload.
+        /// Success/failure is deduced from the argument type
+        ///
+        /// \param val A value that is interpreted as a result of the operation
         void async_return(failure_t&& val)
         {
             async_failure(std::move(val));
         }
 
+        /// Cancel current operation
         void cancel() override
         {
             auto guard = synchronize();
@@ -153,6 +174,7 @@ namespace asy
             }
         }
 
+        /// Abort current operation
         void abort() override
         {
             auto guard = synchronize();
@@ -166,6 +188,10 @@ namespace asy
             m_parent.reset();
         }
 
+        /// Set a pair of callbacks that will be called when result of the operation is ready
+        ///
+        /// \param success_cb Success callback
+        /// \param failure_cb Failure callback
         void set_continuation(success_cb_t success_cb, failure_cb_t failure_cb)
         {
             auto guard = synchronize();
@@ -194,6 +220,9 @@ namespace asy
             }
         }
 
+        /// Check if the current operation is finished
+        ///
+        /// \return True if operation is finished
         bool is_done() override
         {
             auto guard = synchronize();
@@ -242,6 +271,7 @@ namespace asy
         std::mutex m_mutex;
     };
 
+    /// Type alias for a context pointer that is used in continuations
     template <typename Ret, typename Err>
     using basic_context_ptr = std::shared_ptr<basic_context<Ret, Err>>;
 }
