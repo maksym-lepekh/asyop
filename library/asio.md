@@ -13,10 +13,13 @@ The `asyop::asio` library is not intrusive and designed to provide quick start h
 The asy::op core library requires to setup executor in order to run the async operations. For this purpose, `asyop::asio` provides two global functions: `asy::this_thread::set_event_loop(io_service&)` and `asy::this_thread::get_event_loop`. These functions do all the work and expect a single-thread execution environment: program uses single event loop thread and doesn't need synchronization.
 
 ## Asiofy
-Asy::op's integration with ASIO provides two ways to conver
+Asy::op's integration with ASIO provides two ways to convert ASIO's async operation into the asy::op's one.
+
+The first method, `asy::asio::fy<Output...>(caller)` is usable with any 
 
 ## Sleep
 
 <!--stackedit_data:
-eyJoaXN0b3J5IjpbODU3OTMyNTAzLC0yMDk1NDAxMzEzXX0=
+eyJoaXN0b3J5IjpbLTIwMjY1MDMzNjIsLTIwOTU0MDEzMTNdfQ
+==
 -->
