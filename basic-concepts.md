@@ -21,8 +21,8 @@ Such chains support splits and joins to describe parallel computation. Data proc
 ## Error handling
 When error occures, it passed as a result of asynchronous operation. Then, the corresponding error-handling continuation is invoked. It is not available, it is forwarded to the next continuation pair until the error is consumed or left pending in the end of the continuation chain.
 
-## Cancellation
-Cancellation is described as pre
+## Cancelation
+Cancelation is a premature failure of the current operation with a special "canceled" error object that results in invocation of error handling path in the continuation  
 <!--stackedit_data:
-eyJoaXN0b3J5IjpbOTQyMTkzODAyXX0=
+eyJoaXN0b3J5IjpbNzg3ODk4NjY4XX0=
 -->
