@@ -19,10 +19,10 @@ Continuation is also an operation, thus it can has own continuation. That  gives
 Such chains support splits and joins to describe parallel computation. Data processing can be depicted as a graph where nodes represent each operation.
 
 ## Error handling
-When error occures, it passed as a result of asynchronous operation. Then, the corresponding error-handling continuation is invoked. It is not available, it is forwarded to the next continuation pair until the error is consumed or left pending in the end of the continuation chain.
+When error occures, it passed as a result of asynchronous operation. Then, the corresponding error-handling continuation is invoked. It is not available, it is forwarded to the next continuation pair until the error is consumed or left pending in the end of the continuation chain. If the error is consumed, the computation goes back to success path of execution, thus invoking the success continuation that receives `void`.
 
 ## Cancelation
-Cancelation is a premature failure of the current operation with a special "canceled" error object that results in invocation of error handling path in the continuation  
+Cancelation is a premature failure of the current operation with a special "canceled" error object that results in invocation of error handling path in the continuation chain.
 <!--stackedit_data:
-eyJoaXN0b3J5IjpbNzg3ODk4NjY4XX0=
+eyJoaXN0b3J5IjpbODc4OTQzNTczXX0=
 -->
