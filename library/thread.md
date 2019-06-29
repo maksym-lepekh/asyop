@@ -6,9 +6,10 @@ parent: Library description
 ---
 
 # Thread support
+The asy::op library provides a helper 
 
 ## Threadify
 
 <!--stackedit_data:
-eyJoaXN0b3J5IjpbMTQwODQyMTg4N119
+eyJoaXN0b3J5IjpbMTcxNjI4MTg4NF19
 -->
