@@ -18,15 +18,42 @@
 
 namespace asy { inline namespace v1
 {
+    /// The global instance that is capable of invocation of the callable on preferred thread. Used by
+    /// operation context to run continuations
     struct executor
     {
+        /// Client-side callable type
         using fn_t = std::function<void()>;
+
+        /// Per-thread handler type
         using impl_t = std::function<void(fn_t)>;
 
+        /// Add a functor to execution queue. The functor invocation is expected to be done immediately
+        /// and on a preferred thread
+        ///
+        /// \param fn Callable object
+        /// \param id Preferred thread ID, optional, defaults to current thread
         void schedule_execution(fn_t fn, std::thread::id id = std::this_thread::get_id()) noexcept;
+
+        /// Check whether the specified thread shares operation context with other threads, thus context access
+        /// must be synchronised
+        ///
+        /// \param id Thread ID, optional, defaults to current thread
+        /// \return True if the data access should be synchronized, False otherwise
         bool should_sync(std::thread::id id = std::this_thread::get_id()) const noexcept;
+
+        /// Set the handler for specified thread ID. This handler is responsible for invocation of callables
+        /// that are passed with `schedule_execution()`.
+        /// \see schedule_execution()
+        ///
+        /// \param id Thread ID
+        /// \param impl Handler
+        /// \param require_sync Execution on the specified thread ID should synchronize data access
         void set_impl(std::thread::id id, impl_t impl, bool require_sync);
 
+        /// Get a reference to global executor
+        ///
+        /// \return Reference to the singleton
         static executor& get() noexcept;
 
     private:

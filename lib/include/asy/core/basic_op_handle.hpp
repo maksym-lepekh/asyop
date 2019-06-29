@@ -18,6 +18,7 @@
 
 namespace asy
 {
+    /// Client-side handle to the asynchronous operation
     template <typename T, typename Err>
     class basic_op_handle
     {
@@ -25,12 +26,22 @@ namespace asy
         using output_t = T;
         using error_t = Err;
 
+        /// Constructor, no parent
+        ///
+        /// \param exec A callable that is executed at creation of the operation
+        /// \param args Arguments that are forwarder into `exec`
         template <typename Fn, typename... Args>
         explicit basic_op_handle(Fn&& exec, Args&&... args): m_ctx(std::make_shared<basic_context<T, Err>>())
         {
             std::forward<Fn>(exec)(m_ctx, std::forward<Args>(args)...);
         }
 
+        /// Constructor, with parent
+        /// Parent-child connection is typically created when `.then()` or similar is used.
+        ///
+        /// \param parent A pointer to the parent operation context.
+        /// \param exec A callable that is executed at creation of the operation
+        /// \param args Arguments that are forwarder into `exec`
         template <typename Fn, typename... Args>
         explicit basic_op_handle(std::shared_ptr<detail::context_base> parent, Fn&& exec, Args&&... args)
             : m_ctx(std::make_shared<basic_context<T, Err>>(parent))
@@ -38,16 +49,24 @@ namespace asy
             std::forward<Fn>(exec)(m_ctx, std::forward<Args>(args)...);
         }
 
+        /// Cancel the operation
+        /// \note Has no effect if operation is already done
         void cancel()
         {
             m_ctx->cancel();
         }
 
+        /// Abort the operation. No continuation must be invoked
+        /// \note Has no effect if operation is already done
         void abort()
         {
             m_ctx->abort();
         }
 
+        /// Set the a callable that continues the execution on operation success
+        ///
+        /// \param fn Continuation, that is compatible with operation return type
+        /// \return New handler that corresponds to the continuation
         template <typename Fn>
         auto then(Fn&& fn)
         {
@@ -81,6 +100,11 @@ namespace asy
             }
         }
 
+        /// Set the a pair of callables that continue the execution on operation success or failure
+        ///
+        /// \param s Continuation, that is compatible with operation return type
+        /// \param f Continuation, that is compatible with operation error type
+        /// \return New handler that corresponds to the continuation
         template <typename SuccCb, typename FailCb>
         auto then(SuccCb&& s, FailCb&& f)
         {
@@ -116,6 +140,10 @@ namespace asy
             }
         }
 
+        /// Set the a callable that continues the execution on operation failure
+        ///
+        /// \param fn Continuation, that is compatible with operation error type
+        /// \return New handler that corresponds to the continuation
         template <typename Fn>
         auto on_failure(Fn&& fn)
         {

@@ -25,6 +25,7 @@ namespace asy::concept
     template <typename F>
     using context_arg_first = tt::specialization_of<basic_context, tt::specialization_of_first_t<std::shared_ptr, tt::functor_first_t<F>>>;
 
+    /// Concept of the continuation with a context argument
     struct CtxContinuation
     {
         template <typename T, typename... Args>
@@ -39,6 +40,8 @@ namespace asy::concept
 
 namespace asy
 {
+    /// Default support for continuation with a context argument.
+    /// \see struct asy::continuation
     template <typename F, typename... Args>
     struct continuation<F(Args...), c::require<c::satisfy<c::CtxContinuation, F, Args...>>> : std::true_type
     {

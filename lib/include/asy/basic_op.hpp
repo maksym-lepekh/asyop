@@ -19,6 +19,12 @@
 
 namespace asy
 {
+    /// Create and start an operation
+    ///
+    /// \tparam Err Error type of the operation
+    /// \param fn Functor that represents a computation or result of the finished operation or operation handle
+    /// \param args Functor arguments
+    /// \return Operation handle
     template <typename Err, typename F, typename... Args>
     auto basic_op(F&& fn, Args&&... args)
     {
@@ -43,6 +49,11 @@ namespace asy
         }
     }
 
+    /// Create a finished operation with a pending default-constructed result
+    ///
+    /// \tparam Ret Error type of the operation
+    /// \tparam Err Return type of the operation
+    /// \return Operation handle
     template <typename Ret, typename Err>
     auto basic_op()
     {
