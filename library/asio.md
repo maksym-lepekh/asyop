@@ -15,11 +15,20 @@ The asy::op core library requires to setup executor in order to run the async op
 ## Asiofy
 Asy::op's integration with ASIO provides two ways to convert ASIO's async operation into the asy::op's one.
 
-The first method, `asy::asio::fy<Output...>(caller)` is usable with any 
+The first method, `asy::asio::fy<Output...>(caller)` is usable with any method that requires completion handle and outputs `asio::error_code` plus other values (if availalbe). This adaptation method requires the client to specify expected handler arguments (without first error code),  then the client must provide a functor which first argument is a proper completion type (it is recommended to make the `operator()` a template). Inside the functor, the client should call the asio async method and  
+/// forward the completion handler.  
+///  
+/// Example:  
+/// \code  
+/// auto op_handle = asy::asio::fy&lt;std::string&gt;([&](auto completion_handler){  
+///    socket.async_read(std::move(completion_handler));  
+/// });  
+///  
+/// // decltype(op_handle) -> asy::basic_op_handle&lt;std::string, asio::error_code&gt;  
+/// \endcode
 
 ## Sleep
 
 <!--stackedit_data:
-eyJoaXN0b3J5IjpbLTIwMjY1MDMzNjIsLTIwOTU0MDEzMTNdfQ
-==
+eyJoaXN0b3J5IjpbMTA0MjI0NTgyNywtMjA5NTQwMTMxM119
 -->
