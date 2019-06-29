@@ -55,12 +55,12 @@ The common part of the asy::op contains a set of specializations for the `struct
 ### Executor
 The global executor is used to connect the core library with the preferred execution model of the client's project. In other words, the executor is used as a wrapper for event loop or any thread pool.
 
-The asy::op library contains reference implementation of Asio `io_service` support. It uses the `executor` internally to set everything up. It is expected that other integrations will hide executor usage in the same manner, so end-user interaction with `class executor` is minimal.
+The asy::op library contains [reference implementation](asio.md) of Asio `io_service` support. It uses the `executor` internally to set everything up. It is expected that other integrations will hide executor usage in the same manner, so end-user interaction with `class executor` is minimal.
 
 Anyway, the executor is implemented as a singleton and has following public methods: `schedule_execution(F, TID)`, `should_sync(TID)` and `set_impl(TID, F, bool should_sync)`.  The first one is used internally by `basic_context<>` to run the continuation on the preferred thread. In most cases, it'll be a current thread. The second one, `should_sync()` is also used by `basic_context<>` to check if the mutexes should be used when calling `.cance()`, `async_return()`, etc. The executor returns the boolean depending on the current setup of event loops or thread pools and their preferences. The third method `set_impl()` is used to register certain execution implementation (thread, thread pool, event loop) for the specified thread. This is the main point of connection between asy::op and other libraries. This method has a boolean arg to notify the executor that the code is running in a multithreaded environment and thread safety mechanisms should be employed.
 
 The asy::op supports running several event loops and thread pools each on its own thread. The async operation chains can be isolated within the same event loop or can be balanced between threads, but this is fully up to the user's choice. The actual balancer is implemented by the client's code and is set via `set_impl()` method for each thread separately. Continuations are called with the preferred thread that equals parent's execution thread. The balancer of the preferred thread can reschedule the continuation on the other one. Please note that asy::op does not implement balancing, it only provides the compatible interface ;)
 <!--stackedit_data:
-eyJoaXN0b3J5IjpbMTc2ODIxMTU3MywxMjkxNDY3NTcxLC05MT
+eyJoaXN0b3J5IjpbLTE3NDkxNDU0NywxMjkxNDY3NTcxLC05MT
 U1NTE2NDNdfQ==
 -->
