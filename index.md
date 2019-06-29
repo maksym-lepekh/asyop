@@ -16,9 +16,9 @@ The library is designed with the following goals in mind:
 * Help with error handling but do not force specific error types, let the user use utils from its own codebase
 * Provide meaningful support for cancellation
 * Support different executors (thread pools, event loops, etc.) via an ad-hoc interface, let the user write own library support
-* Write reference implementations for Asio, std::thread, but let the user replace it with different code
+* Write reference implementations for [Asio, std::thread, but let the user replace it with different code
 
 This piece of code should utilize modern CI usages, such as multi-os, multi-toolchain checks, code coverage reports, static analysis (TODO) and sanitizer (TODO) cheks.
 <!--stackedit_data:
-eyJoaXN0b3J5IjpbNDM1Nzc1OTJdfQ==
+eyJoaXN0b3J5IjpbLTIwMDU5MzU3MzksNDM1Nzc1OTJdfQ==
 -->
