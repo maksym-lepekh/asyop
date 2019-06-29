@@ -26,10 +26,10 @@ auto op_handle = asy::asio::fy<std::string>([&](auto completion_handler){
 // decltype(op_handle) -> asy::basic_op_handle<std::string, asio::error_code>;  
 ```
 
-The second method utilizes ASIO's support to customize return type of the async operation. It is available to all methods with proper implementation. Thi
+The second method utilizes ASIO's support to customize return type of the async operation. It is available to all methods with proper implementation. The client is exepected to pass a special token `asy::asio::adapt` instead of completion handler. After that, the async operation will return perfectly usable `asy::op_handler`
 
 ## Sleep
 
 <!--stackedit_data:
-eyJoaXN0b3J5IjpbMTc1NjMwMzU5MiwtMjA5NTQwMTMxM119
+eyJoaXN0b3J5IjpbNDUzNzc0ODA1LC0yMDk1NDAxMzEzXX0=
 -->
