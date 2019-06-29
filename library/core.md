@@ -50,7 +50,7 @@ The methods `basic_op_handle::then()` and `basic_op_handle::on_failure()` are te
 
 It is expected that the user provides a specialization to `struct continuation<>` that defines two static public methods, thus making given functor type "compatible" with an `asy::op` library. These methods are `to_handle(F, Args...)` and `deferred(Ctx, F, Args)`. The former must call the functor with giver args and return the operation handle that corresponds to the operation which "returns" immediately when the user function is finished. The latter is similar, but instead of operation handle, it should forward the functor results via a pointer to the async context.
 
-The common part of the asy::op contains a set of specializations for the `struct continuation<>` that should cover most of the cases, this can be used as a quick start for new projects. They will be covered later.
+The common part of the asy::op contains a set of specializations for the `struct continuation<>` that should cover most of the cases, this can be used as a quick start for new projects. They will be covered [later](customization.md#custom-callable-signature).
 
 ### Executor
 The global executor is used to connect the core library with the preferred execution model of the client's project. In other words, the executor is used as a wrapper for event loop or any thread pool.
@@ -61,6 +61,6 @@ Anyway, the executor is implemented as a singleton and has following public meth
 
 The asy::op supports running several event loops and thread pools each on its own thread. The async operation chains can be isolated within the same event loop or can be balanced between threads, but this is fully up to the user's choice. The actual balancer is implemented by the client's code and is set via `set_impl()` method for each thread separately. Continuations are called with the preferred thread that equals parent's execution thread. The balancer of the preferred thread can reschedule the continuation on the other one. Please note that asy::op does not implement balancing, it only provides the compatible interface ;)
 <!--stackedit_data:
-eyJoaXN0b3J5IjpbMjY5NTUzNzYyLDEyOTE0Njc1NzEsLTkxNT
-U1MTY0M119
+eyJoaXN0b3J5IjpbMTc2ODIxMTU3MywxMjkxNDY3NTcxLC05MT
+U1NTE2NDNdfQ==
 -->
