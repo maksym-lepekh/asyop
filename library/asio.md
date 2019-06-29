@@ -29,7 +29,9 @@ auto op_handle = asy::asio::fy<std::string>([&](auto completion_handler){
 The second method utilizes ASIO's support to customize return type of the async operation. It is available to all methods with proper implementation. The client is exepected to pass a special token `asy::asio::adapt` instead of completion handler. After that, the async operation will return perfectly usable `asy::basic_op_handle<Output, asio::error_code>`. Depending on number of ouput values, the `Output` and be a `void`, single type or `std::tuple<...>`.
 
 ## Sleep
+`asyop::asio` provides a `sleep()` function that takes a `chrono::duration` as an arguments and uses default `io_service` for the current
 
+## Operation with timeout
 <!--stackedit_data:
-eyJoaXN0b3J5IjpbODg2NzU5NzA0LC0yMDk1NDAxMzEzXX0=
+eyJoaXN0b3J5IjpbMzkxMzczMjgwLC0yMDk1NDAxMzEzXX0=
 -->
