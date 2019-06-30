@@ -3,7 +3,7 @@ language: cpp
 matrix:
   include:
     - os: linux
-      name: linux-gcc7-coverage
+      name: "GCC | Coverage"
       addons:
         apt:
           sources:
@@ -29,7 +29,7 @@ matrix:
         - bash <(curl -s https://codecov.io/bash) -f coverage.info;
 
     - os: osx
-      name: osx-appleclang-debug
+      name: "Apple Clang | Debug"
       osx_image: xcode10.2
       env:
         - BUILD_TYPE=Debug
@@ -39,7 +39,7 @@ matrix:
         - conan user
 
     - os: linux
-      name: linux-clang7-release
+      name: "LLVM | Release"
       addons:
         apt:
           sources:
@@ -58,8 +58,7 @@ matrix:
         - conan user
 
     - os: windows
-      name: win-msvc-release
-
+      name: "MSVC | Release"
       install:
         - choco install conan
         - export PATH=$PATH:"/C/Program Files/Conan/conan"
@@ -71,7 +70,7 @@ matrix:
         - cd tests && ctest --output-on-failure
 
     - os: linux
-      name: linux-llvm7-analyze
+      name: "LLVM | Static Analyze"
       addons:
         apt:
           sources:
@@ -97,6 +96,74 @@ matrix:
         - cmake -DCMAKE_BUILD_TYPE=$BUILD_TYPE -DCMAKE_EXPORT_COMPILE_COMMANDS=ON ..
         - cd ..
         - clang-check-7 -analyze -p out/compile_commands.json tests/*.cpp lib/src/*.cpp lib/src_asio/*.cpp
+
+    - os: linux
+      name: "LLVM | ASan,LSan,UBSan"
+      addons:
+        apt:
+          sources:
+            - ubuntu-toolchain-r-test
+            - llvm-toolchain-xenial-7
+          packages:
+            - libstdc++-7-dev
+            - clang-7
+            - clang-tools-7
+            - cmake
+      env:
+        - COMPILER="CC=clang-7 && CXX=clang++-7"
+        - BUILD_TYPE=AUBSan
+      install:
+        - eval $COMPILER
+        - sudo apt-get remove python-enum34
+        - sudo pip install --upgrade pip
+        - sudo pip install conan
+        - conan user
+        - ASAN_OPTIONS=detect_stack_use_after_return=1:halt_on_error=false:detect_leaks=1
+        - echo $ASAN_OPTIONS
+
+    - os: linux
+      name: "LLVM | MSan"
+      addons:
+        apt:
+          sources:
+            - ubuntu-toolchain-r-test
+            - llvm-toolchain-xenial-7
+          packages:
+            - libstdc++-7-dev
+            - clang-7
+            - clang-tools-7
+            - cmake
+      env:
+        - COMPILER="CC=clang-7 && CXX=clang++-7"
+        - BUILD_TYPE=MSan
+      install:
+        - eval $COMPILER
+        - sudo apt-get remove python-enum34
+        - sudo pip install --upgrade pip
+        - sudo pip install conan
+        - conan user
+
+    - os: linux
+      name: "LLVM | TSan"
+      addons:
+        apt:
+          sources:
+            - ubuntu-toolchain-r-test
+            - llvm-toolchain-xenial-7
+          packages:
+            - libstdc++-7-dev
+            - clang-7
+            - clang-tools-7
+            - cmake
+      env:
+        - COMPILER="CC=clang-7 && CXX=clang++-7"
+        - BUILD_TYPE=TSan
+      install:
+        - eval $COMPILER
+        - sudo apt-get remove python-enum34
+        - sudo pip install --upgrade pip
+        - sudo pip install conan
+        - conan user
 
   allow_failures:
     - os: windows
