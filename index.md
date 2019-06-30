@@ -18,7 +18,8 @@ The library is designed with the following goals in mind:
 * Support different executors (thread pools, event loops, etc.) via an ad-hoc interface, let the user write own library support
 * Write reference implementations for [ASIO](library/asio.md), [std::thread](library/thread.md), but let the user replace it with different code
 
-This piece of code should utilize modern CI usages, such as multi-os, multi-toolchain checks, code coverage reports, static analysis (TODO) and sanitizer (TODO) cheks.
+This piece of code should utilize modern CI usages, such as multi-os, multi-toolchain checks, code coverage reports, static analysis and sanitizer cheks.
 <!--stackedit_data:
-eyJoaXN0b3J5IjpbLTI5MTY0MTQxNiw0MzU3NzU5Ml19
+eyJoaXN0b3J5IjpbMTU2NzMzMjMxMiwtMjkxNjQxNDE2LDQzNT
+c3NTkyXX0=
 -->
