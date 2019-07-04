@@ -417,4 +417,10 @@ TEST_CASE("asy::op then", "[asio]")
 
         io.run();
     }
+
+    SECTION("Set continuation after resolve (void)")
+    {
+        asy::op<void>().then([&](){ timer.cancel();});
+        io.run();
+    }
 }

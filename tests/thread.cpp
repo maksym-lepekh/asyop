@@ -18,6 +18,7 @@
 #include <asy/thread.hpp>
 #include <chrono>
 #include <string>
+#include <atomic>
 
 using namespace std::literals;
 
@@ -36,13 +37,15 @@ TEST_CASE("Threadify", "[asio]")
     SECTION("Simple case")
     {
         auto main_id = std::this_thread::get_id();
+        auto is_other_thread = std::atomic_bool{false};
 
-        asy::thread::fy([main_id](){
-            CHECK(main_id != std::this_thread::get_id());
+        asy::thread::fy([main_id, &is_other_thread](){
+            is_other_thread = (main_id != std::this_thread::get_id());
             std::this_thread::sleep_for(5ms);
             return 42;
         })
         .then([&](int&& input) {
+            CHECK(is_other_thread);
             CHECK(input == 42);
             timer.cancel();
         });
@@ -64,12 +67,55 @@ TEST_CASE("Threadify", "[asio]")
         io.run();
     }
 
+    SECTION("std::future, with handle")
+    {
+        auto thr = std::thread{};
+
+        asy::thread::fy(std::async(std::launch::async, []{
+            std::this_thread::sleep_for(5ms);
+            return 42;
+        }), thr)
+        .then([&](int&& input) {
+            CHECK(input == 42);
+            timer.cancel();
+        });
+
+        io.run();
+        if (thr.joinable()) thr.join();
+    }
+
+    SECTION("Cancel thread, with handle")
+    {
+        auto main_id = std::this_thread::get_id();
+        auto is_other_thread = std::atomic_bool{false};
+        auto thr = std::thread{};
+
+        auto handle = asy::thread::fy([main_id, &is_other_thread](){
+            is_other_thread = (main_id != std::this_thread::get_id());
+            std::this_thread::sleep_for(50ms);
+            return 42;
+        }, thr)
+        .then([&](int&& input) { FAIL("Wrong path"); }, [&](auto err){
+            CHECK( err == std::make_error_code(std::errc::operation_canceled) );
+            timer.cancel();
+        });
+
+        io.post([&](){
+            handle.cancel();
+        });
+
+        io.run();
+        if (thr.joinable()) thr.join();
+        CHECK(is_other_thread);
+    }
+
     SECTION("Cancel thread")
     {
         auto main_id = std::this_thread::get_id();
+        auto is_other_thread = std::atomic_bool{false};
 
-        auto handle = asy::thread::fy([main_id](){
-            CHECK(main_id != std::this_thread::get_id());
+        auto handle = asy::thread::fy([main_id, &is_other_thread](){
+            is_other_thread = (main_id != std::this_thread::get_id());
             std::this_thread::sleep_for(50ms);
             return 42;
         })
@@ -83,5 +129,7 @@ TEST_CASE("Threadify", "[asio]")
         });
 
         io.run();
+        std::this_thread::sleep_for(100ms);
+        CHECK(is_other_thread);
     }
 }
