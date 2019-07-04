@@ -55,7 +55,7 @@ namespace asy
     auto add_cancel(asy::basic_op_handle<T, Err>& handle, Fn&& fn)
     {
         return handle.then(detail::make_skip<T, Err>(),
-        [cb = std::forward<Fn>(fn)](basic_context_ptr<void, Err> ctx, Err&& err)
+        [cb = std::forward<Fn>(fn)](basic_context_ptr<T, Err> ctx, Err&& err)
         {
             if (err == detail::error_traits<Err>::get_cancelled())
             {

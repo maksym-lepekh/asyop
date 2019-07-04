@@ -61,18 +61,7 @@ namespace asy
         {
             return [f = std::forward<F>(f), ctx](Args&& ... args) mutable
             {
-                if constexpr (std::is_void_v<ret_type>)
-                {
-                    to_handle(std::in_place_type<Err>, std::forward<F>(f), std::forward<Args>(args)...).then(
-                            [ctx](){ ctx->async_success(); },
-                            [ctx](Err&& err){ ctx->async_failure(std::move(err)); });
-                }
-                else
-                {
-                    to_handle(std::in_place_type<Err>, std::forward<F>(f), std::forward<Args>(args)...).then(
-                            [ctx](ret_type&& output){ ctx->async_success(std::move(output)); },
-                            [ctx](Err&& err){ ctx->async_failure(std::move(err)); });
-                }
+                std::invoke(f, ctx, std::forward<Args>(args)...);
             };
         }
     };
