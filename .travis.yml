@@ -133,6 +133,7 @@ matrix:
             - clang-7
             - clang-tools-7
             - cmake
+            - subversion
       env:
         - COMPILER="CC=clang-7 && CXX=clang++-7"
         - BUILD_TYPE=MSan
@@ -142,6 +143,11 @@ matrix:
         - sudo pip install --upgrade pip
         - sudo pip install conan
         - conan user
+        - git clone https://github.com/rukkal/libcxx-msan.git
+        - cd libcxx-msan
+        - ./build.sh &>/dev/null
+        - source load-environment && cd ..
+        - AUX_CMAKE_FLAGS='-DCMAKE_CXX_FLAGS=-stdlib=libc++ -fsanitize=memory'
 
     - os: linux
       name: "LLVM | TSan"
@@ -171,6 +177,6 @@ matrix:
 script:
   - mkdir out && cd out
   - conan install .. -o build_tests=True
-  - cmake -DCMAKE_BUILD_TYPE=$BUILD_TYPE ..
+  - cmake -DCMAKE_BUILD_TYPE=$BUILD_TYPE "$AUX_CMAKE_FLAGS" ..
   - cmake --build . -- -j $(nproc)
   - cd tests && ctest --output-on-failure
