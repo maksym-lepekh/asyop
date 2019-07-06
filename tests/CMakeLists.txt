@@ -3,7 +3,7 @@ project(asyop-tests LANGUAGES CXX)
 
 list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_LIST_DIR}/../cmake")
 include(${CMAKE_CURRENT_BINARY_DIR}/conan_paths.cmake OPTIONAL)
-include(coverage-support)
+
 find_package(Catch2 REQUIRED)
 find_package(ASIO REQUIRED)
 

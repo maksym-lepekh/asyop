@@ -117,8 +117,6 @@ TEST_CASE("timed_op", "[asio]")
 
     SECTION("Success")
     {
-        auto now = std::chrono::steady_clock::now();
-
         asy::asio::timed_op(10ms, asy::asio::sleep(5ms).then([]{ return 42; }))
         .then([&](int&& input){
             CHECK(input == 42);
@@ -130,8 +128,6 @@ TEST_CASE("timed_op", "[asio]")
 
     SECTION("Time out")
     {
-        auto now = std::chrono::steady_clock::now();
-
         asy::timed_op(5ms, asy::sleep(10ms).then([]{ return 42; }))
         .on_failure([&](auto&& err){
             CHECK(err == make_error_code(std::errc::timed_out));
@@ -143,8 +139,6 @@ TEST_CASE("timed_op", "[asio]")
 
     SECTION("Cancel")
     {
-        auto now = std::chrono::steady_clock::now();
-
         auto h = asy::timed_op(5ms, asy::sleep(10ms).then([]{ return 42; }))
                 .on_failure([&](auto&& err){
                     CHECK(err == make_error_code(std::errc::operation_canceled));

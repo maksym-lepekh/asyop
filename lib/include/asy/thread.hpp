@@ -18,7 +18,7 @@
 #include <thread>
 #include <future>
 #include <memory>
-#include <pthread.h>
+#include <utility>
 
 namespace asy::thread::detail
 {
@@ -28,17 +28,20 @@ namespace asy::thread::detail
         using ret_t = std::invoke_result_t<F>;
 
         auto origin_id = std::this_thread::get_id();
+        auto thread_handle = std::thread{};
 
-        return asy::op([fn = std::forward<F>(f), origin_id](asy::context<ret_t> ctx) mutable
+        auto h = asy::op([fn = std::forward<F>(f), origin_id, &thread_handle](asy::context<ret_t> ctx) mutable
         {
-            std::thread([fn = std::forward<F>(fn), ctx, origin_id]() mutable
+            thread_handle = std::thread([fn = std::forward<F>(fn), ctx, origin_id]() mutable
             {
                 asy::executor::get().schedule_execution([ctx, ret = fn()]() mutable
                 {
                     ctx->async_success(std::move(ret));
                 }, origin_id);
-            }).detach();
+            });
         });
+
+        return std::pair(std::move(h), std::move(thread_handle));
     }
 
     template <typename T>
@@ -60,11 +63,38 @@ namespace asy::thread
     {
         if constexpr (asy::tt::specialization_of<std::future, std::decay_t<F>>::value)
         {
-            return detail::fy_future(std::forward<F>(f));
+            auto&& [op, thr] = detail::fy_future(std::forward<F>(f));
+            thr.detach();
+            return op;
         }
         else
         {
-            return detail::fy_func(std::forward<F>(f));
+            auto&& [op, thr] = detail::fy_func(std::forward<F>(f));
+            thr.detach();
+            return op;
+        }
+    }
+
+    /// Convert a blocking operation into an asynchronous operation. A new thread is started for invocation.
+    /// Also supports extraction of the result from the `std::future`
+    ///
+    /// \param f A functor that represents a computation, or a future object
+    /// \param t_handle [out] handle of the created thread
+    /// \return Operation handle
+    template <typename F>
+    auto fy(F&& f, std::thread& t_handle)
+    {
+        if constexpr (asy::tt::specialization_of<std::future, std::decay_t<F>>::value)
+        {
+            auto&& [op, thr] = detail::fy_future(std::forward<F>(f));
+            t_handle = std::move(thr);
+            return op;
+        }
+        else
+        {
+            auto&& [op, thr] = detail::fy_func(std::forward<F>(f));
+            t_handle = std::move(thr);
+            return op;
         }
     }
 }
