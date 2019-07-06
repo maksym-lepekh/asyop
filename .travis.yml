@@ -171,8 +171,42 @@ matrix:
         - sudo pip install conan
         - conan user
 
+    - stage: check
+      os:  linux
+      name: "LLVM | Tidy"
+      addons:
+        apt:
+          sources:
+            - ubuntu-toolchain-r-test
+            - llvm-toolchain-xenial-7
+          packages:
+            - libstdc++-7-dev
+            - clang-tidy-7
+            - expect-dev
+            - cmake
+      env:
+        - COMPILER="CC=clang-7 && CXX=clang++-7"
+        - BUILD_TYPE=Debug
+      install:
+        - eval $COMPILER
+        - sudo apt-get remove python-enum34
+        - sudo pip install --upgrade pip
+        - sudo pip install conan
+        - conan user
+      script:
+        - mkdir out && cd out
+        - conan install .. -o build_tests=True
+        - cmake -DCMAKE_BUILD_TYPE=$BUILD_TYPE "$AUX_CMAKE_FLAGS"  -DCMAKE_EXPORT_COMPILE_COMMANDS=ON ..
+        - cd ..
+        - unbuffer clang-tidy-7 -header-filter=.* -p out $(find lib/ -name *.cpp) | tee tidy.out
+        - bash -c 'if [[ $(grep -E "warning:|error:" tidy.out) ]]; then exit 1; else exit 0; fi'
+
   allow_failures:
     - os: windows
+
+stages:
+  - check
+  - test
 
 script:
   - mkdir out && cd out
