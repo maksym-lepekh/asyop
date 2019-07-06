@@ -15,6 +15,8 @@ The function supports two types of input arguments.
 The first one: functor that calls blocking functions. It is invoked in a separate thread and the return type is used as an output type of the operation handle.
 
 The second one: an instance of the `std::future<Output>`. The implementation will call `.get()` in a separate thread and will forward the output into async operation continuation.
+
+There `asy::fy`
 <!--stackedit_data:
-eyJoaXN0b3J5IjpbMTQ1Nzc1MTQyOV19
+eyJoaXN0b3J5IjpbNjkxNzg1NDgxLDE0NTc3NTE0MjldfQ==
 -->
