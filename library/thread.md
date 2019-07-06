@@ -17,6 +17,7 @@ The first one: functor that calls blocking functions. It is invoked in a separat
 The second one: an instance of the `std::future<Output>`. The implementation will call `.get()` in a separate thread and will forward the output into async operation continuation.
 
 There is an overload of `asy::fy()` that has  `std::thread` as an out parameter. This enables the client code to receive a handle to a newly created thread so the user can wait (`join()`) for it for proper destruction procedure. The thread will be detached otherwise.
+
 <!--stackedit_data:
-eyJoaXN0b3J5IjpbMTgzMjkwNDA2MiwxNDU3NzUxNDI5XX0=
+eyJoaXN0b3J5IjpbLTE3NzcxNjkzNjQsMTQ1Nzc1MTQyOV19
 -->
