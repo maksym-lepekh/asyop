@@ -6,7 +6,7 @@ class AsyOpConan(ConanFile):
     description = "C++17 library for asynchronous operations"
     license = "https://github.com/maksym-lepekh/asyop/blob/master/LICENSE"
     url = "https://maksym-lepekh.github.io/asyop/"
-    version = "0.1"
+    version = "0.2"
     settings = "os", "compiler", "build_type", "arch"
     generators = "cmake_paths"
 
