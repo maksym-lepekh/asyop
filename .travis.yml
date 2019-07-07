@@ -3,7 +3,7 @@ language: cpp
 matrix:
   include:
     - os: linux
-      name: "GCC | Coverage"
+      name: "GCC7 | Coverage"
       addons:
         apt:
           sources:
@@ -39,7 +39,7 @@ matrix:
         - conan user
 
     - os: linux
-      name: "LLVM | Release"
+      name: "LLVM7 | Release"
       addons:
         apt:
           sources:
@@ -70,19 +70,19 @@ matrix:
         - cd tests && ctest --output-on-failure
 
     - os: linux
-      name: "LLVM | Static Analyze"
+      name: "LLVM8 | Static Analyze"
       addons:
         apt:
           sources:
             - ubuntu-toolchain-r-test
-            - llvm-toolchain-xenial-7
+            - llvm-toolchain-xenial-8
           packages:
             - libstdc++-7-dev
-            - clang-7
-            - clang-tools-7
+            - clang-8
+            - clang-tools-8
             - cmake
       env:
-        - COMPILER="CC=clang-7 && CXX=clang++-7"
+        - COMPILER="CC=clang-8 && CXX=clang++-8"
         - BUILD_TYPE=Release
       install:
         - eval $COMPILER
@@ -95,22 +95,22 @@ matrix:
         - conan install .. -o build_tests=True
         - cmake -DCMAKE_BUILD_TYPE=$BUILD_TYPE -DCMAKE_EXPORT_COMPILE_COMMANDS=ON ..
         - cd ..
-        - clang-check-7 -analyze -p out/compile_commands.json tests/*.cpp lib/src/*.cpp lib/src_asio/*.cpp
+        - clang-check-8 -analyze -p out/compile_commands.json tests/*.cpp lib/src/*.cpp lib/src_asio/*.cpp
 
     - os: linux
-      name: "LLVM | ASan,LSan,UBSan"
+      name: "LLVM8 | ASan,LSan,UBSan"
       addons:
         apt:
           sources:
             - ubuntu-toolchain-r-test
-            - llvm-toolchain-xenial-7
+            - llvm-toolchain-xenial-8
           packages:
             - libstdc++-7-dev
-            - clang-7
-            - clang-tools-7
+            - clang-8
+            - clang-tools-8
             - cmake
       env:
-        - COMPILER="CC=clang-7 && CXX=clang++-7"
+        - COMPILER="CC=clang-8 && CXX=clang++-8"
         - BUILD_TYPE=AUBSan
       install:
         - eval $COMPILER
@@ -122,20 +122,20 @@ matrix:
         - echo $ASAN_OPTIONS
 
     - os: linux
-      name: "LLVM | MSan"
+      name: "LLVM8 | MSan"
       addons:
         apt:
           sources:
             - ubuntu-toolchain-r-test
-            - llvm-toolchain-xenial-7
+            - llvm-toolchain-xenial-8
           packages:
             - libstdc++-7-dev
-            - clang-7
-            - clang-tools-7
+            - clang-8
+            - clang-tools-8
             - cmake
             - subversion
       env:
-        - COMPILER="CC=clang-7 && CXX=clang++-7"
+        - COMPILER="CC=clang-8 && CXX=clang++-8"
         - BUILD_TYPE=MSan
       install:
         - eval $COMPILER
@@ -150,19 +150,19 @@ matrix:
         - AUX_CMAKE_FLAGS='-DCMAKE_CXX_FLAGS=-stdlib=libc++ -fsanitize=memory'
 
     - os: linux
-      name: "LLVM | TSan"
+      name: "LLVM8 | TSan"
       addons:
         apt:
           sources:
             - ubuntu-toolchain-r-test
-            - llvm-toolchain-xenial-7
+            - llvm-toolchain-xenial-8
           packages:
             - libstdc++-7-dev
-            - clang-7
-            - clang-tools-7
+            - clang-8
+            - clang-tools-8
             - cmake
       env:
-        - COMPILER="CC=clang-7 && CXX=clang++-7"
+        - COMPILER="CC=clang-8 && CXX=clang++-8"
         - BUILD_TYPE=TSan
       install:
         - eval $COMPILER
@@ -173,19 +173,19 @@ matrix:
 
     - stage: check
       os:  linux
-      name: "LLVM | Tidy"
+      name: "LLVM8 | Tidy"
       addons:
         apt:
           sources:
             - ubuntu-toolchain-r-test
-            - llvm-toolchain-xenial-7
+            - llvm-toolchain-xenial-8
           packages:
             - libstdc++-7-dev
-            - clang-tidy-7
+            - clang-tidy-8
             - expect-dev
             - cmake
       env:
-        - COMPILER="CC=clang-7 && CXX=clang++-7"
+        - COMPILER="CC=clang-8 && CXX=clang++-8"
         - BUILD_TYPE=Debug
       install:
         - eval $COMPILER
@@ -198,7 +198,7 @@ matrix:
         - conan install .. -o build_tests=True
         - cmake -DCMAKE_BUILD_TYPE=$BUILD_TYPE "$AUX_CMAKE_FLAGS"  -DCMAKE_EXPORT_COMPILE_COMMANDS=ON ..
         - cd ..
-        - unbuffer clang-tidy-7 -p out $(find lib/ -name *.cpp) | tee tidy.out
+        - unbuffer clang-tidy-8 -p out $(find lib/ -name *.cpp) | tee tidy.out
         - bash -c 'if [[ $(grep -E "warning:|error:" tidy.out) ]]; then exit 1; else exit 0; fi'
 
   allow_failures:
