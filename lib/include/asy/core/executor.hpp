@@ -33,13 +33,14 @@ namespace asy { inline namespace v1
         ///
         /// \param fn Callable object
         /// \param id Preferred thread ID, optional, defaults to current thread
-        void schedule_execution(fn_t fn, std::thread::id id = std::this_thread::get_id()) noexcept;
+        void schedule_execution(fn_t fn, std::thread::id id = std::this_thread::get_id());
 
         /// Check whether the specified thread shares operation context with other threads, thus context access
         /// must be synchronised
         ///
         /// \param id Thread ID, optional, defaults to current thread
         /// \return True if the data access should be synchronized, False otherwise
+        [[nodiscard]]
         bool should_sync(std::thread::id id = std::this_thread::get_id()) const noexcept;
 
         /// Set the handler for specified thread ID. This handler is responsible for invocation of callables

@@ -53,14 +53,14 @@ namespace asy::detail::asio
     {
         using ret_t = asy::basic_op_handle<T, Err>;
 
-        explicit comp_handler_base(const adapt_t&) {}
+        explicit comp_handler_base(const adapt_t& /*tag*/) {}
 
         void operator()(asy::basic_context_ptr<T, Err> ctx)
         {
-            m_ctx = ctx;
+            op_ctx = ctx;
         }
 
-        asy::basic_context_ptr<T, Err> m_ctx;
+        asy::basic_context_ptr<T, Err> op_ctx;
     };
 
     template <typename Sign>
@@ -76,9 +76,9 @@ namespace asy::detail::asio
         void operator()(Err ec)
         {
             if (ec)
-                base_t::m_ctx->async_failure(std::move(ec));
+                base_t::op_ctx->async_failure(std::move(ec));
             else
-                base_t::m_ctx->async_success();
+                base_t::op_ctx->async_success();
         }
     };
 
@@ -92,9 +92,9 @@ namespace asy::detail::asio
         void operator()(Err ec, Arg arg)
         {
             if (ec)
-                base_t::m_ctx->async_failure(std::move(ec));
+                base_t::op_ctx->async_failure(std::move(ec));
             else
-                base_t::m_ctx->async_success(std::move(arg));
+                base_t::op_ctx->async_success(std::move(arg));
         }
     };
 
@@ -108,9 +108,9 @@ namespace asy::detail::asio
         void operator()(Err ec, Arg arg, Arg2 arg2, Args... args)
         {
             if (ec)
-                base_t::m_ctx->async_failure(std::move(ec));
+                base_t::op_ctx->async_failure(std::move(ec));
             else
-                base_t::m_ctx->async_success(std::make_tuple(std::move(arg), std::move(arg2), std::move(args)...));
+                base_t::op_ctx->async_success(std::make_tuple(std::move(arg), std::move(arg2), std::move(args)...));
         }
     };
 }

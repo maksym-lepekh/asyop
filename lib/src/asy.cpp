@@ -29,7 +29,7 @@ asy::executor& asy::executor::get() noexcept
     return inst;
 }
 
-void asy::executor::schedule_execution(asy::executor::fn_t fn, std::thread::id id) noexcept
+void asy::executor::schedule_execution(asy::executor::fn_t fn, std::thread::id id)
 {
     assert(registry.find(id) != registry.end());
     std::invoke(registry[id].first, std::move(fn));

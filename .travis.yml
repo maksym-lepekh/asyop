@@ -198,7 +198,7 @@ matrix:
         - conan install .. -o build_tests=True
         - cmake -DCMAKE_BUILD_TYPE=$BUILD_TYPE "$AUX_CMAKE_FLAGS"  -DCMAKE_EXPORT_COMPILE_COMMANDS=ON ..
         - cd ..
-        - unbuffer clang-tidy-7 -header-filter=.* -p out $(find lib/ -name *.cpp) | tee tidy.out
+        - unbuffer clang-tidy-7 -p out $(find lib/ -name *.cpp) | tee tidy.out
         - bash -c 'if [[ $(grep -E "warning:|error:" tidy.out) ]]; then exit 1; else exit 0; fi'
 
   allow_failures:

@@ -59,7 +59,7 @@ namespace asy::concept
     /// "Value or error" continuation concept
     struct VoEContinuation
     {
-        template <typename T, typename... Args> auto operator()(T&& t, Args&&...)
+        template <typename T, typename... Args> auto operator()(T&& /*t*/, Args&&... /*args*/)
         -> require<
                 is_true<std::is_invocable_v<T, Args...>>,
                 satisfy<ValueOrError, std::invoke_result_t<T, Args...>>
@@ -69,7 +69,7 @@ namespace asy::concept
     /// "Value or none" continuation concept
     struct VoNContinuation
     {
-        template <typename T, typename... Args> auto operator()(T&& t, Args&&...)
+        template <typename T, typename... Args> auto operator()(T&& /*t*/, Args&&... /*args*/)
         -> require<
                 is_true<std::is_invocable_v<T, Args...>>,
                 satisfy<ValueOrNone, std::invoke_result_t<T, Args...>>
@@ -79,7 +79,7 @@ namespace asy::concept
     /// "None or error" continuation concept
     struct NoEContinuation
     {
-        template <typename T, typename... Args> auto operator()(T&& t, Args&&...)
+        template <typename T, typename... Args> auto operator()(T&& /*t*/, Args&&... /*args*/)
         -> require<
                 is_true<std::is_invocable_v<T, Args...>>,
                 satisfy<NoneOrError, std::invoke_result_t<T, Args...>>
@@ -100,7 +100,7 @@ namespace asy
         using err_type = std::remove_reference_t<decltype(std::declval<ret_type_orig>().error())>;
 
         template <typename Err>
-        static auto to_handle(std::in_place_type_t<Err>, F&& f, Args&&... args)
+        static auto to_handle(std::in_place_type_t<Err> /*err type*/, F&& f, Args&&... args)
         {
             return basic_op_handle<ret_type, Err>{
                  [](basic_context_ptr<ret_type, Err> ctx, F&& f, Args&&... args)
@@ -138,7 +138,7 @@ namespace asy
         using err_type = void;
 
         template <typename Err>
-        static auto to_handle(std::in_place_type_t<Err>, F&& f, Args&&... args)
+        static auto to_handle(std::in_place_type_t<Err> /*err type*/, F&& f, Args&&... args)
         {
             return basic_op_handle<ret_type, Err>{
                     [](basic_context_ptr<ret_type, Err> ctx, F&& f, Args&&... args)
@@ -176,7 +176,7 @@ namespace asy
         using err_type = std::remove_reference_t<decltype(std::declval<ret_type_orig>().error())>;
 
         template <typename Err>
-        static auto to_handle(std::in_place_type_t<Err>, F&& f, Args&&... args)
+        static auto to_handle(std::in_place_type_t<Err> /*err type*/, F&& f, Args&&... args)
         {
             return basic_op_handle<ret_type, Err>{
                     [](basic_context_ptr<ret_type, Err> ctx, F&& f, Args&&... args)
