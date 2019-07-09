@@ -76,9 +76,13 @@ namespace asy::detail::asio
         void operator()(Err ec)
         {
             if (ec)
+            {
                 base_t::op_ctx->async_failure(std::move(ec));
+            }
             else
+            {
                 base_t::op_ctx->async_success();
+            }
         }
     };
 
@@ -92,9 +96,13 @@ namespace asy::detail::asio
         void operator()(Err ec, Arg arg)
         {
             if (ec)
+            {
                 base_t::op_ctx->async_failure(std::move(ec));
+            }
             else
+            {
                 base_t::op_ctx->async_success(std::move(arg));
+            }
         }
     };
 
@@ -108,9 +116,13 @@ namespace asy::detail::asio
         void operator()(Err ec, Arg arg, Arg2 arg2, Args... args)
         {
             if (ec)
+            {
                 base_t::op_ctx->async_failure(std::move(ec));
+            }
             else
+            {
                 base_t::op_ctx->async_success(std::make_tuple(std::move(arg), std::move(arg2), std::move(args)...));
+            }
         }
     };
 }
@@ -153,11 +165,17 @@ namespace asy { inline namespace asio
                         else
                         {
                             if constexpr (sizeof...(HandlerArgs) == 0)
+                            {
                                 ctx->async_success();
+                            }
                             else if constexpr (sizeof...(HandlerArgs) == 1)
+                            {
                                 ctx->async_success(std::forward<HandlerArgs>(args)...);
+                            }
                             else
+                            {
                                 ctx->async_success(std::forward_as_tuple(args...));
+                            }
                         }
                     });
                 }, std::forward<Call>(call));
@@ -200,9 +218,13 @@ namespace asy { inline namespace asio
             if (input.index() == 0)
             {
                 if constexpr (std::is_void_v<ret_t>)
+                {
                     ctx->async_success();
+                }
                 else
+                {
                     ctx->async_success(std::move(std::get<0>(input)));
+                }
             }
             else
             {

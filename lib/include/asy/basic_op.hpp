@@ -16,6 +16,7 @@
 #include "core/basic_context.hpp"
 #include "core/basic_op_handle.hpp"
 #include "core/continuation.hpp"
+#include "common/type_traits.hpp"
 
 namespace asy
 {

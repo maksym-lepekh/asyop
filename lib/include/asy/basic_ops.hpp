@@ -38,9 +38,13 @@ namespace asy::detail
     auto make_skip()
     {
         if constexpr (std::is_void_v<T>)
-            return [](basic_context_ptr<T, Err> ctx){ ctx->async_success(); };
+        {
+            return [](basic_context_ptr<T, Err> ctx) { ctx->async_success(); };
+        }
         else
-            return [](basic_context_ptr<T, Err> ctx, T&& input){ ctx->async_success(std::move(input)); };
+        {
+            return [](basic_context_ptr<T, Err> ctx, T&& input) { ctx->async_success(std::move(input)); };
+        }
     }
 }
 
@@ -147,7 +151,10 @@ namespace asy
                           ctx->async_failure(std::forward<decltype(err)>(err));
                           detail::static_for<sizeof...(Fs)>([&](auto idx)
                           {
-                              if (idx != index) std::get<idx.value>(*ops).cancel();
+                              if (idx != index)
+                              {
+                                  std::get<idx.value>(*ops).cancel();
+                              }
                           });
                       });
             });
@@ -186,14 +193,20 @@ namespace asy
                             ctx->async_success(rets_t(std::in_place_index<index.value>, std::forward<decltype(output)>(output)));
                             detail::static_for<sizeof...(Fs)>([&](auto idx)
                             {
-                                if (idx != index) std::get<idx.value>(*ops).cancel();
+                                if (idx != index)
+                                {
+                                    std::get<idx.value>(*ops).cancel();
+                                }
                             });
                         },
                         [ctx, index, ops](auto&& err) {
                             ctx->async_failure(std::forward<decltype(err)>(err));
                             detail::static_for<sizeof...(Fs)>([&](auto idx)
                             {
-                                if (idx != index) std::get<idx.value>(*ops).cancel();
+                                if (idx != index)
+                                {
+                                    std::get<idx.value>(*ops).cancel();
+                                }
                             });
                         });
             });

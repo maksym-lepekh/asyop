@@ -107,9 +107,13 @@ namespace asy
                  {
                      auto&& ret = f(std::forward<Args>(args)...);
                      if (ret.has_value())
+                     {
                          ctx->async_success(std::move(ret.value()));
+                     }
                      else
+                     {
                          ctx->async_failure(std::move(ret.error()));
+                     }
                  }, std::forward<F>(f), std::forward<Args>(args)...};
         }
 
@@ -120,9 +124,13 @@ namespace asy
             {
                 auto&& ret = f(std::forward<Args>(args)...);
                 if (ret.has_value())
+                {
                     ctx->async_success(std::move(ret.value()));
+                }
                 else
+                {
                     ctx->async_failure(std::move(ret.error()));
+                }
             };
         }
     };
@@ -145,9 +153,13 @@ namespace asy
                     {
                         auto&& ret = f(std::forward<Args>(args)...);
                         if (ret.has_value())
+                        {
                             ctx->async_success(std::move(ret.value()));
+                        }
                         else
+                        {
                             ctx->async_failure();
+                        }
                     }, std::forward<F>(f), std::forward<Args>(args)...};
         }
 
@@ -158,9 +170,13 @@ namespace asy
             {
                 auto&& ret = f(std::forward<Args>(args)...);
                 if (ret.has_value())
+                {
                     ctx->async_success(std::move(ret.value()));
+                }
                 else
+                {
                     ctx->async_failure();
+                }
             };
         }
     };
@@ -183,9 +199,13 @@ namespace asy
                     {
                         auto&& ret = f(std::forward<Args>(args)...);
                         if (ret.has_value())
+                        {
                             ctx->async_success();
+                        }
                         else
+                        {
                             ctx->async_failure(std::move(ret.error()));
+                        }
                     }, std::forward<F>(f), std::forward<Args>(args)...};
         }
 
@@ -196,9 +216,13 @@ namespace asy
             {
                 auto&& ret = f(std::forward<Args>(args)...);
                 if (ret.has_value())
+                {
                     ctx->async_success();
+                }
                 else
+                {
                     ctx->async_failure(std::move(ret.error()));
+                }
             };
         }
     };

@@ -100,3 +100,5 @@ fabric.properties
 ### Other
 .vscode
 .ccls-cache
+.clangd
+test_package/build
