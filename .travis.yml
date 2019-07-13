@@ -23,7 +23,7 @@ matrix:
         - sudo pip install conan
         - conan user
       after_success:
-        - lcov --directory . --capture --output-file coverage.info
+        - cd .. && lcov --directory . --capture --output-file coverage.info
         - lcov --remove coverage.info '/usr/*' '*/tests/*' '*/.conan/*' --output-file coverage.info
         - lcov --list coverage.info
         - bash <(curl -s https://codecov.io/bash) -f coverage.info;
@@ -108,6 +108,7 @@ matrix:
             - libstdc++-7-dev
             - clang-8
             - clang-tools-8
+            - llvm-8
             - cmake
       env:
         - COMPILER="CC=clang-8 && CXX=clang++-8"
@@ -132,6 +133,8 @@ matrix:
             - libstdc++-7-dev
             - clang-8
             - clang-tools-8
+            - llvm-8
+            - python
             - cmake
             - subversion
       env:
@@ -143,11 +146,14 @@ matrix:
         - sudo pip install --upgrade pip
         - sudo pip install conan
         - conan user
+        - pyenv versions
+        - pyenv global 2.7.15
         - git clone https://github.com/rukkal/libcxx-msan.git
         - cd libcxx-msan
-        - ./build.sh &>/dev/null
+        - ./build.sh > /dev/null
         - source load-environment && cd ..
         - AUX_CMAKE_FLAGS='-DCMAKE_CXX_FLAGS=-stdlib=libc++ -fsanitize=memory'
+        - pyenv global system
 
     - os: linux
       name: "LLVM8 | TSan"
@@ -160,6 +166,7 @@ matrix:
             - libstdc++-7-dev
             - clang-8
             - clang-tools-8
+            - llvm-8
             - cmake
       env:
         - COMPILER="CC=clang-8 && CXX=clang++-8"

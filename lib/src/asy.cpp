@@ -13,12 +13,18 @@
 // limitations under the License.
 #include <asy/core/executor.hpp>
 #include <map>
+#include <optional>
+#include <mutex>
 #include <utility>
 #include <cassert>
 
 namespace
 {
-    auto registry = std::map<std::thread::id, std::pair<asy::executor::impl_t, bool>>{};
+    using reg_rec_t = std::pair<asy::executor::impl_t, bool>;
+
+    auto registry = std::map<std::thread::id, reg_rec_t>{};
+    auto reg_mutex = std::mutex{};
+    thread_local auto this_impl = std::optional<reg_rec_t>{};
 }
 
 asy::executor::executor() = default;
@@ -31,17 +37,34 @@ asy::executor& asy::executor::get() noexcept
 
 void asy::executor::schedule_execution(asy::executor::fn_t fn, std::thread::id id)
 {
-    assert(registry.find(id) != registry.end());
-    std::invoke(registry[id].first, std::move(fn));
+    if (id == std::this_thread::get_id())
+    {
+        std::invoke(this_impl->first, std::move(fn));
+    }
+    else
+    {
+        auto guard = std::lock_guard{reg_mutex};
+        assert(registry.find(id) != registry.end());
+        std::invoke(registry[id].first, std::move(fn));
+    }
 }
 
 bool asy::executor::should_sync(std::thread::id id) const noexcept
 {
+    if (id == std::this_thread::get_id())
+    {
+        return this_impl->second;
+    }
+
+    auto guard = std::lock_guard{reg_mutex};
     assert(registry.find(id) != registry.end());
     return registry[id].second;
 }
 
 void asy::executor::set_impl(std::thread::id id, asy::executor::impl_t impl, bool require_sync)
 {
+    this_impl = reg_rec_t{impl, require_sync};
+
+    auto guard = std::lock_guard{reg_mutex};
     registry[id] = { std::move(impl), require_sync };
 }
