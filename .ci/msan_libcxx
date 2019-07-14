@@ -1,0 +1,29 @@
+#!/usr/bin/env bash -e
+
+mkdir -p libcxx-msan && cd libcxx-msan
+echo "Entered " $(pwd)
+
+file_dir=$( pwd )
+num_of_processors=$(cat /proc/cpuinfo | grep -c ^processor)
+
+echo "Checkout LLVM ..."
+svn co http://llvm.org/svn/llvm-project/llvm/trunk llvm > /dev/null
+(cd llvm/projects && svn co http://llvm.org/svn/llvm-project/libcxx/trunk libcxx) > /dev/null
+(cd llvm/projects && svn co http://llvm.org/svn/llvm-project/libcxxabi/trunk libcxxabi) > /dev/null
+echo "Done"
+
+[[ -d build ]] && rm -rf build
+mkdir -p build && cd build
+cmake ../llvm -DCMAKE_INSTALL_PREFIX=.. -DCMAKE_BUILD_TYPE=Release -DPYTHON_EXECUTABLE=$(which python) -DLLVM_USE_SANITIZER=Memory
+
+echo "Install libcxx..."
+make install-libcxx install-libcxxabi -j${num_of_processors} > /dev/null
+echo "Done"
+
+export LIBRARY_PATH=${file_dir}/lib
+export LD_LIBRARY_PATH=${file_dir}/lib
+export C_INCLUDE_PATH=${file_dir}/include/c++/v1
+export CPLUS_INCLUDE_PATH=${C_INCLUDE_PATH}
+
+cd ../..
+echo "Entered " $(pwd)

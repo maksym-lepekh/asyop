@@ -14,10 +14,10 @@ matrix:
             - cmake
             - lcov
       env:
-        - COMPILER="CC=gcc-7 && CXX=g++-7"
+        - CC=gcc-7
+        - CXX=g++-7
         - BUILD_TYPE=Coverage
       install:
-        - eval $COMPILER
         - sudo apt-get remove python-enum34
         - sudo pip install --upgrade pip
         - sudo pip install conan
@@ -48,10 +48,10 @@ matrix:
             - libstdc++-7-dev
             - cmake
       env:
-        - COMPILER="CC=clang && CXX=clang++"
+        - CC=clang
+        - CXX=clang++
         - BUILD_TYPE=Release
       install:
-        - eval $COMPILER
         - sudo apt-get remove python-enum34
         - sudo pip install --upgrade pip
         - sudo pip install conan
@@ -82,10 +82,10 @@ matrix:
             - clang-tools-8
             - cmake
       env:
-        - COMPILER="CC=clang-8 && CXX=clang++-8"
+        - CC=clang-8
+        - CXX=clang++-8
         - BUILD_TYPE=Release
       install:
-        - eval $COMPILER
         - sudo apt-get remove python-enum34
         - sudo pip install --upgrade pip
         - sudo pip install conan
@@ -111,16 +111,15 @@ matrix:
             - llvm-8
             - cmake
       env:
-        - COMPILER="CC=clang-8 && CXX=clang++-8"
+        - CC=clang-8
+        - CXX=clang++-8
         - BUILD_TYPE=AUBSan
       install:
-        - eval $COMPILER
         - sudo apt-get remove python-enum34
         - sudo pip install --upgrade pip
         - sudo pip install conan
         - conan user
         - ASAN_OPTIONS=detect_stack_use_after_return=1:halt_on_error=false:detect_leaks=1
-        - echo $ASAN_OPTIONS
 
     - os: linux
       name: "LLVM8 | MSan"
@@ -138,22 +137,18 @@ matrix:
             - cmake
             - subversion
       env:
-        - COMPILER="CC=clang-8 && CXX=clang++-8"
+        - CC=clang-8
+        - CXX=clang++-8
         - BUILD_TYPE=MSan
       install:
-        - eval $COMPILER
+        - source .ci/msan_libcxx
+        - echo $LIBRARY_PATH
+        - ls $LIBRARY_PATH
+        - AUX_CMAKE_FLAGS='-DCMAKE_CXX_FLAGS=-stdlib=libc++ -fsanitize=memory'
         - sudo apt-get remove python-enum34
         - sudo pip install --upgrade pip
         - sudo pip install conan
         - conan user
-        - pyenv versions
-        - pyenv global 2.7.15
-        - git clone https://github.com/rukkal/libcxx-msan.git
-        - cd libcxx-msan
-        - ./build.sh > /dev/null
-        - source load-environment && cd ..
-        - AUX_CMAKE_FLAGS='-DCMAKE_CXX_FLAGS=-stdlib=libc++ -fsanitize=memory'
-        - pyenv global system
 
     - os: linux
       name: "LLVM8 | TSan"
@@ -169,10 +164,10 @@ matrix:
             - llvm-8
             - cmake
       env:
-        - COMPILER="CC=clang-8 && CXX=clang++-8"
+        - CC=clang-8
+        - CXX=clang++-8
         - BUILD_TYPE=TSan
       install:
-        - eval $COMPILER
         - sudo apt-get remove python-enum34
         - sudo pip install --upgrade pip
         - sudo pip install conan
@@ -192,10 +187,10 @@ matrix:
             - expect-dev
             - cmake
       env:
-        - COMPILER="CC=clang-8 && CXX=clang++-8"
+        - CC=clang-8
+        - CXX=clang++-8
         - BUILD_TYPE=Debug
       install:
-        - eval $COMPILER
         - sudo apt-get remove python-enum34
         - sudo pip install --upgrade pip
         - sudo pip install conan
