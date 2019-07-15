@@ -31,7 +31,7 @@ namespace asy
         /// \param args Functor call arguments (forwarded)
         /// \return asy::basic_op_handle of running computation
         template <typename Err, typename... Args>
-        static auto to_handle(std::in_place_type_t<Err>, F&& f, Args&&... args)
+        static auto to_handle(std::in_place_type_t<Err> /*err type*/, F&& /*f*/, Args&&... /*args*/)
         {
             static_assert(!std::is_void_v<Sfinae>, "Invalid continuation type");
         }
@@ -46,7 +46,7 @@ namespace asy
         /// \param args Functor arguments
         /// \return Callable
         template <typename T, typename Err, typename... Args>
-        static auto deferred(asy::basic_context_ptr<T, Err> ctx, F&& f, Args&&...)
+        static auto deferred(asy::basic_context_ptr<T, Err> /*ctx*/, F&& /*f*/, Args&&... /*args*/)
         {
             static_assert(!std::is_void_v<Sfinae>, "Invalid continuation type");
         }
@@ -66,7 +66,7 @@ namespace asy
         }
         else
         {
-            return [ctx](Input&& input){ ctx->async_success(); };
+            return [ctx](Input&& /*input*/){ ctx->async_success(); };
         }
     }
 

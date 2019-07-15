@@ -1,0 +1,7 @@
+---
+Checks: '-*,modernize-*,readability-*,performance-*,misc-*,cppcoreguidelines-*,bugprone-*,performance-,-cppcoreguidelines-pro-bounds-array-to-pointer-decay'
+HeaderFilterRegex: '.*'
+CheckOptions:
+  - key: misc-non-private-member-variables-in-classes.IgnoreClassesWithAllMemberVariablesBeingPublic
+    value: '1'
+...

@@ -90,12 +90,17 @@ namespace asy
             {
                 return;
             }
-            else if (auto cbs = std::get_if<cb_pair_t>(&m_pending))
+
+            if (auto cbs = std::get_if<cb_pair_t>(&m_pending))
             {
                 if constexpr (std::is_void_v<Val>)
+                {
                     post(std::get<success_cb_t>(*cbs));
+                }
                 else
+                {
                     post(std::get<success_cb_t>(*cbs), std::move(val));
+                }
 
                 m_pending = detail::done_t{};
                 m_parent.reset();
@@ -116,7 +121,8 @@ namespace asy
             {
                 return;
             }
-            else if (auto cbs = std::get_if<cb_pair_t>(&m_pending))
+
+            if (auto cbs = std::get_if<cb_pair_t>(&m_pending))
             {
                 post(std::get<failure_cb_t>(*cbs), std::move(val));
                 m_pending = detail::done_t{};
@@ -199,12 +205,17 @@ namespace asy
             {
                 return;
             }
-            else if (auto s_val = std::get_if<success_t>(&m_pending))
+
+            if (auto s_val = std::get_if<success_t>(&m_pending))
             {
                 if constexpr (std::is_void_v<Val>)
+                {
                     post(success_cb);
+                }
                 else
+                {
                     post(success_cb, std::move(*s_val));
+                }
                 m_pending = detail::done_t{};
                 m_parent.reset();
             }
@@ -254,8 +265,26 @@ namespace asy
 
         struct sync_guard
         {
-            sync_guard(std::mutex& m, bool l) : mutex(m), locked(l) { if (locked) mutex.lock(); }
-            ~sync_guard() { if (locked) mutex.unlock(); }
+            sync_guard(std::mutex& m, bool l) : mutex(m), locked(l)
+            {
+                if (locked)
+                {
+                    mutex.lock();
+                }
+            }
+
+            sync_guard(const sync_guard&) = default;
+            sync_guard(sync_guard&&) noexcept = default;
+            sync_guard& operator=(const sync_guard&) = default;
+            sync_guard& operator=(sync_guard&&) noexcept = default;
+
+            ~sync_guard()
+            {
+                if (locked)
+                {
+                    mutex.unlock();
+                }
+            }
 
             std::mutex& mutex;
             bool locked;

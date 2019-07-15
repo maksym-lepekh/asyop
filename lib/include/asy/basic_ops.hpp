@@ -22,7 +22,7 @@
 namespace asy::detail
 {
     template<typename F, std::size_t... S>
-    constexpr void static_for(F&& function, std::index_sequence<S...>) {
+    constexpr void static_for(F&& function, std::index_sequence<S...> /*seq*/) {
         (... , function(std::integral_constant<std::size_t, S>{}));
     }
 
@@ -38,9 +38,13 @@ namespace asy::detail
     auto make_skip()
     {
         if constexpr (std::is_void_v<T>)
-            return [](basic_context_ptr<T, Err> ctx){ ctx->async_success(); };
+        {
+            return [](basic_context_ptr<T, Err> ctx) { ctx->async_success(); };
+        }
         else
-            return [](basic_context_ptr<T, Err> ctx, T&& input){ ctx->async_success(std::move(input)); };
+        {
+            return [](basic_context_ptr<T, Err> ctx, T&& input) { ctx->async_success(std::move(input)); };
+        }
     }
 }
 
@@ -79,7 +83,7 @@ namespace asy
 
         auto ops = std::make_shared<ops_t>(basic_op<Err>(std::forward<Fs>(fs))...);
 
-        auto h = basic_op_handle<rets_t, Err>([ops](basic_context_ptr<rets_t, Err> ctx, Fs&&...fs)
+        auto h = basic_op_handle<rets_t, Err>([ops](basic_context_ptr<rets_t, Err> ctx, Fs&&... /*fs*/)
         {
             auto counter = std::make_shared<int>(sizeof...(Fs));
             auto res = std::make_shared<rets_t>();
@@ -128,7 +132,7 @@ namespace asy
 
         auto ops = std::make_shared<ops_t>(basic_op<Err>(std::forward<Fs>(fs))...);
 
-        auto h = basic_op_handle<rets_t, Err>([ops](basic_context_ptr<rets_t, Err> ctx, Fs&&...fs)
+        auto h = basic_op_handle<rets_t, Err>([ops](basic_context_ptr<rets_t, Err> ctx, Fs&&... /*fs*/)
         {
             auto counter = std::make_shared<int>(sizeof...(Fs));
             auto res = std::make_shared<rets_t>();
@@ -147,7 +151,10 @@ namespace asy
                           ctx->async_failure(std::forward<decltype(err)>(err));
                           detail::static_for<sizeof...(Fs)>([&](auto idx)
                           {
-                              if (idx != index) std::get<idx.value>(*ops).cancel();
+                              if (idx != index)
+                              {
+                                  std::get<idx.value>(*ops).cancel();
+                              }
                           });
                       });
             });
@@ -178,7 +185,7 @@ namespace asy
 
         auto ops = std::make_shared<ops_t>(basic_op<Err>(std::forward<Fs>(fs))...);
 
-        auto h = basic_op_handle<rets_t, Err>([ops](basic_context_ptr<rets_t, Err> ctx, Fs&&...fs)
+        auto h = basic_op_handle<rets_t, Err>([ops](basic_context_ptr<rets_t, Err> ctx, Fs&&... /*fs*/)
         {
             detail::static_for<sizeof...(Fs)>([&](auto index){
                 std::get<index.value>(*ops).then(
@@ -186,14 +193,20 @@ namespace asy
                             ctx->async_success(rets_t(std::in_place_index<index.value>, std::forward<decltype(output)>(output)));
                             detail::static_for<sizeof...(Fs)>([&](auto idx)
                             {
-                                if (idx != index) std::get<idx.value>(*ops).cancel();
+                                if (idx != index)
+                                {
+                                    std::get<idx.value>(*ops).cancel();
+                                }
                             });
                         },
                         [ctx, index, ops](auto&& err) {
                             ctx->async_failure(std::forward<decltype(err)>(err));
                             detail::static_for<sizeof...(Fs)>([&](auto idx)
                             {
-                                if (idx != index) std::get<idx.value>(*ops).cancel();
+                                if (idx != index)
+                                {
+                                    std::get<idx.value>(*ops).cancel();
+                                }
                             });
                         });
             });

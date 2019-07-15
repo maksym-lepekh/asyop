@@ -29,7 +29,7 @@ namespace asy::concept
     struct CtxContinuation
     {
         template <typename T, typename... Args>
-        auto operator()(T&& t, Args&&...)
+        auto operator()(T&& /*t*/, Args&&... /*args*/)
         -> require<
                 is_true<std::is_void_v<tt::functor_ret_t<T>>>,
                 is_true<context_arg_first<T>::value>,
@@ -51,7 +51,7 @@ namespace asy
         using ret_type_orig = void;
 
         template<typename Err>
-        static auto to_handle(std::in_place_type_t<Err>, F&& f, Args&& ... args)
+        static auto to_handle(std::in_place_type_t<Err> /*err type*/, F&& f, Args&& ... args)
         {
             return asy::basic_op_handle<ret_type, Err>(std::forward<F>(f), std::forward<Args>(args)...);
         }

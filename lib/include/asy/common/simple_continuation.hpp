@@ -26,7 +26,7 @@ namespace asy::concept
     struct SimpleContinuation
     {
         template <typename T, typename... Args>
-        auto operator()(T&& t, Args&&...)
+        auto operator()(T&& /*t*/, Args&&... /*args*/)
         -> require<
                 is_true<std::is_invocable_v<T, Args...>>
         >{}
@@ -44,7 +44,7 @@ namespace asy
         using ret_type = std::invoke_result_t<F, Args...>;
 
         template <typename Err>
-        static auto to_handle(std::in_place_type_t<Err>, F&& f, Args&&... args)
+        static auto to_handle(std::in_place_type_t<Err> /*err type*/, F&& f, Args&&... args)
         {
             return basic_op_handle<ret_type, Err>{
                 [](basic_context_ptr<ret_type, Err> ctx, F&& f, Args&&... args)

@@ -67,7 +67,7 @@ namespace asy::detail
     class has_call_op
     {
         template <typename C>
-        static constexpr bool has(decltype(&C::operator())) { return true; }
+        static constexpr bool has(decltype(&C::operator()) /*dummy*/) { return true; }
 
         template <typename>
         static constexpr bool has(...) { return false; }

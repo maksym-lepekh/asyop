@@ -26,7 +26,7 @@ namespace asy::concept
     /// "Async return" continuation concept
     struct ARetContinuation
     {
-        template <typename T, typename... Args> auto operator()(T&& t, Args&&...)
+        template <typename T, typename... Args> auto operator()(T&& /*t*/, Args&&... /*args*/)
         -> require<
                 is_true<std::is_invocable_v<T, Args...>>,
                 is_true<tt::specialization_of<asy::basic_op_handle, std::invoke_result_t<T, Args...>>::value>
@@ -46,7 +46,7 @@ namespace asy
         using ret_type = typename tt::specialization_of<asy::basic_op_handle, ret_type_orig>::first_arg;
 
         template<typename Err>
-        static auto to_handle(std::in_place_type_t<Err>, F&& f, Args&& ... args)
+        static auto to_handle(std::in_place_type_t<Err> /*err type*/, F&& f, Args&& ... args)
         {
             return std::forward<F>(f)(std::forward<Args>(args)...);
         }

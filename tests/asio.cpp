@@ -87,12 +87,12 @@ TEST_CASE("sleep", "[asio]")
     SECTION("Timer cancelled")
     {
         auto now = std::chrono::steady_clock::now();
-        auto h = asy::asio::sleep(5ms);
+        auto h = asy::asio::sleep(15ms);
 
         h.then([](){ FAIL("Wrong path"); }, [&](asio::error_code e)
         {
             auto after = std::chrono::steady_clock::now();
-            CHECK((now + 5ms) > after);
+            CHECK((now + 15ms) > after);
             CHECK(e == make_error_code(std::errc::operation_canceled));
             fail_timer.cancel();
         });
@@ -184,4 +184,44 @@ TEST_CASE("adapt", "[asio]")
         timer.cancel();
         io.run();
     }
+}
+
+TEST_CASE("Load-balance example", "[asio]")
+{
+    auto io = asio::io_service{};
+    auto fail_timer = asio::steady_timer{io, 1000ms};
+
+    fail_timer.async_wait([](const asio::error_code& err){
+        if (!err) FAIL("Timeout");
+    });
+
+    auto counter = std::atomic_int{2};
+
+    auto worker = [&]{
+        asy::executor::get().set_impl(
+                std::this_thread::get_id(),
+                [&io](asy::executor::fn_t fn)
+                {
+                    io.post(std::move(fn));
+                },
+                true);
+
+        auto timer = asio::steady_timer{io, 50ms};
+
+        timer.async_wait(asy::adapt).then([&]{
+            if (counter.fetch_sub(1) == 1)
+            {
+                fail_timer.cancel();
+            }
+        });
+
+        io.run();
+    };
+
+    auto t1 = std::thread{worker};
+    auto t2 = std::thread{worker};
+    t1.join();
+    t2.join();
+
+    CHECK(counter.load() == 0);
 }
