@@ -63,7 +63,10 @@ bool asy::executor::should_sync(std::thread::id id) const noexcept
 
 void asy::executor::set_impl(std::thread::id id, asy::executor::impl_t impl, bool require_sync)
 {
-    this_impl = reg_rec_t{impl, require_sync};
+    if (id == std::this_thread::get_id())
+    {
+        this_impl = reg_rec_t{impl, require_sync};
+    }
 
     auto guard = std::lock_guard{reg_mutex};
     registry[id] = { std::move(impl), require_sync };
