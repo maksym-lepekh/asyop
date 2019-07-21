@@ -34,4 +34,3 @@ C++17 library for asynchronous operations
 * Use of customizable allocator
 * Adapt to C++20: concepts, coroutine support, modules, ...
 * Adapt to Executors proposal
-* Fix MSVC build :)

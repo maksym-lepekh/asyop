@@ -39,7 +39,7 @@ namespace asy
     /// Default support for "async return" continuation.
     /// \see struct asy::continuation
     template <typename F, typename... Args>
-    struct simple_continuation<F(Args...), c::require<c::satisfy<c::ARetContinuation, F, Args...>>>
+    struct simple_continuation<F(Args...), std::enable_if_t<c::satisfies<c::ARetContinuation, F, Args...>>>
             : std::true_type
     {
         using ret_type_orig = std::invoke_result_t<F, Args...>;

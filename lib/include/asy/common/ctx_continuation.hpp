@@ -43,7 +43,7 @@ namespace asy
     /// Default support for continuation with a context argument.
     /// \see struct asy::continuation
     template <typename F, typename... Args>
-    struct continuation<F(Args...), c::require<c::satisfy<c::CtxContinuation, F, Args...>>> : std::true_type
+    struct continuation<F(Args...), std::enable_if_t<c::satisfies<c::CtxContinuation, F, Args...>>> : std::true_type
     {
         using _shptr = tt::functor_first_t<F>;
         using _ctx = tt::specialization_of_first_t<std::shared_ptr, _shptr>;

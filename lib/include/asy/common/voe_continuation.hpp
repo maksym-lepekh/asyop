@@ -92,7 +92,7 @@ namespace asy
     /// Default support for ValueOrError continuation.
     /// \see struct asy::continuation
     template <typename F, typename... Args>
-    struct simple_continuation<F(Args...), c::require<c::satisfy<c::VoEContinuation, F, Args...>>>
+    struct simple_continuation<F(Args...), std::enable_if_t<c::satisfies<c::VoEContinuation, F, Args...>>>
             : std::true_type
     {
         using ret_type_orig = std::invoke_result_t<F, Args...>;
@@ -138,7 +138,7 @@ namespace asy
     /// Default support for ValueOrNone continuation.
     /// \see struct asy::continuation
     template <typename F, typename... Args>
-    struct simple_continuation<F(Args...), c::require<c::satisfy<c::VoNContinuation, F, Args...>>>
+    struct simple_continuation<F(Args...), std::enable_if_t<c::satisfies<c::VoNContinuation, F, Args...>>>
             : std::true_type
     {
         using ret_type_orig = std::invoke_result_t<F, Args...>;
@@ -184,7 +184,7 @@ namespace asy
     /// Default support for NoneOrError continuation.
     /// \see struct asy::continuation
     template <typename F, typename... Args>
-    struct simple_continuation<F(Args...), c::require<c::satisfy<c::NoEContinuation, F, Args...>>>
+    struct simple_continuation<F(Args...), std::enable_if_t<c::satisfies<c::NoEContinuation, F, Args...>>>
             : std::true_type
     {
         using ret_type_orig = std::invoke_result_t<F, Args...>;

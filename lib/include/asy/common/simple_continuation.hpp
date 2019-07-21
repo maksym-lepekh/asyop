@@ -84,6 +84,6 @@ namespace asy
     /// Default support for simple continuation.
     /// \see struct asy::continuation
     template <typename Functor, typename... Input>
-    struct continuation<Functor(Input...), c::require<c::satisfy<c::SimpleContinuation, Functor, Input...>>>
+    struct continuation<Functor(Input...), std::enable_if_t<c::satisfies<c::SimpleContinuation, Functor, Input...>>>
             : simple_continuation<Functor(Input...)>{};
 }

@@ -23,7 +23,7 @@ matrix:
         - sudo pip install conan
         - conan user
       after_success:
-        - cd .. && lcov --directory . --capture --output-file coverage.info
+        - lcov --directory . --capture --output-file coverage.info
         - lcov --remove coverage.info '/usr/*' '*/tests/*' '*/.conan/*' --output-file coverage.info
         - lcov --list coverage.info
         - bash <(curl -s https://codecov.io/bash) -f coverage.info;
@@ -65,9 +65,9 @@ matrix:
       script:
         - mkdir out && cd out
         - conan install .. -o build_tests=True
-        - cmake -DCMAKE_WINDOWS_EXPORT_ALL_SYMBOLS=ON ..
+        - cmake -DCMAKE_WINDOWS_EXPORT_ALL_SYMBOLS=ON -DCMAKE_CXX_FLAGS='-D_SILENCE_CXX17_ALLOCATOR_VOID_DEPRECATION_WARNING -D_WIN32_WINNT=0x0601' ..
         - cmake --build . --config Release
-        - cd tests && ctest --output-on-failure
+        - ctest --output-on-failure
 
     - os: linux
       name: "LLVM8 | Static Analyze"
@@ -203,9 +203,6 @@ matrix:
         - unbuffer clang-tidy-8 -p out $(find lib/ -name *.cpp) | tee tidy.out
         - bash -c 'if [[ $(grep -E "warning:|error:" tidy.out) ]]; then exit 1; else exit 0; fi'
 
-  allow_failures:
-    - os: windows
-
 stages:
   - check
   - test
@@ -215,4 +212,4 @@ script:
   - conan install .. -o build_tests=True
   - cmake -DCMAKE_BUILD_TYPE=$BUILD_TYPE "$AUX_CMAKE_FLAGS" ..
   - cmake --build . -- -j $(nproc)
-  - cd tests && ctest --output-on-failure
+  - ctest --output-on-failure
