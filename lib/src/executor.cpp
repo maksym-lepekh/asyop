@@ -27,17 +27,9 @@ namespace
     thread_local auto this_impl = std::optional<reg_rec_t>{};
 }
 
-asy::executor::executor() = default;
-
-asy::executor& asy::executor::get() noexcept
-{
-    static executor inst;
-    return inst;
-}
-
 void asy::executor::schedule_execution(asy::executor::fn_t fn, std::thread::id id)
 {
-    if (id == std::this_thread::get_id())
+    if (this_impl && (id == std::this_thread::get_id()))
     {
         std::invoke(this_impl->first, std::move(fn));
     }
@@ -49,9 +41,9 @@ void asy::executor::schedule_execution(asy::executor::fn_t fn, std::thread::id i
     }
 }
 
-bool asy::executor::should_sync(std::thread::id id) const noexcept
+bool asy::executor::should_sync(std::thread::id id) noexcept
 {
-    if (id == std::this_thread::get_id())
+    if (this_impl && (id == std::this_thread::get_id()))
     {
         return this_impl->second;
     }

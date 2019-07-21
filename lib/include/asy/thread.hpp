@@ -34,7 +34,7 @@ namespace asy::thread::detail
         {
             thread_handle = std::thread([fn = std::forward<F>(fn), ctx, origin_id]() mutable
             {
-                asy::executor::get().schedule_execution([ctx, ret = fn()]() mutable
+                asy::executor::schedule_execution([ctx, ret = fn()]() mutable
                 {
                     ctx->async_success(std::move(ret));
                 }, origin_id);

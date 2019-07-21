@@ -28,7 +28,7 @@ void asy::this_thread::v1::set_event_loop(::asio::io_service& s)
     auto id = std::this_thread::get_id();
     registry[id] = &s;
 
-    asy::executor::get().set_impl(
+    asy::executor::set_impl(
             id,
             [id](asy::executor::fn_t fn)
             {

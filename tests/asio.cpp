@@ -198,7 +198,7 @@ TEST_CASE("Load-balance example", "[asio]")
     auto counter = std::atomic_int{2};
 
     auto worker = [&]{
-        asy::executor::get().set_impl(
+        asy::executor::set_impl(
                 std::this_thread::get_id(),
                 [&io](asy::executor::fn_t fn)
                 {

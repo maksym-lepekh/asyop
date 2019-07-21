@@ -246,7 +246,7 @@ namespace asy
         {
             if (f)
             {
-                executor::get().schedule_execution(
+                executor::schedule_execution(
                         [handler = std::forward<F>(f), params = std::make_tuple(std::move(arg)...)]() mutable
                         {
                             std::apply(handler, std::move(params));
@@ -259,7 +259,7 @@ namespace asy
         {
             if (f)
             {
-                executor::get().schedule_execution([handler = std::forward<F>(f)]() { handler(); });
+                executor::schedule_execution([handler = std::forward<F>(f)]() { handler(); });
             }
         }
 
@@ -292,7 +292,7 @@ namespace asy
 
         sync_guard synchronize()
         {
-            return sync_guard(m_mutex, executor::get().should_sync(std::this_thread::get_id()));
+            return sync_guard(m_mutex, executor::should_sync(std::this_thread::get_id()));
         }
 
         std::variant<std::monostate, cb_pair_t, success_t, failure_t, detail::done_t> m_pending;
