@@ -19,7 +19,3 @@ add_executable(asyop-tests
     executor.cpp
     thread.cpp)
 target_link_libraries(asyop-tests PRIVATE Catch2::Catch2 asyop::asio)
-
-enable_testing()
-include(Catch)
-catch_discover_tests(asyop-tests)

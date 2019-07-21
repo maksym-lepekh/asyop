@@ -37,11 +37,10 @@ TEST_CASE("executor::should_sync multi", "[core]")
         worker_id = std::this_thread::get_id();
         asy::executor::set_impl(worker_id, [](auto){}, false);
 
-        barr.wait();
-
         test1 = asy::executor::should_sync(main_id);
         test2 = !asy::executor::should_sync(worker_id);
 
+        barr.wait();
         barr.wait();
     }};
 

@@ -65,9 +65,9 @@ matrix:
       script:
         - mkdir out && cd out
         - conan install .. -o build_tests=True
-        - cmake -DCMAKE_WINDOWS_EXPORT_ALL_SYMBOLS=ON -DCMAKE_CXX_FLAGS='-D_SILENCE_CXX17_ALLOCATOR_VOID_DEPRECATION_WARNING -D_WIN32_WINNT=0x0601' ..
+        - cmake -DCMAKE_WINDOWS_EXPORT_ALL_SYMBOLS=ON -DCMAKE_CXX_FLAGS='-D_SILENCE_CXX17_ALLOCATOR_VOID_DEPRECATION_WARNING -D_WIN32_WINNT=0x0601 /EHsc' ..
         - cmake --build . --config Release
-        - ctest --output-on-failure
+        - ./Release/asyop-tests
 
     - os: linux
       name: "LLVM8 | Static Analyze"
@@ -212,4 +212,4 @@ script:
   - conan install .. -o build_tests=True
   - cmake -DCMAKE_BUILD_TYPE=$BUILD_TYPE "$AUX_CMAKE_FLAGS" ..
   - cmake --build . -- -j $(nproc)
-  - ctest --output-on-failure
+  - ./asyop-tests
