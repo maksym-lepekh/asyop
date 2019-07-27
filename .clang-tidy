@@ -4,4 +4,6 @@ HeaderFilterRegex: '.*'
 CheckOptions:
   - key: misc-non-private-member-variables-in-classes.IgnoreClassesWithAllMemberVariablesBeingPublic
     value: '1'
+  - key: cppcoreguidelines-macro-usage.AllowedRegexp
+    value: '^DEBUG_*|ASYOP_*'
 ...

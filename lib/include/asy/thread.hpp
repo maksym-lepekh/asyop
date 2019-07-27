@@ -61,7 +61,7 @@ namespace asy::thread
     template <typename F>
     auto fy(F&& f)
     {
-        if constexpr (asy::tt::specialization_of<std::future, std::decay_t<F>>::value)
+        if constexpr (asy::util::specialization_of<std::future, std::decay_t<F>>::value)
         {
             auto&& [op, thr] = detail::fy_future(std::forward<F>(f));
             thr.detach();
@@ -84,7 +84,7 @@ namespace asy::thread
     template <typename F>
     auto fy(F&& f, std::thread& t_handle)
     {
-        if constexpr (asy::tt::specialization_of<std::future, std::decay_t<F>>::value)
+        if constexpr (asy::util::specialization_of<std::future, std::decay_t<F>>::value)
         {
             auto&& [op, thr] = detail::fy_future(std::forward<F>(f));
             t_handle = std::move(thr);

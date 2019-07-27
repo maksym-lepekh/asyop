@@ -13,7 +13,7 @@
 // limitations under the License.
 #include <catch2/catch.hpp>
 #include <type_traits>
-#include <asy/common/type_traits.hpp>
+#include <asy/common/util.hpp>
 
 
 void void_int_fn(int) {}
@@ -27,7 +27,7 @@ TEST_CASE("Simple continuation", "[deduce]")
     SECTION("void(int) function")
     {
         using T = decltype(void_int_fn);
-        using info = asy::tt::functor<T>;
+        using info = asy::util::functor<T>;
 
         STATIC_REQUIRE_FALSE( info::is_ambiguous );
         STATIC_REQUIRE( info::arg_n == 1 );
@@ -38,7 +38,7 @@ TEST_CASE("Simple continuation", "[deduce]")
     SECTION("void() function")
     {
         using T = decltype(void_void_fn);
-        using info = asy::tt::functor<T>;
+        using info = asy::util::functor<T>;
 
         STATIC_REQUIRE_FALSE( info::is_ambiguous );
         STATIC_REQUIRE( info::arg_n == 0 );
@@ -48,7 +48,7 @@ TEST_CASE("Simple continuation", "[deduce]")
     SECTION("char(int) function")
     {
         using T = decltype(char_int_fn);
-        using info = asy::tt::functor<T>;
+        using info = asy::util::functor<T>;
 
         STATIC_REQUIRE_FALSE( info::is_ambiguous );
         STATIC_REQUIRE( info::arg_n == 1 );
@@ -59,7 +59,7 @@ TEST_CASE("Simple continuation", "[deduce]")
     SECTION("char() function")
     {
         using T = decltype(char_void_fn);
-        using info = asy::tt::functor<T>;
+        using info = asy::util::functor<T>;
 
         STATIC_REQUIRE_FALSE( info::is_ambiguous );
         STATIC_REQUIRE( info::arg_n == 0 );
@@ -69,7 +69,7 @@ TEST_CASE("Simple continuation", "[deduce]")
     SECTION("char(int, double) function")
     {
         using T = decltype(char_int_double_fn);
-        using info = asy::tt::functor<T>;
+        using info = asy::util::functor<T>;
 
         STATIC_REQUIRE_FALSE( info::is_ambiguous );
         STATIC_REQUIRE( info::arg_n == 2 );
@@ -85,7 +85,7 @@ TEST_CASE("Lambda continuation", "[deduce]")
     SECTION("void()")
     {
         auto l = [](){};
-        using info = asy::tt::functor<decltype(l)>;
+        using info = asy::util::functor<decltype(l)>;
 
         STATIC_REQUIRE_FALSE( info::is_ambiguous );
         STATIC_REQUIRE( info::arg_n == 0 );
@@ -95,7 +95,7 @@ TEST_CASE("Lambda continuation", "[deduce]")
     SECTION("void(int)")
     {
         auto l = [](int){};
-        using info = asy::tt::functor<decltype(l)>;
+        using info = asy::util::functor<decltype(l)>;
 
         STATIC_REQUIRE_FALSE( info::is_ambiguous );
         STATIC_REQUIRE( info::arg_n == 1 );
@@ -106,7 +106,7 @@ TEST_CASE("Lambda continuation", "[deduce]")
     SECTION("char(int)")
     {
         auto l = [](int){ return char{}; };
-        using info = asy::tt::functor<decltype(l)>;
+        using info = asy::util::functor<decltype(l)>;
 
         STATIC_REQUIRE_FALSE( info::is_ambiguous );
         STATIC_REQUIRE( info::arg_n == 1 );
@@ -117,7 +117,7 @@ TEST_CASE("Lambda continuation", "[deduce]")
     SECTION("char()")
     {
         auto l = [](){ return char{}; };
-        using info = asy::tt::functor<decltype(l)>;
+        using info = asy::util::functor<decltype(l)>;
 
         STATIC_REQUIRE_FALSE( info::is_ambiguous );
         STATIC_REQUIRE( info::arg_n == 0 );
@@ -127,7 +127,7 @@ TEST_CASE("Lambda continuation", "[deduce]")
     SECTION("char(int, double)")
     {
         auto l = [](int, double){ return char{}; };
-        using info = asy::tt::functor<decltype(l)>;
+        using info = asy::util::functor<decltype(l)>;
 
         STATIC_REQUIRE_FALSE( info::is_ambiguous );
         STATIC_REQUIRE( info::arg_n == 2 );
@@ -140,7 +140,7 @@ TEST_CASE("Lambda continuation", "[deduce]")
     SECTION("generic lambda")
     {
         auto l = [](auto){ return char{}; };
-        using info = asy::tt::functor<decltype(l)>;
+        using info = asy::util::functor<decltype(l)>;
 
         STATIC_REQUIRE( info::is_ambiguous );
     }
@@ -152,7 +152,7 @@ TEST_CASE("Lambda continuation", "[deduce]")
             char operator()(int) { return {}; }
             char operator()(double) { return{}; }
         };
-        using info = asy::tt::functor<functor>;
+        using info = asy::util::functor<functor>;
 
         STATIC_REQUIRE( info::is_ambiguous );
     }
@@ -167,21 +167,21 @@ TEST_CASE("Is template specialization", "[deduce]")
 {
     SECTION("Single argument template")
     {
-        using ret = asy::tt::specialization_of<single_template_t, single_template_t<int>>;
+        using ret = asy::util::specialization_of<single_template_t, single_template_t<int>>;
         STATIC_REQUIRE( ret::value );
         STATIC_REQUIRE( std::is_same_v<ret::first_arg, int> );
     }
 
     SECTION("Multiple argument template")
     {
-        using ret = asy::tt::specialization_of<multi_template_t, multi_template_t<int, double, char>>;
+        using ret = asy::util::specialization_of<multi_template_t, multi_template_t<int, double, char>>;
         STATIC_REQUIRE( ret::value );
         STATIC_REQUIRE( std::is_same_v<ret::first_arg, int> );
     }
 
     SECTION("Variadic argument template")
     {
-        using ret = asy::tt::specialization_of<variadic_template_t, variadic_template_t<int, double, char>>;
+        using ret = asy::util::specialization_of<variadic_template_t, variadic_template_t<int, double, char>>;
         STATIC_REQUIRE( ret::value );
         STATIC_REQUIRE( std::is_same_v<ret::first_arg, int> );
     }

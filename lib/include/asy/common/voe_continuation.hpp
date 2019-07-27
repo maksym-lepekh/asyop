@@ -14,11 +14,11 @@
 #pragma once
 
 #include <type_traits>
-#include <asy/core/basic_op_handle.hpp>
-#include <asy/core/basic_context.hpp>
-#include <asy/core/support/concept.hpp>
+#include "../core/basic_op_handle.hpp"
+#include "../core/basic_context.hpp"
+#include "../core/support/concept.hpp"
 #include "simple_continuation.hpp"
-#include "type_traits.hpp"
+#include "util.hpp"
 
 
 namespace asy::concept
@@ -105,15 +105,17 @@ namespace asy
             return basic_op_handle<ret_type, Err>{
                  [](basic_context_ptr<ret_type, Err> ctx, F&& f, Args&&... args)
                  {
-                     auto&& ret = f(std::forward<Args>(args)...);
-                     if (ret.has_value())
+                     util::safe_invoke(ctx, [&ctx](auto&& ret)
                      {
-                         ctx->async_success(std::move(ret.value()));
-                     }
-                     else
-                     {
-                         ctx->async_failure(std::move(ret.error()));
-                     }
+                         if (ret.has_value())
+                         {
+                             ctx->async_success(std::move(ret.value()));
+                         }
+                         else
+                         {
+                             ctx->async_failure(std::move(ret.error()));
+                         }
+                     }, std::forward<F>(f), std::forward<Args>(args)...);
                  }, std::forward<F>(f), std::forward<Args>(args)...};
         }
 
@@ -122,15 +124,17 @@ namespace asy
         {
             return [f = std::forward<F>(f), ctx](Args&&... args)
             {
-                auto&& ret = f(std::forward<Args>(args)...);
-                if (ret.has_value())
+                util::safe_invoke(ctx, [&ctx](auto&& ret)
                 {
-                    ctx->async_success(std::move(ret.value()));
-                }
-                else
-                {
-                    ctx->async_failure(std::move(ret.error()));
-                }
+                    if (ret.has_value())
+                    {
+                        ctx->async_success(std::move(ret.value()));
+                    }
+                    else
+                    {
+                        ctx->async_failure(std::move(ret.error()));
+                    }
+                }, f, std::forward<Args>(args)...);
             };
         }
     };
@@ -151,15 +155,17 @@ namespace asy
             return basic_op_handle<ret_type, Err>{
                     [](basic_context_ptr<ret_type, Err> ctx, F&& f, Args&&... args)
                     {
-                        auto&& ret = f(std::forward<Args>(args)...);
-                        if (ret.has_value())
+                        util::safe_invoke(ctx, [&ctx](auto&& ret)
                         {
-                            ctx->async_success(std::move(ret.value()));
-                        }
-                        else
-                        {
-                            ctx->async_failure();
-                        }
+                            if (ret.has_value())
+                            {
+                                ctx->async_success(std::move(ret.value()));
+                            }
+                            else
+                            {
+                                ctx->async_failure();
+                            }
+                        }, std::forward<F>(f), std::forward<Args>(args)...);
                     }, std::forward<F>(f), std::forward<Args>(args)...};
         }
 
@@ -168,15 +174,17 @@ namespace asy
         {
             return [f = std::forward<F>(f), ctx](Args&&... args)
             {
-                auto&& ret = f(std::forward<Args>(args)...);
-                if (ret.has_value())
+                util::safe_invoke(ctx, [&ctx](auto&& ret)
                 {
-                    ctx->async_success(std::move(ret.value()));
-                }
-                else
-                {
-                    ctx->async_failure();
-                }
+                    if (ret.has_value())
+                    {
+                        ctx->async_success(std::move(ret.value()));
+                    }
+                    else
+                    {
+                        ctx->async_failure();
+                    }
+                }, f, std::forward<Args>(args)...);
             };
         }
     };
@@ -197,15 +205,17 @@ namespace asy
             return basic_op_handle<ret_type, Err>{
                     [](basic_context_ptr<ret_type, Err> ctx, F&& f, Args&&... args)
                     {
-                        auto&& ret = f(std::forward<Args>(args)...);
-                        if (ret.has_value())
+                        util::safe_invoke(ctx, [&ctx](auto&& ret)
                         {
-                            ctx->async_success();
-                        }
-                        else
-                        {
-                            ctx->async_failure(std::move(ret.error()));
-                        }
+                            if (ret.has_value())
+                            {
+                                ctx->async_success();
+                            }
+                            else
+                            {
+                                ctx->async_failure(std::move(ret.error()));
+                            }
+                        }, std::forward<F>(f), std::forward<Args>(args)...);
                     }, std::forward<F>(f), std::forward<Args>(args)...};
         }
 
@@ -214,15 +224,17 @@ namespace asy
         {
             return [f = std::forward<F>(f), ctx](Args&&... args)
             {
-                auto&& ret = f(std::forward<Args>(args)...);
-                if (ret.has_value())
+                util::safe_invoke(ctx, [&ctx](auto&& ret)
                 {
-                    ctx->async_success();
-                }
-                else
-                {
-                    ctx->async_failure(std::move(ret.error()));
-                }
+                    if (ret.has_value())
+                    {
+                        ctx->async_success();
+                    }
+                    else
+                    {
+                        ctx->async_failure(std::move(ret.error()));
+                    }
+                }, f, std::forward<Args>(args)...);
             };
         }
     };

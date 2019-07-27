@@ -14,10 +14,10 @@
 #pragma once
 
 #include <type_traits>
-#include <asy/core/basic_context.hpp>
-#include <asy/core/basic_op_handle.hpp>
-#include <asy/core/support/concept.hpp>
-#include "type_traits.hpp"
+#include "../core/basic_context.hpp"
+#include "../core/basic_op_handle.hpp"
+#include "../core/support/concept.hpp"
+#include "util.hpp"
 
 
 namespace asy::concept
@@ -66,15 +66,10 @@ namespace asy
         template <typename T, typename Err>
         static auto invoke(asy::basic_context_ptr<T, Err> ctx, F&& f, Args&&... args)
         {
-            if constexpr (std::is_void_v<ret_type>)
+            util::safe_invoke(ctx, [&ctx](auto&&... ret)
             {
-                f(std::forward<Args>(args)...);
-                ctx->async_success();
-            }
-            else
-            {
-                ctx->async_success(f(std::forward<Args>(args)...));
-            }
+                ctx->async_success(std::forward<decltype(ret)>(ret)...);
+            }, std::forward<F>(f), std::forward<Args>(args)...);
         }
     };
 

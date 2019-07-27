@@ -15,7 +15,7 @@
 
 #include <type_traits>
 #include <tuple>
-#include "type_traits.hpp"
+#include "util.hpp"
 #include "../core/basic_op_handle.hpp"
 #include "../core/basic_context.hpp"
 
@@ -23,7 +23,7 @@
 namespace asy::concept
 {
     template <typename F>
-    using context_arg_first = tt::specialization_of<basic_context, tt::specialization_of_first_t<std::shared_ptr, tt::functor_first_t<F>>>;
+    using context_arg_first = util::specialization_of<basic_context, util::specialization_of_first_t<std::shared_ptr, util::functor_first_t<F>>>;
 
     /// Concept of the continuation with a context argument
     struct CtxContinuation
@@ -31,9 +31,9 @@ namespace asy::concept
         template <typename T, typename... Args>
         auto operator()(T&& /*t*/, Args&&... /*args*/)
         -> require<
-                is_true<std::is_void_v<tt::functor_ret_t<T>>>,
+                is_true<std::is_void_v<util::functor_ret_t<T>>>,
                 is_true<context_arg_first<T>::value>,
-                is_true<std::is_invocable_v<T, tt::functor_first_t<T>, Args...>>
+                is_true<std::is_invocable_v<T, util::functor_first_t<T>, Args...>>
         >{}
     };
 }
@@ -45,15 +45,32 @@ namespace asy
     template <typename F, typename... Args>
     struct continuation<F(Args...), std::enable_if_t<c::satisfies<c::CtxContinuation, F, Args...>>> : std::true_type
     {
-        using _shptr = tt::functor_first_t<F>;
-        using _ctx = tt::specialization_of_first_t<std::shared_ptr, _shptr>;
-        using ret_type = tt::specialization_of_first_t<basic_context, _ctx>;
+        using _shptr = util::functor_first_t<F>;
+        using _ctx = util::specialization_of_first_t<std::shared_ptr, _shptr>;
+        using ret_type = util::specialization_of_first_t<basic_context, _ctx>;
         using ret_type_orig = void;
 
         template<typename Err>
         static auto to_handle(std::in_place_type_t<Err> /*err type*/, F&& f, Args&& ... args)
         {
-            return asy::basic_op_handle<ret_type, Err>(std::forward<F>(f), std::forward<Args>(args)...);
+            if constexpr (util::should_catch<Err, F, Args...>)
+            {
+                ASYOP_TRY
+                {
+                    return asy::basic_op_handle<ret_type, Err>(std::forward<F>(f), std::forward<Args>(args)...);
+                }
+                ASYOP_CATCH
+                {
+                    return asy::basic_op_handle<ret_type, Err>([e = std::current_exception()](auto ctx)
+                    {
+                        ctx->async_failure(e);
+                    });
+                }
+            }
+            else
+            {
+                return asy::basic_op_handle<ret_type, Err>(std::forward<F>(f), std::forward<Args>(args)...);
+            }
         }
 
         template<typename T, typename Err>
@@ -61,7 +78,7 @@ namespace asy
         {
             return [f = std::forward<F>(f), ctx](Args&& ... args) mutable
             {
-                std::invoke(f, ctx, std::forward<Args>(args)...);
+                util::safe_invoke(ctx, []{}, f, ctx, std::forward<Args>(args)...);
             };
         }
     };

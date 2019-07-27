@@ -9,7 +9,7 @@ find_package(ASIO REQUIRED)
 
 add_executable(asyop-tests
     main.cpp
-    type_traits.cpp
+    util.cpp
     continuation.cpp
     then.cpp
     op.cpp

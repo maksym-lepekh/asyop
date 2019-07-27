@@ -52,22 +52,18 @@ namespace asy
         }
     };
 
-    /// Generate a continuation that forwards successful result of previous operation
+    /// Generate a continuation that "swallows" successful result of previous operation
     ///
     /// \tparam Input Return type of the previous operation
     /// \param ctx Context of the generated continuation
     /// \return Continuation
     template <typename Input, typename Ctx>
-    static auto default_skip_cont(Ctx ctx)
+    static auto default_void_cont(Ctx ctx)
     {
-        if constexpr (std::is_void_v<Input>)
+        return [ctx](auto&&... /*input*/)
         {
-            return [ctx](){ ctx->async_success(); };
-        }
-        else
-        {
-            return [ctx](Input&& /*input*/){ ctx->async_success(); };
-        }
+            ctx->async_success();
+        };
     }
 
     /// Generate a continuation that forwards failure of previous operation

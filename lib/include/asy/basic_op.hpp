@@ -16,7 +16,7 @@
 #include "core/basic_context.hpp"
 #include "core/basic_op_handle.hpp"
 #include "core/continuation.hpp"
-#include "common/type_traits.hpp"
+#include "common/util.hpp"
 
 namespace asy
 {
@@ -29,7 +29,7 @@ namespace asy
     template <typename Err, typename F, typename... Args>
     auto basic_op(F&& fn, Args&&... args)
     {
-        if constexpr (tt::specialization_of<basic_op_handle, std::decay_t<F>>::value && sizeof...(Args) == 0)
+        if constexpr (util::specialization_of<basic_op_handle, std::decay_t<F>>::value && sizeof...(Args) == 0)
         {
             return std::forward<F>(fn);
         }

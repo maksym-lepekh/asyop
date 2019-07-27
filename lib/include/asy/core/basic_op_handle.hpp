@@ -154,7 +154,7 @@ namespace asy
                     [this, &fn](basic_context_ptr<void, Err> ctx)
                     {
                         m_ctx->set_continuation(
-                                default_skip_cont<T>(ctx),
+                                default_void_cont<T>(ctx),
                                 info::deferred(ctx, std::forward<Fn>(fn)));
                     });
         }
