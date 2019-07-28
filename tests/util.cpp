@@ -14,7 +14,9 @@
 #include <catch2/catch.hpp>
 #include <type_traits>
 #include <asy/common/util.hpp>
-
+#include <asy/core/executor.hpp>
+#include <asy/op.hpp>
+#include <exception>
 
 void void_int_fn(int) {}
 void void_void_fn() {}
@@ -185,4 +187,118 @@ TEST_CASE("Is template specialization", "[deduce]")
         STATIC_REQUIRE( ret::value );
         STATIC_REQUIRE( std::is_same_v<ret::first_arg, int> );
     }
+}
+
+struct my_err
+{
+    my_err(std::exception_ptr ptr): e(ptr) {}
+    std::exception_ptr e;
+};
+
+namespace asy::detail
+{
+    template <> struct error_traits<my_err>
+    {
+        static my_err get_cancelled()
+        {
+            try
+            {
+                throw std::logic_error("cancelled");
+            }
+            catch (...)
+            {
+                return my_err(std::current_exception());
+            }
+        }
+    };
+}
+
+TEST_CASE("safe_invoke", "[exceptions]")
+{
+    asy::executor::set_impl(std::this_thread::get_id(), [](auto&& f){ f(); }, false);
+    auto called = false;
+
+    SECTION("Non-exception error type")
+    {
+        auto ctx = std::make_shared<asy::basic_context<int, std::error_code>>();
+
+        SECTION("Success")
+        {
+            ctx->set_continuation(
+                    [&](int i){ CHECK(i == 42); called = true; },
+                    [](auto&&){ FAIL("Wrong path"); });
+
+            SECTION("Non-Void return")
+            {
+                asy::util::safe_invoke(ctx,
+                        [ctx](int i){ ctx->async_success(std::move(i)); },
+                        [](){ return 42; });
+            }
+
+            SECTION("Void return")
+            {
+                asy::util::safe_invoke(ctx,
+                        [ctx](){ ctx->async_success(42); },
+                        [](){});
+            }
+        }
+
+        SECTION("Failure")
+        {
+            ctx->set_continuation(
+                    [&](int i){ FAIL("Wrong path"); },
+                    [&](auto&&){ FAIL("Wrong path"); });
+
+            try
+            {
+                asy::util::safe_invoke(ctx,
+                        [ctx](int i){ ctx->async_success(std::move(i)); },
+                        [](){ throw std::runtime_error("oops"); return 42; });
+            }
+            catch (std::runtime_error& e)
+            {
+                called = true;
+            }
+        }
+    }
+
+    SECTION("Exception error type")
+    {
+        auto ctx = std::make_shared<asy::basic_context<int, my_err>>();
+
+        SECTION("Success")
+        {
+            ctx->set_continuation(
+                    [&](int i){ CHECK(i == 42); called = true; },
+                    [](auto&&){ FAIL("Wrong path"); });
+
+            asy::util::safe_invoke(ctx,
+                    [ctx](int i){ ctx->async_success(std::move(i)); },
+                    [](){ return 42; });
+        }
+
+        SECTION("Failure")
+        {
+            ctx->set_continuation(
+                    [&](int i){ FAIL("Wrong path"); },
+                    [&](my_err&& err)
+                    {
+                        try
+                        {
+                            std::rethrow_exception(err.e);
+                        }
+                        catch (std::runtime_error& e)
+                        {
+                            called = true;
+                            CHECK(e.what() == std::string("oops"));
+                        }
+                    });
+
+            asy::util::safe_invoke(ctx,
+                    [ctx](int i){ ctx->async_success(std::move(i)); },
+                    [](){ throw std::runtime_error("oops"); return 42; });
+        }
+    }
+
+    CHECK(called);
 }

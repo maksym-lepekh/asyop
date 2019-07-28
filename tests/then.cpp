@@ -52,6 +52,20 @@ TEST_CASE("asy::op then", "[asio]")
         io.run();
     }
 
+    SECTION("Areturn continuation with failure")
+    {
+        asy::op<int>().then([](int&& i){
+            return asy::op_handle<double>([](asy::context<double> ctx, int){
+                ctx->async_failure(std::make_error_code(std::errc::address_in_use));
+            }, i);
+        }).on_failure([&](auto err){
+            CHECK(err == std::make_error_code(std::errc::address_in_use));
+            timer.cancel();
+        });
+
+        io.run();
+    }
+
     SECTION("Async continuation")
     {
         asy::op<int>().then([&](asy::context<double> ctx, int&&){
