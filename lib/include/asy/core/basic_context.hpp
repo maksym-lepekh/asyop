@@ -47,9 +47,6 @@ namespace asy::detail
         template<typename F> using std_fun_t = std::function<cb_result<F>()>;
     };
 
-    template<typename Err>
-    struct error_traits;
-
     struct context_base
     {
         virtual void cancel() = 0;
@@ -60,6 +57,12 @@ namespace asy::detail
 
 namespace asy
 {
+    /// Helper type to define support of specified error type
+    /// Client code should specialize this struct and declare following static method:
+    /// `static Err get_canceled()`
+    template<typename Err>
+    struct error_traits;
+
     /// An operation context that holds current state of the execution and pending continuation or result, if available
     /// \note Not all methods are intended to be called by client code.
     template <typename Val, typename Err>
@@ -167,7 +170,7 @@ namespace asy
                 return;
             }
 
-            auto val = detail::error_traits<Err>::get_cancelled();
+            auto val = error_traits<Err>::get_canceled();
             if (auto cbs = std::get_if<cb_pair_t>(&m_pending))
             {
                 post(std::get<failure_cb_t>(*cbs), std::move(val));

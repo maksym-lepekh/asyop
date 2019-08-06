@@ -33,9 +33,9 @@ namespace asy
         {
             return std::forward<F>(fn);
         }
-        else if constexpr (asy::continuation<F(Args...)>::value)
+        else if constexpr (asy::continuation<F(Err, Args...)>::value)
         {
-            return asy::continuation<F(Args...)>::to_handle(std::in_place_type<Err>, std::forward<F>(fn), std::forward<Args>(args)...);
+            return asy::continuation<F(Err, Args...)>::to_handle(std::forward<F>(fn), std::forward<Args>(args)...);
         }
         else if constexpr (sizeof...(Args) == 0)
         {

@@ -26,10 +26,12 @@ namespace asy::concept
     /// "Async return" continuation concept
     struct ARetContinuation
     {
-        template <typename T, typename... Args> auto operator()(T&& /*t*/, Args&&... /*args*/)
+        template <typename T, typename Err, typename... Args>
+        auto operator()(T&& /*t*/, Err&& /*err*/, Args&&... /*args*/)
         -> require<
                 is_true<std::is_invocable_v<T, Args...>>,
-                is_true<util::specialization_of<asy::basic_op_handle, std::invoke_result_t<T, Args...>>::value>
+                is_true<util::specialization_of<asy::basic_op_handle, std::invoke_result_t<T, Args...>>::value>,
+                is_true<std::is_convertible_v<util::specialization_of_second_t<asy::basic_op_handle, std::invoke_result_t<T, Args...>>, Err>>
         >{}
     };
 }
@@ -38,14 +40,14 @@ namespace asy
 {
     /// Default support for "async return" continuation.
     /// \see struct asy::continuation
-    template <typename F, typename... Args>
-    struct simple_continuation<F(Args...), std::enable_if_t<c::satisfies<c::ARetContinuation, F, Args...>>>
+    template <typename F, typename Err, typename... Args>
+    struct simple_continuation<F(Err, Args...), std::enable_if_t<c::satisfies<c::ARetContinuation, F, Err, Args...>>>
             : std::true_type
     {
         using ret_type_orig = std::invoke_result_t<F, Args...>;
         using ret_type = typename util::specialization_of<asy::basic_op_handle, ret_type_orig>::first_arg;
 
-        template <typename Err, typename FF, typename... AArgs>
+        template <typename EE, typename FF, typename... AArgs>
         static auto safe_invoke(FF&& f, AArgs&&... args)
         {
             if constexpr (util::should_catch<Err, FF, AArgs...>)
@@ -56,10 +58,10 @@ namespace asy
                 }
                 ASYOP_CATCH
                 {
-                    return asy::basic_op_handle<ret_type, Err>([e = std::current_exception()](auto ctx)
-                                                               {
-                                                                   ctx->async_failure(e);
-                                                               });
+                    return asy::basic_op_handle<ret_type, EE>([e = std::current_exception()](auto ctx)
+                    {
+                        ctx->async_failure(e);
+                    });
                 }
             }
             else
@@ -68,17 +70,16 @@ namespace asy
             }
         }
 
-        template<typename Err>
-        static auto to_handle(std::in_place_type_t<Err> /*err type*/, F&& f, Args&& ... args)
+        static auto to_handle(F&& f, Args&& ... args)
         {
             return safe_invoke<Err>(std::forward<F>(f), std::forward<Args>(args)...);
         }
 
-        template<typename T, typename Err>
-        static auto deferred(asy::basic_context_ptr<T, Err> ctx, F&& f)
+        template<typename T, typename E>
+        static auto deferred(asy::basic_context_ptr<T, E> ctx, F&& f)
         {
             return [f = std::forward<F>(f), ctx](Args&& ... args) {
-                auto&& handle = safe_invoke<Err>(f, std::forward<Args>(args)...);
+                auto&& handle = safe_invoke<E>(f, std::forward<Args>(args)...);
                 handle.then(
                         [ctx](auto&&... output){
                             ctx->async_success(std::forward<decltype(output)>(output)...); },

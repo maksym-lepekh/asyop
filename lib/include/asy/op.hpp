@@ -27,16 +27,13 @@
 
 namespace asy
 {
-    namespace detail
+    template <> struct error_traits<std::error_code>
     {
-        template <> struct error_traits<std::error_code>
+        static std::error_code get_canceled()
         {
-            static std::error_code get_cancelled()
-            {
-                return std::make_error_code(std::errc::operation_canceled);
-            }
-        };
-    }
+            return std::make_error_code(std::errc::operation_canceled);
+        }
+    };
 
     /// Default (std::error_code) specialisation of `op_handle`
     template <typename T>

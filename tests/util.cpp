@@ -195,11 +195,11 @@ struct my_err
     std::exception_ptr e;
 };
 
-namespace asy::detail
+namespace asy
 {
     template <> struct error_traits<my_err>
     {
-        static my_err get_cancelled()
+        static my_err get_canceled()
         {
             try
             {
@@ -231,14 +231,14 @@ TEST_CASE("safe_invoke", "[exceptions]")
             SECTION("Non-Void return")
             {
                 asy::util::safe_invoke(ctx,
-                        [ctx](int i){ ctx->async_success(std::move(i)); },
+                        [&ctx](int i){ ctx->async_success(std::move(i)); },
                         [](){ return 42; });
             }
 
             SECTION("Void return")
             {
                 asy::util::safe_invoke(ctx,
-                        [ctx](){ ctx->async_success(42); },
+                        [&ctx](){ ctx->async_success(42); },
                         [](){});
             }
         }
@@ -252,7 +252,7 @@ TEST_CASE("safe_invoke", "[exceptions]")
             try
             {
                 asy::util::safe_invoke(ctx,
-                        [ctx](int i){ ctx->async_success(std::move(i)); },
+                        [&ctx](int i){ ctx->async_success(std::move(i)); },
                         [](){ throw std::runtime_error("oops"); return 42; });
             }
             catch (std::runtime_error& e)
@@ -273,7 +273,7 @@ TEST_CASE("safe_invoke", "[exceptions]")
                     [](auto&&){ FAIL("Wrong path"); });
 
             asy::util::safe_invoke(ctx,
-                    [ctx](int i){ ctx->async_success(std::move(i)); },
+                    [&ctx](int i){ ctx->async_success(std::move(i)); },
                     [](){ return 42; });
         }
 

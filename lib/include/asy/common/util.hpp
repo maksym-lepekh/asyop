@@ -117,14 +117,26 @@ namespace asy::util
 
     /// A helper that represents a true type if the second arg is a specialization of the first one
     /// Provides a type alias for the first template argument of the specialization
-    template <template <typename...> typename Templ, typename... OtherArgs, typename TemplArg>
-    struct specialization_of<Templ, Templ<TemplArg, OtherArgs...>> : std::true_type {
+    template <template <typename...> typename Templ, typename TemplArg>
+    struct specialization_of<Templ, Templ<TemplArg>> : std::true_type {
         using first_arg = TemplArg;
+    };
+
+    /// A helper that represents a true type if the second arg is a specialization of the first one
+    /// Provides a type alias for the first, second and other template arguments of the specialization
+    template <template <typename...> typename Templ, typename... OtherArgs, typename TemplArg1, typename TemplArg2>
+    struct specialization_of<Templ, Templ<TemplArg1, TemplArg2, OtherArgs...>> : std::true_type {
+        using first_arg = TemplArg1;
+        using second_arg = TemplArg2;
+        using args = std::tuple<OtherArgs...>;
     };
 
     /// First template argument of the tempalte specialization
     template <template <typename...> typename Templ, typename... OtherArgs>
     using specialization_of_first_t = typename specialization_of<Templ, OtherArgs...>::first_arg;
+
+    template <template <typename...> typename Templ, typename... OtherArgs>
+    using specialization_of_second_t = typename specialization_of<Templ, OtherArgs...>::second_arg;
 
     template <typename Err, typename F, typename... Args>
     constexpr auto should_catch = std::is_convertible_v<std::exception_ptr, Err>

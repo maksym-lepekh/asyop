@@ -26,12 +26,11 @@ namespace asy
         /// Invoke the functor and return op handle
         /// \note It is expected to be called as `c::template to_handle<Err>(f, args...)`
         ///
-        /// \tparam Err Expected error type
         /// \param f Functor that matches supported signature
         /// \param args Functor call arguments (forwarded)
         /// \return asy::basic_op_handle of running computation
-        template <typename Err, typename... Args>
-        static auto to_handle(std::in_place_type_t<Err> /*err type*/, F&& /*f*/, Args&&... /*args*/)
+        template <typename... Args>
+        static auto to_handle(F&& /*f*/, Args&&... /*args*/)
         {
             static_assert(!std::is_void_v<Sfinae>, "Invalid continuation type");
         }

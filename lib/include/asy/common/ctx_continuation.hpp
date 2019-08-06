@@ -25,15 +25,19 @@ namespace asy::concept
     template <typename F>
     using context_arg_first = util::specialization_of<basic_context, util::specialization_of_first_t<std::shared_ptr, util::functor_first_t<F>>>;
 
+    template <typename F>
+    using context_get_second_arg = util::specialization_of_second_t<basic_context, util::specialization_of_first_t<std::shared_ptr, util::functor_first_t<F>>>;
+
     /// Concept of the continuation with a context argument
     struct CtxContinuation
     {
-        template <typename T, typename... Args>
-        auto operator()(T&& /*t*/, Args&&... /*args*/)
+        template <typename T, typename Err, typename... Args>
+        auto operator()(T&& /*t*/, Err&& /*err*/, Args&&... /*args*/)
         -> require<
                 is_true<std::is_void_v<util::functor_ret_t<T>>>,
                 is_true<context_arg_first<T>::value>,
-                is_true<std::is_invocable_v<T, util::functor_first_t<T>, Args...>>
+                is_true<std::is_invocable_v<T, util::functor_first_t<T>, Args...>>,
+                is_true<std::is_convertible_v<context_get_second_arg<T>, Err>>
         >{}
     };
 }
@@ -42,16 +46,15 @@ namespace asy
 {
     /// Default support for continuation with a context argument.
     /// \see struct asy::continuation
-    template <typename F, typename... Args>
-    struct continuation<F(Args...), std::enable_if_t<c::satisfies<c::CtxContinuation, F, Args...>>> : std::true_type
+    template <typename F, typename Err, typename... Args>
+    struct continuation<F(Err, Args...), std::enable_if_t<c::satisfies<c::CtxContinuation, F, Err, Args...>>> : std::true_type
     {
         using _shptr = util::functor_first_t<F>;
         using _ctx = util::specialization_of_first_t<std::shared_ptr, _shptr>;
         using ret_type = util::specialization_of_first_t<basic_context, _ctx>;
         using ret_type_orig = void;
 
-        template<typename Err>
-        static auto to_handle(std::in_place_type_t<Err> /*err type*/, F&& f, Args&& ... args)
+        static auto to_handle(F&& f, Args&& ... args)
         {
             if constexpr (util::should_catch<Err, F, Args...>)
             {
@@ -73,8 +76,8 @@ namespace asy
             }
         }
 
-        template<typename T, typename Err>
-        static auto deferred(asy::basic_context_ptr<T, Err> ctx, F&& f)
+        template<typename T, typename E>
+        static auto deferred(asy::basic_context_ptr<T, E> ctx, F&& f)
         {
             return [f = std::forward<F>(f), ctx](Args&& ... args) mutable
             {
