@@ -30,25 +30,24 @@ TEST_CASE("executor::should_sync multi", "[core]")
     auto test2 = std::atomic_bool{false};
 
     auto main_id = std::this_thread::get_id();
-    asy::executor::get().set_impl(main_id, [](auto){}, true);
+    asy::executor::set_impl(main_id, [](auto){}, true);
 
     auto worker_id = std::atomic<decltype(main_id)>{};
     auto worker = std::thread{[&]{
         worker_id = std::this_thread::get_id();
-        asy::executor::get().set_impl(worker_id, [](auto){}, false);
+        asy::executor::set_impl(worker_id, [](auto){}, false);
+
+        test1 = asy::executor::should_sync(main_id);
+        test2 = !asy::executor::should_sync(worker_id);
 
         barr.wait();
-
-        test1 = asy::executor::get().should_sync(main_id);
-        test2 = !asy::executor::get().should_sync(worker_id);
-
         barr.wait();
     }};
 
     barr.wait();
 
-    CHECK(asy::executor::get().should_sync(main_id));
-    CHECK(!asy::executor::get().should_sync(worker_id));
+    CHECK(asy::executor::should_sync(main_id));
+    CHECK(!asy::executor::should_sync(worker_id));
     CHECK(test1);
     CHECK(test2);
 

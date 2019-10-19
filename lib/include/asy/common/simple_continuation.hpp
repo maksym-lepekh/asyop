@@ -14,10 +14,10 @@
 #pragma once
 
 #include <type_traits>
-#include <asy/core/basic_context.hpp>
-#include <asy/core/basic_op_handle.hpp>
-#include <asy/core/support/concept.hpp>
-#include "type_traits.hpp"
+#include "../core/basic_context.hpp"
+#include "../core/basic_op_handle.hpp"
+#include "../core/support/concept.hpp"
+#include "util.hpp"
 
 
 namespace asy::concept
@@ -25,8 +25,8 @@ namespace asy::concept
     /// "Simple" continuation concept
     struct SimpleContinuation
     {
-        template <typename T, typename... Args>
-        auto operator()(T&& /*t*/, Args&&... /*args*/)
+        template <typename T, typename Err, typename... Args>
+        auto operator()(T&& /*t*/, Err&& /*err*/, Args&&... /*args*/)
         -> require<
                 is_true<std::is_invocable_v<T, Args...>>
         >{}
@@ -38,13 +38,12 @@ namespace asy
     template <typename F>
     struct simple_continuation_impl;
 
-    template <typename F, typename... Args>
-    struct simple_continuation_impl<F(Args...)> : std::true_type
+    template <typename F, typename Err, typename... Args>
+    struct simple_continuation_impl<F(Err, Args...)> : std::true_type
     {
         using ret_type = std::invoke_result_t<F, Args...>;
 
-        template <typename Err>
-        static auto to_handle(std::in_place_type_t<Err> /*err type*/, F&& f, Args&&... args)
+        static auto to_handle(F&& f, Args&&... args)
         {
             return basic_op_handle<ret_type, Err>{
                 [](basic_context_ptr<ret_type, Err> ctx, F&& f, Args&&... args)
@@ -53,8 +52,8 @@ namespace asy
                 }, std::forward<F>(f), std::forward<Args>(args)...};
         }
 
-        template <typename T, typename Err>
-        static auto deferred(asy::basic_context_ptr<T, Err> ctx, F&& f)
+        template <typename T, typename E>
+        static auto deferred(asy::basic_context_ptr<T, E> ctx, F&& f)
         {
             return [f = std::forward<F>(f), ctx](Args&&... args) mutable
             {
@@ -63,18 +62,13 @@ namespace asy
         }
 
     private:
-        template <typename T, typename Err>
-        static auto invoke(asy::basic_context_ptr<T, Err> ctx, F&& f, Args&&... args)
+        template <typename T, typename E>
+        static auto invoke(asy::basic_context_ptr<T, E> ctx, F&& f, Args&&... args)
         {
-            if constexpr (std::is_void_v<ret_type>)
+            util::safe_invoke(ctx, [&ctx](auto&&... ret)
             {
-                f(std::forward<Args>(args)...);
-                ctx->async_success();
-            }
-            else
-            {
-                ctx->async_success(f(std::forward<Args>(args)...));
-            }
+                ctx->async_success(std::forward<decltype(ret)>(ret)...);
+            }, std::forward<F>(f), std::forward<Args>(args)...);
         }
     };
 
@@ -83,7 +77,7 @@ namespace asy
 
     /// Default support for simple continuation.
     /// \see struct asy::continuation
-    template <typename Functor, typename... Input>
-    struct continuation<Functor(Input...), c::require<c::satisfy<c::SimpleContinuation, Functor, Input...>>>
-            : simple_continuation<Functor(Input...)>{};
+    template <typename Functor, typename Error, typename... Input>
+    struct continuation<Functor(Error, Input...), std::enable_if_t<c::satisfies<c::SimpleContinuation, Functor, Error, Input...>>>
+            : simple_continuation<Functor(Error, Input...)>{};
 }

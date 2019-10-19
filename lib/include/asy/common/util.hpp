@@ -16,6 +16,16 @@
 #include <type_traits>
 #include <tuple>
 #include <memory>
+#include "../core/basic_context.hpp"
+
+
+#if defined(__cpp_exceptions)
+#define ASYOP_TRY try
+#define ASYOP_CATCH catch(...)
+#else
+#define ASYOP_TRY if constexpr (true)
+#define ASYOP_CATCH else
+#endif
 
 
 namespace asy::detail
@@ -86,7 +96,7 @@ namespace asy::detail
     struct functor_info_sel<F, true>: public functor_info_mem<decltype(&std::remove_reference_t<F>::operator())>{};
 }
 
-namespace asy::tt
+namespace asy::util
 {
     /// Helper that provides certain information that is deduced from the functor type
     template <typename F>
@@ -107,12 +117,64 @@ namespace asy::tt
 
     /// A helper that represents a true type if the second arg is a specialization of the first one
     /// Provides a type alias for the first template argument of the specialization
-    template <template <typename...> typename Templ, typename... OtherArgs, typename TemplArg>
-    struct specialization_of<Templ, Templ<TemplArg, OtherArgs...>> : std::true_type {
+    template <template <typename...> typename Templ, typename TemplArg>
+    struct specialization_of<Templ, Templ<TemplArg>> : std::true_type {
         using first_arg = TemplArg;
+    };
+
+    /// A helper that represents a true type if the second arg is a specialization of the first one
+    /// Provides a type alias for the first, second and other template arguments of the specialization
+    template <template <typename...> typename Templ, typename... OtherArgs, typename TemplArg1, typename TemplArg2>
+    struct specialization_of<Templ, Templ<TemplArg1, TemplArg2, OtherArgs...>> : std::true_type {
+        using first_arg = TemplArg1;
+        using second_arg = TemplArg2;
+        using args = std::tuple<OtherArgs...>;
     };
 
     /// First template argument of the tempalte specialization
     template <template <typename...> typename Templ, typename... OtherArgs>
     using specialization_of_first_t = typename specialization_of<Templ, OtherArgs...>::first_arg;
+
+    template <template <typename...> typename Templ, typename... OtherArgs>
+    using specialization_of_second_t = typename specialization_of<Templ, OtherArgs...>::second_arg;
+
+    template <typename Err, typename F, typename... Args>
+    constexpr auto should_catch = std::is_convertible_v<std::exception_ptr, Err>
+            && !std::is_nothrow_invocable_v<F, Args...>;
+
+    template <typename T, typename Err, typename Cb, typename F, typename... Args>
+    auto safe_invoke(asy::basic_context_ptr<T, Err> ctx, Cb&& cb, F&& f, Args&&... args)
+    {
+        if constexpr (should_catch<Err, F, Args...>)
+        {
+            ASYOP_TRY
+            {
+                if constexpr (std::is_void_v<std::invoke_result_t<F, Args...>>)
+                {
+                    std::forward<F>(f)(std::forward<Args>(args)...);
+                    std::forward<Cb>(cb)();
+                }
+                else
+                {
+                    std::forward<Cb>(cb)(std::forward<F>(f)(std::forward<Args>(args)...));
+                }
+            }
+            ASYOP_CATCH
+            {
+                ctx->async_failure(std::current_exception());
+            }
+        }
+        else
+        {
+            if constexpr (std::is_void_v<std::invoke_result_t<F, Args...>>)
+            {
+                std::forward<F>(f)(std::forward<Args>(args)...);
+                std::forward<Cb>(cb)();
+            }
+            else
+            {
+                std::forward<Cb>(cb)(std::forward<F>(f)(std::forward<Args>(args)...));
+            }
+        }
+    }
 }

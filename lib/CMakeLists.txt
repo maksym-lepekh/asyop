@@ -4,7 +4,7 @@ if (DEFINED PROJECT_NAME)
     set(IS_SUBDIR ON)
 endif()
 
-project(asyop LANGUAGES CXX VERSION 0.2)
+project(asyop LANGUAGES CXX VERSION 0.3)
 
 # dependencies
 list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_LIST_DIR}/../cmake")
@@ -14,7 +14,7 @@ find_package(ASIO)
 
 
 # main library
-add_library(asyop SHARED src/asy.cpp)
+add_library(asyop SHARED src/executor.cpp)
 target_include_directories(asyop PUBLIC
     $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/include>
     $<INSTALL_INTERFACE:include>)

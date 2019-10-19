@@ -23,7 +23,7 @@ using namespace std::literals;
 TEST_CASE("asiofy", "[asio]")
 {
     auto io = asio::io_service{};
-    auto fail_timer = asio::steady_timer{io, 50ms};
+    auto fail_timer = asio::steady_timer{io, 500ms};
 
     fail_timer.async_wait([](const asio::error_code& err){
         if (!err) FAIL("Timeout");
@@ -62,7 +62,7 @@ TEST_CASE("sleep", "[asio]")
     using namespace std::literals;
 
     auto io = asio::io_service{};
-    auto fail_timer = asio::steady_timer{io, 50ms};
+    auto fail_timer = asio::steady_timer{io, 500ms};
 
     fail_timer.async_wait([](const asio::error_code& err){
         if (!err) FAIL("Timeout");
@@ -107,7 +107,7 @@ TEST_CASE("timed_op", "[asio]")
     using namespace std::literals;
 
     auto io = asio::io_service{};
-    auto fail_timer = asio::steady_timer{io, 50ms};
+    auto fail_timer = asio::steady_timer{io, 500ms};
 
     fail_timer.async_wait([](const asio::error_code& err){
         if (!err) FAIL("Timeout");
@@ -153,7 +153,7 @@ TEST_CASE("timed_op", "[asio]")
 TEST_CASE("adapt", "[asio]")
 {
     auto io = asio::io_service{};
-    auto fail_timer = asio::steady_timer{io, 200ms};
+    auto fail_timer = asio::steady_timer{io, 500ms};
 
     fail_timer.async_wait([](const asio::error_code& err){
         if (!err) FAIL("Timeout");
@@ -198,7 +198,7 @@ TEST_CASE("Load-balance example", "[asio]")
     auto counter = std::atomic_int{2};
 
     auto worker = [&]{
-        asy::executor::get().set_impl(
+        asy::executor::set_impl(
                 std::this_thread::get_id(),
                 [&io](asy::executor::fn_t fn)
                 {

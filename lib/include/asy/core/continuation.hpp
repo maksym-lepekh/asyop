@@ -26,12 +26,11 @@ namespace asy
         /// Invoke the functor and return op handle
         /// \note It is expected to be called as `c::template to_handle<Err>(f, args...)`
         ///
-        /// \tparam Err Expected error type
         /// \param f Functor that matches supported signature
         /// \param args Functor call arguments (forwarded)
         /// \return asy::basic_op_handle of running computation
-        template <typename Err, typename... Args>
-        static auto to_handle(std::in_place_type_t<Err> /*err type*/, F&& /*f*/, Args&&... /*args*/)
+        template <typename... Args>
+        static auto to_handle(F&& /*f*/, Args&&... /*args*/)
         {
             static_assert(!std::is_void_v<Sfinae>, "Invalid continuation type");
         }
@@ -52,22 +51,18 @@ namespace asy
         }
     };
 
-    /// Generate a continuation that forwards successful result of previous operation
+    /// Generate a continuation that "swallows" successful result of previous operation
     ///
     /// \tparam Input Return type of the previous operation
     /// \param ctx Context of the generated continuation
     /// \return Continuation
     template <typename Input, typename Ctx>
-    static auto default_skip_cont(Ctx ctx)
+    static auto default_void_cont(Ctx ctx)
     {
-        if constexpr (std::is_void_v<Input>)
+        return [ctx](auto&&... /*input*/)
         {
-            return [ctx](){ ctx->async_success(); };
-        }
-        else
-        {
-            return [ctx](Input&& /*input*/){ ctx->async_success(); };
-        }
+            ctx->async_success();
+        };
     }
 
     /// Generate a continuation that forwards failure of previous operation

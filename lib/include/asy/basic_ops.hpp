@@ -50,7 +50,7 @@ namespace asy::detail
 
 namespace asy
 {
-    /// Add a continuation that invokes a functor if the operation is cancelled
+    /// Add a continuation that invokes a functor if the operation is canceled
     ///
     /// \param handle Parent operation handle
     /// \param fn Functor that is invoked on cancellation
@@ -61,7 +61,7 @@ namespace asy
         return handle.then(detail::make_skip<T, Err>(),
         [cb = std::forward<Fn>(fn)](basic_context_ptr<T, Err> ctx, Err&& err)
         {
-            if (err == detail::error_traits<Err>::get_cancelled())
+            if (err == error_traits<Err>::get_canceled())
             {
                 cb();
             }

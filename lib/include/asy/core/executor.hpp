@@ -18,9 +18,9 @@
 
 namespace asy { inline namespace v1
 {
-    /// The global instance that is capable of invocation of the callable on preferred thread. Used by
+    /// The global facility that is capable of invocation of the callable on preferred thread. Used by
     /// operation context to run continuations
-    struct executor
+    namespace executor
     {
         /// Client-side callable type
         using fn_t = std::function<void()>;
@@ -41,7 +41,7 @@ namespace asy { inline namespace v1
         /// \param id Thread ID, optional, defaults to current thread
         /// \return True if the data access should be synchronized, False otherwise
         [[nodiscard]]
-        bool should_sync(std::thread::id id = std::this_thread::get_id()) const noexcept;
+        bool should_sync(std::thread::id id = std::this_thread::get_id()) noexcept;
 
         /// Set the handler for specified thread ID. This handler is responsible for invocation of callables
         /// that are passed with `schedule_execution()`.
@@ -51,13 +51,5 @@ namespace asy { inline namespace v1
         /// \param impl Handler
         /// \param require_sync Execution on the specified thread ID should synchronize data access
         void set_impl(std::thread::id id, impl_t impl, bool require_sync);
-
-        /// Get a reference to global executor
-        ///
-        /// \return Reference to the singleton
-        static executor& get() noexcept;
-
-    private:
-        executor();
     };
 }}

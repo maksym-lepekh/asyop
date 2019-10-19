@@ -14,11 +14,11 @@
 #pragma once
 
 #include <type_traits>
-#include <asy/core/basic_op_handle.hpp>
-#include <asy/core/basic_context.hpp>
-#include <asy/core/support/concept.hpp>
+#include "../core/basic_op_handle.hpp"
+#include "../core/basic_context.hpp"
+#include "../core/support/concept.hpp"
 #include "simple_continuation.hpp"
-#include "type_traits.hpp"
+#include "util.hpp"
 
 
 namespace asy::concept
@@ -59,17 +59,18 @@ namespace asy::concept
     /// "Value or error" continuation concept
     struct VoEContinuation
     {
-        template <typename T, typename... Args> auto operator()(T&& /*t*/, Args&&... /*args*/)
+        template <typename T, typename Err, typename... Args> auto operator()(T&& /*t*/, Err&& /*err*/, Args&&... /*args*/)
         -> require<
                 is_true<std::is_invocable_v<T, Args...>>,
-                satisfy<ValueOrError, std::invoke_result_t<T, Args...>>
+                satisfy<ValueOrError, std::invoke_result_t<T, Args...>>,
+                is_true<std::is_convertible_v<decltype(std::declval<std::invoke_result_t<T, Args...>>().error()), Err>>
         >{}
     };
 
     /// "Value or none" continuation concept
     struct VoNContinuation
     {
-        template <typename T, typename... Args> auto operator()(T&& /*t*/, Args&&... /*args*/)
+        template <typename T, typename Err, typename... Args> auto operator()(T&& /*t*/, Err&& /*err*/, Args&&... /*args*/)
         -> require<
                 is_true<std::is_invocable_v<T, Args...>>,
                 satisfy<ValueOrNone, std::invoke_result_t<T, Args...>>
@@ -79,10 +80,11 @@ namespace asy::concept
     /// "None or error" continuation concept
     struct NoEContinuation
     {
-        template <typename T, typename... Args> auto operator()(T&& /*t*/, Args&&... /*args*/)
+        template <typename T, typename Err, typename... Args> auto operator()(T&& /*t*/, Err&& /*err*/, Args&&... /*args*/)
         -> require<
                 is_true<std::is_invocable_v<T, Args...>>,
-                satisfy<NoneOrError, std::invoke_result_t<T, Args...>>
+                satisfy<NoneOrError, std::invoke_result_t<T, Args...>>,
+                is_true<std::is_convertible_v<decltype(std::declval<std::invoke_result_t<T, Args...>>().error()), Err>>
         >{}
     };
 }
@@ -91,138 +93,147 @@ namespace asy
 {
     /// Default support for ValueOrError continuation.
     /// \see struct asy::continuation
-    template <typename F, typename... Args>
-    struct simple_continuation<F(Args...), c::require<c::satisfy<c::VoEContinuation, F, Args...>>>
+    template <typename F, typename Err, typename... Args>
+    struct simple_continuation<F(Err, Args...), std::enable_if_t<c::satisfies<c::VoEContinuation, F, Err, Args...>>>
             : std::true_type
     {
         using ret_type_orig = std::invoke_result_t<F, Args...>;
         using ret_type = std::remove_reference_t<decltype(std::declval<ret_type_orig>().value())>;
         using err_type = std::remove_reference_t<decltype(std::declval<ret_type_orig>().error())>;
 
-        template <typename Err>
-        static auto to_handle(std::in_place_type_t<Err> /*err type*/, F&& f, Args&&... args)
+        static auto to_handle(F&& f, Args&&... args)
         {
             return basic_op_handle<ret_type, Err>{
                  [](basic_context_ptr<ret_type, Err> ctx, F&& f, Args&&... args)
                  {
-                     auto&& ret = f(std::forward<Args>(args)...);
-                     if (ret.has_value())
+                     util::safe_invoke(ctx, [&ctx](auto&& ret)
                      {
-                         ctx->async_success(std::move(ret.value()));
-                     }
-                     else
-                     {
-                         ctx->async_failure(std::move(ret.error()));
-                     }
+                         if (ret.has_value())
+                         {
+                             ctx->async_success(std::move(ret.value()));
+                         }
+                         else
+                         {
+                             ctx->async_failure(std::move(ret.error()));
+                         }
+                     }, std::forward<F>(f), std::forward<Args>(args)...);
                  }, std::forward<F>(f), std::forward<Args>(args)...};
         }
 
-        template <typename T, typename Err>
-        static auto deferred(asy::basic_context_ptr<T, Err> ctx, F&& f)
+        template <typename T, typename E>
+        static auto deferred(asy::basic_context_ptr<T, E> ctx, F&& f)
         {
             return [f = std::forward<F>(f), ctx](Args&&... args)
             {
-                auto&& ret = f(std::forward<Args>(args)...);
-                if (ret.has_value())
+                util::safe_invoke(ctx, [&ctx](auto&& ret)
                 {
-                    ctx->async_success(std::move(ret.value()));
-                }
-                else
-                {
-                    ctx->async_failure(std::move(ret.error()));
-                }
+                    if (ret.has_value())
+                    {
+                        ctx->async_success(std::move(ret.value()));
+                    }
+                    else
+                    {
+                        ctx->async_failure(std::move(ret.error()));
+                    }
+                }, f, std::forward<Args>(args)...);
             };
         }
     };
 
     /// Default support for ValueOrNone continuation.
     /// \see struct asy::continuation
-    template <typename F, typename... Args>
-    struct simple_continuation<F(Args...), c::require<c::satisfy<c::VoNContinuation, F, Args...>>>
+    template <typename F, typename Err, typename... Args>
+    struct simple_continuation<F(Err, Args...), std::enable_if_t<c::satisfies<c::VoNContinuation, F, Err, Args...>>>
             : std::true_type
     {
         using ret_type_orig = std::invoke_result_t<F, Args...>;
         using ret_type = std::remove_reference_t<decltype(std::declval<ret_type_orig>().value())>;
         using err_type = void;
 
-        template <typename Err>
-        static auto to_handle(std::in_place_type_t<Err> /*err type*/, F&& f, Args&&... args)
+        static auto to_handle(F&& f, Args&&... args)
         {
             return basic_op_handle<ret_type, Err>{
                     [](basic_context_ptr<ret_type, Err> ctx, F&& f, Args&&... args)
                     {
-                        auto&& ret = f(std::forward<Args>(args)...);
-                        if (ret.has_value())
+                        util::safe_invoke(ctx, [&ctx](auto&& ret)
                         {
-                            ctx->async_success(std::move(ret.value()));
-                        }
-                        else
-                        {
-                            ctx->async_failure();
-                        }
+                            if (ret.has_value())
+                            {
+                                ctx->async_success(std::move(ret.value()));
+                            }
+                            else
+                            {
+                                ctx->async_failure();
+                            }
+                        }, std::forward<F>(f), std::forward<Args>(args)...);
                     }, std::forward<F>(f), std::forward<Args>(args)...};
         }
 
-        template <typename T, typename Err>
-        static auto deferred(asy::basic_context_ptr<T, Err> ctx, F&& f)
+        template <typename T, typename E>
+        static auto deferred(asy::basic_context_ptr<T, E> ctx, F&& f)
         {
             return [f = std::forward<F>(f), ctx](Args&&... args)
             {
-                auto&& ret = f(std::forward<Args>(args)...);
-                if (ret.has_value())
+                util::safe_invoke(ctx, [&ctx](auto&& ret)
                 {
-                    ctx->async_success(std::move(ret.value()));
-                }
-                else
-                {
-                    ctx->async_failure();
-                }
+                    if (ret.has_value())
+                    {
+                        ctx->async_success(std::move(ret.value()));
+                    }
+                    else
+                    {
+                        ctx->async_failure();
+                    }
+                }, f, std::forward<Args>(args)...);
             };
         }
     };
 
     /// Default support for NoneOrError continuation.
     /// \see struct asy::continuation
-    template <typename F, typename... Args>
-    struct simple_continuation<F(Args...), c::require<c::satisfy<c::NoEContinuation, F, Args...>>>
+    template <typename F, typename Err, typename... Args>
+    struct simple_continuation<F(Err, Args...), std::enable_if_t<c::satisfies<c::NoEContinuation, F, Err, Args...>>>
             : std::true_type
     {
         using ret_type_orig = std::invoke_result_t<F, Args...>;
         using ret_type = void;
         using err_type = std::remove_reference_t<decltype(std::declval<ret_type_orig>().error())>;
 
-        template <typename Err>
-        static auto to_handle(std::in_place_type_t<Err> /*err type*/, F&& f, Args&&... args)
+        static auto to_handle(F&& f, Args&&... args)
         {
             return basic_op_handle<ret_type, Err>{
                     [](basic_context_ptr<ret_type, Err> ctx, F&& f, Args&&... args)
                     {
-                        auto&& ret = f(std::forward<Args>(args)...);
-                        if (ret.has_value())
+                        util::safe_invoke(ctx, [&ctx](auto&& ret)
                         {
-                            ctx->async_success();
-                        }
-                        else
-                        {
-                            ctx->async_failure(std::move(ret.error()));
-                        }
+                            if (ret.has_value())
+                            {
+                                ctx->async_success();
+                            }
+                            else
+                            {
+                                ctx->async_failure(std::move(ret.error()));
+                            }
+                        }, std::forward<F>(f), std::forward<Args>(args)...);
                     }, std::forward<F>(f), std::forward<Args>(args)...};
         }
 
-        template <typename T, typename Err>
-        static auto deferred(asy::basic_context_ptr<T, Err> ctx, F&& f)
+        template <typename T, typename E>
+        static auto deferred(asy::basic_context_ptr<T, E> ctx, F&& f)
         {
             return [f = std::forward<F>(f), ctx](Args&&... args)
             {
-                auto&& ret = f(std::forward<Args>(args)...);
-                if (ret.has_value())
+                util::safe_invoke(ctx, [&ctx](auto&& ret)
                 {
-                    ctx->async_success();
-                }
-                else
-                {
-                    ctx->async_failure(std::move(ret.error()));
-                }
+                    if (ret.has_value())
+                    {
+                        ctx->async_success();
+                    }
+                    else
+                    {
+                        ctx->async_failure(std::move(ret.error()));
+                    }
+                }, f, std::forward<Args>(args)...);
             };
         }
     };
