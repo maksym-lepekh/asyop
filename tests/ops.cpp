@@ -23,7 +23,7 @@ using namespace std::literals;
 TEST_CASE("Compound then", "[asio]")
 {
     auto io = asio::io_service{};
-    auto timer = asio::steady_timer{io, 50ms};
+    auto timer = asio::steady_timer{io, 500ms};
 
     timer.async_wait([](const asio::error_code& err) {
         if (!err) FAIL("Timeout");
@@ -238,8 +238,8 @@ TEST_CASE("Compound then", "[asio]")
 
     SECTION("when_all: cancel")
     {
-        auto timer2 = asio::steady_timer{io, 10ms};
-        auto timer3 = asio::steady_timer{io, 15ms};
+        auto timer2 = asio::steady_timer{io, 50ms};
+        auto timer3 = asio::steady_timer{io, 75ms};
 
         auto handle = asy::when_all(
                 asy::op([&](asy::context<void> ctx)
@@ -289,8 +289,8 @@ TEST_CASE("Compound then", "[asio]")
 
     SECTION("when_success: cancel")
     {
-        auto timer2 = asio::steady_timer{io, 15ms};
-        auto timer3 = asio::steady_timer{io, 30ms};
+        auto timer2 = asio::steady_timer{io, 50ms};
+        auto timer3 = asio::steady_timer{io, 75ms};
 
         auto handle = asy::when_success(
                 asy::op([&](asy::context<void> ctx)
@@ -338,8 +338,8 @@ TEST_CASE("Compound then", "[asio]")
 
     SECTION("when_any: cancel")
     {
-        auto timer2 = asio::steady_timer{io, 15ms};
-        auto timer3 = asio::steady_timer{io, 30ms};
+        auto timer2 = asio::steady_timer{io, 50ms};
+        auto timer3 = asio::steady_timer{io, 75ms};
 
         auto handle = asy::when_any(
                 asy::op([&](asy::context<void> ctx)
