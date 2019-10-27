@@ -17,5 +17,6 @@ add_executable(asyop-tests
     value_or_error.cpp
     asio.cpp
     executor.cpp
-    thread.cpp)
+    thread.cpp
+    op_handle.cpp)
 target_link_libraries(asyop-tests PRIVATE Catch2::Catch2 asyop::asio)

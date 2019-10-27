@@ -1,4 +1,5 @@
 cmake_minimum_required(VERSION 3.9)
+project(asyop-root)
 
 include(${CMAKE_CURRENT_BINARY_DIR}/conan_paths.cmake OPTIONAL)
 include(cmake/build-types.cmake)

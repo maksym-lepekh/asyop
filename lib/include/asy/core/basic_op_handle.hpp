@@ -16,6 +16,10 @@
 #include "basic_context.hpp"
 #include "continuation.hpp"
 
+#include <ostream>
+#include <string>
+#include <sstream>
+
 namespace asy
 {
     /// Client-side handle to the asynchronous operation
@@ -159,7 +163,64 @@ namespace asy
                     });
         }
 
+    public:
+        friend auto operator<(const basic_op_handle& a, const basic_op_handle& b) noexcept
+        {
+            return a.m_ctx < b.m_ctx;
+        }
+
+        friend auto operator==(const basic_op_handle& a, const basic_op_handle& b) noexcept
+        {
+            return a.m_ctx == b.m_ctx;
+        }
+
+        friend auto operator!=(const basic_op_handle& a, const basic_op_handle& b) noexcept
+        {
+            return !(a == b);
+        }
+
+        friend auto operator>=(const basic_op_handle& a, const basic_op_handle& b) noexcept
+        {
+            return !(a < b);
+        }
+
+        friend auto operator<=(const basic_op_handle& a, const basic_op_handle& b) noexcept
+        {
+            return (a < b) || (a == b);
+        }
+
+        friend auto operator>(const basic_op_handle& a, const basic_op_handle& b) noexcept
+        {
+            return !(a <= b);
+        }
+
+        friend std::hash<basic_op_handle>;
+
+        friend std::ostream& operator<<(std::ostream& os, const basic_op_handle& obj)
+        {
+            return os << "op_handle{" << obj.m_ctx.get() << "}";
+        }
+
+        friend auto to_string(const basic_op_handle& obj)
+        {
+            auto ss = std::stringstream{};
+            ss << obj;
+            return ss.str();
+        }
+
     private:
         basic_context_ptr<T, Err> m_ctx;
+    };
+}
+
+namespace std
+{
+    template<typename T, typename Err>
+    struct hash<asy::basic_op_handle<T, Err>>
+    {
+        auto operator()(asy::basic_op_handle<T, Err> const& h) const noexcept
+        {
+            return std::hash<decltype(h.m_ctx)>{}(h.m_ctx);
+        }
     };
 }
