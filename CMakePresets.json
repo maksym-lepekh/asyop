@@ -7,68 +7,102 @@
   },
   "configurePresets": [
     {
-      "name": "debug",
-      "displayName": "Default Config",
-      "description": "Default build using Ninja generator",
-      "cacheVariables": {
-        "CMAKE_BUILD_TYPE": "Debug",
-        "CMAKE_CXX_COMPILER": "clang++"
-      },
+      "name": "common",
+      "hidden":true,
+      "binaryDir": "${sourceDir}/cmake-build-${presetName}",
       "generator": "Ninja",
-      "binaryDir": "${sourceDir}/cmake-build-debug"
+      "cacheVariables": {
+          "CMAKE_EXPORT_COMPILE_COMMANDS": "ON"
+      }
+    },
+    {
+      "name": "base-clang",
+      "hidden": true,
+      "cacheVariables": {
+        "CMAKE_CXX_COMPILER": "clang++"
+      }
+    },
+    {
+      "name": "base-gcc",
+      "hidden": true,
+      "cacheVariables": {
+        "CMAKE_CXX_COMPILER": "g++"
+      }
+    },
+    {
+      "name": "base-debug",
+      "hidden": true,
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Debug"
+      },
+      "generator": "Ninja"
+    },
+    {
+      "name": "debug-gcc",
+      "inherits": ["base-gcc", "base-debug", "common"]
+    },
+    {
+      "name": "debug-clang",
+      "inherits": ["base-clang", "base-debug", "common"]
     }
   ],
   "buildPresets": [
     {
-      "name": "default",
-      "configurePreset": "debug"
+      "name": "clang",
+      "configurePreset": "debug-clang",
+      "cleanFirst": true
     },
     {
-      "name": "rebuild",
-      "inherits": ["default"],
+      "name": "gcc",
+      "configurePreset": "debug-gcc",
       "cleanFirst": true
     }
   ],
   "testPresets": [
     {
-      "name": "default",
-      "configurePreset": "debug",
+      "name": "clang",
+      "configurePreset": "debug-clang",
       "output": {"outputOnFailure": true},
       "execution": {"noTestsAction": "error", "stopOnFailure": true}
+    },
+    {
+      "name": "gcc",
+      "inherits": ["clang"],
+      "configurePreset": "debug-gcc"
     }
   ],
   "workflowPresets": [
     {
-      "name": "default",
+      "name": "gcc",
       "steps": [
         {
           "type": "configure",
-          "name": "debug"
+          "name": "debug-gcc"
         },
         {
           "type": "build",
-          "name": "default"
+          "name": "gcc"
         },
         {
           "type": "test",
-          "name": "default"
+          "name": "gcc"
         }
       ]
     },
     {
-      "name": "rebuild",
+      "name": "clang",
       "steps": [
         {
           "type": "configure",
-          "name": "debug"
+          "name": "debug-clang"
         },
         {
           "type": "build",
-          "name": "rebuild"
+          "name": "clang"
         },
         {
           "type": "test",
-          "name": "default"
+          "name": "clang"
         }
       ]
     }

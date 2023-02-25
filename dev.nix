@@ -9,18 +9,20 @@ in
             pkgs.cmake
             pkgs.ninja
             pkgs.ccache
+            pkgs.gcc
             pkgs.clang_15
             pkgs.pkg-config
+            # other cli
+            pkgs.ranger
+            pkgs.tree
             # linked libs
             pkgs.catch2
             asio
-            # other cli
-            pkgs.ranger
         ];
 
         shellHook = ''
             export NIX_DEBUG=0;
             export NIX_CFLAGS_COMPILE="";
-            export NIX_LDFLAGS="";
+            export NIX_LDFLAGS=" -L${pkgs.llvmPackages_15.libcxxabi}/lib";
           '';
     }
