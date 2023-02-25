@@ -1,22 +1,14 @@
-cmake_minimum_required(VERSION 3.9)
+cmake_minimum_required(VERSION 3.24)
 
-if (DEFINED PROJECT_NAME)
-    set(IS_SUBDIR ON)
-endif()
-
-project(asyop LANGUAGES CXX VERSION 0.3)
-
-# dependencies
-list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_LIST_DIR}/../cmake")
-include(${CMAKE_CURRENT_BINARY_DIR}/conan_paths.cmake OPTIONAL)
 find_package(Threads REQUIRED)
-find_package(ASIO)
+include(FindPkgConfig)
+pkg_check_modules(ASIO IMPORTED_TARGET asio)
 
 
 # main library
 add_library(asyop SHARED src/executor.cpp)
 target_include_directories(asyop PUBLIC
-    $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/include>
+    $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
     $<INSTALL_INTERFACE:include>)
 target_link_libraries(asyop PUBLIC Threads::Threads)
 target_compile_features(asyop PUBLIC cxx_std_17)
@@ -29,9 +21,9 @@ set_target_properties(asyop PROPERTIES
 if (ASIO_FOUND)
     add_library(asyop-asio SHARED src_asio/evloop_asio.cpp)
     target_include_directories(asyop-asio PUBLIC
-        $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/include_asio>
+        $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include_asio>
         $<INSTALL_INTERFACE:include_asio>)
-    target_link_libraries(asyop-asio PUBLIC asyop ASIO::ASIO)
+    target_link_libraries(asyop-asio PUBLIC asyop PkgConfig::ASIO)
     set_target_properties(asyop-asio PROPERTIES EXPORT_NAME asio)
     set_target_properties(asyop-asio PROPERTIES
         VERSION ${CMAKE_PROJECT_VERSION}
@@ -39,7 +31,7 @@ if (ASIO_FOUND)
 endif()
 
 
-if (IS_SUBDIR)
+if (NOT PROJECT_IS_TOP_LEVEL)
     # just create imported target names
     add_library(asyop::asyop ALIAS asyop)
     if (ASIO_FOUND)
