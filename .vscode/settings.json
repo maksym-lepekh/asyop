@@ -1,0 +1,10 @@
+{
+	"clangd.arguments": [
+		"--compile-commands-dir=.internal",
+		"--query-driver=/nix/store/**/clang*",
+		"--background-index=true",
+		"--all-scopes-completion=true"
+	],
+	"cmake.allowUnsupportedPresetsVersions": true,
+	"cmake.copyCompileCommands": ".internal/compile_commands.json"
+}

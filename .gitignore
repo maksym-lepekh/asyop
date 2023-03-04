@@ -5,3 +5,6 @@
 
 # CMake
 cmake-build-*/
+
+# Other
+.internal
